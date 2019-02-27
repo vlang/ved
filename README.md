@@ -1,6 +1,8 @@
-# Vid - open source editor written in V with the performance of Sublime Text 
+# Vid - open source editor written in V with the performance of Sublime Text
 
-Screenshots coming soon. For now you can [have a look at an old demo](https://volt.ws/img/lang.webm).
+![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
+
+More screenshots coming soon. For now you can [have a look at an old demo](https://volt.ws/img/lang.webm).
 
 Open source release in the summer of 2019 (after the release of V).
 
