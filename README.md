@@ -1,4 +1,4 @@
-# Vid - open source editor written in V with the performance of Sublime Text
+# Vid - open-sorce cross-platform editor written in V with the performance of Sublime Text
 
 ![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
 
