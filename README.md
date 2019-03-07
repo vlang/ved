@@ -14,9 +14,11 @@ Main features:
 - Integration with git
 - Built-in time management system (based on Pomodoro)
 - Global shortcuts (bring to front etc)
+- Split view
+- Workspaces 
 
 ![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
 
-You can also [have a look at an old demo](https://volt.ws/img/lang.webm).
+You can also [have a look at an old demo](https://volt-app.com/img/lang.webm).
 
 
