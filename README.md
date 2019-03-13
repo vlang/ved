@@ -5,7 +5,7 @@ Open source release in the summer of 2019 (after the release of [V](https://vlan
 
 Main features:
 
-- Small size (200 KB binary)
+- Small size (200 KB binary, zero dependencies)
 - Hardware accelerated text rendering
 - High performance (scrolling through 300k lines with syntax highlighting without any lag)
 - Vim mode
