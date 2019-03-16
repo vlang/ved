@@ -1,5 +1,5 @@
 # Vid
-## Open-source cross-platform editor written in V with the performance of Sublime Text
+## Open-source editor written in V with the performance of Sublime Text
 
 Open source release in the summer of 2019 (after the release of [V](https://vlang.io)).
 
@@ -15,7 +15,8 @@ Main features:
 - Built-in time management system (based on Pomodoro)
 - Global shortcuts (bring to front etc)
 - Split view
-- Workspaces 
+- Workspaces
+- Cross-platform (Windows, macOS, Linux)
 
 ![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
 
