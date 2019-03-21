@@ -11,6 +11,7 @@ Main features:
 - Vim mode
 - Easy integration with any compiler/build system
 - Go to definition, ctrlp (fuzzy file finder)
+- Very fast search in all project files
 - Integration with git
 - Built-in time management system (based on Pomodoro)
 - Global shortcuts (bring to front etc)
