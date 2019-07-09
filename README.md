@@ -1,7 +1,7 @@
 # Vid
 ## Open-source editor written in V with the performance of Sublime Text
 
-Open source release on July 9 at 1pm UTC.
+Open source release In July. 
 
 Main features:
 
