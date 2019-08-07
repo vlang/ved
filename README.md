@@ -30,6 +30,37 @@ This will be gradually fixed. The goal is to have a stable and highly customizab
 ### Known issues
 - No way to change key bindings, color settings, etc
 - Vim-mode only
+- No mouse support
+- No word wrap (I'm used to 80 character lines)
+
+
+### Instructions
+
+Vid works best with workspaces (directories with code). You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
+
+To open multiple workspaces, run
+
+`vid path/to/project1 path/to/project2 `
+
+Key bindings:
+
+`C` is `⌘` on macOS, `Ctrl` on all other systems.
+
+```
+C o    open a file
+C s    save
+C p    open ctrlp (fuzzy search)
+C c    git commit -am
+C -    git diff
+C 1    switch to Vid from any other application (only on macOS for now)
+C d    go to the previous split
+C e    go to the next split
+C [    go to the previous workspace
+C ]    go to the next workspace
+
+
+```
+
 
 Most of these are relatively easy to fix.
 
