@@ -53,6 +53,7 @@ C r    reload current file
 C p    open ctrlp (fuzzy search)
 /      search in current file
 C g    copy current file's path to clipboard
+tt     go to the previous file
 
 C c    git commit -am
 C -    git diff
@@ -69,9 +70,7 @@ C ]    go to the next workspace
 
 C a    start a new task
 C t    show the Timer/Pomodoro window
-C a    start a new task
-C a    start a new task
-C a    start a new task
+
 
 ```
 
@@ -91,7 +90,7 @@ zz
 y d p J
 .
 < >
-/
+/ *
 gg G
 x r
 ```
