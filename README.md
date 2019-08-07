@@ -75,6 +75,34 @@ C a    start a new task
 
 ```
 
+Supported vi bindings:
+
+```
+j k h l
+C-F C-B
+L H
+w b
+dw de cw ce
+di ci
+A I
+o O
+v
+zz
+y d p J
+.
+< >
+/
+gg G
+x r
+```
+
+
+
+Many bindings are missing, and the design is not scalable. Most of them are hard-coded, so there needs to be extra logic for handling `db`, `cb` etc. This has to be improved.
+
+
+
+
 
 Most of these are relatively easy to fix.
 
