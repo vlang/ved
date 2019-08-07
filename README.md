@@ -1,5 +1,5 @@
 # Vid
-## Open-source editor written in V with the performance of Sublime Text
+## Text editor written in V with the performance of Sublime Text
 
 Open source release on August 7. 
 
@@ -33,6 +33,7 @@ This will be gradually fixed. The goal is to have a stable and highly customizab
 - No mouse support
 - No word wrap (I'm used to 80 character lines)
 
+Most of these are relatively easy to fix.
 
 ### Instructions
 
@@ -103,7 +104,7 @@ Many bindings are missing, and the design is not scalable. Most of them are hard
 
 
 
-Most of these are relatively easy to fix.
+
 
 
 ![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
