@@ -49,15 +49,29 @@ Key bindings:
 ```
 C o    open a file
 C s    save
+C r    reload current file
 C p    open ctrlp (fuzzy search)
+/      search in current file
+C g    copy current file's path to clipboard
+
 C c    git commit -am
 C -    git diff
+?      git grep (search across all files in current workspace)
+
+C u    build current project (build instructions must be located in "build")
+C y    alternative build of the current project (build instructions must be located in "build2")
 C 1    switch to Vid from any other application (only on macOS for now)
+
 C d    go to the previous split
 C e    go to the next split
 C [    go to the previous workspace
 C ]    go to the next workspace
 
+C a    start a new task
+C t    show the Timer/Pomodoro window
+C a    start a new task
+C a    start a new task
+C a    start a new task
 
 ```
 
