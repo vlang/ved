@@ -1,5 +1,7 @@
 # Vid - small and fast text editor written in V
 
+
+
 ### Building from source
 
 First you need to [install V](https://github.com/vlang/v#installing-v-from-source). This will take a couple of seconds.
@@ -10,6 +12,8 @@ cd vid
 v .
 ./vid
 ```
+
+Vid should build in under a second.
 
 ### This is pre-alpha software.
 
@@ -111,6 +115,9 @@ Many bindings are missing, and the design is not scalable. Most of them are hard
 
 
 
+You can support the development of Vid and V on Patreon:
+
+<a href='https://patreon.com/vlang'><img src='https://camo.githubusercontent.com/3baa6f57d721101b50f691de31b730b9fbcc3a8a/68747470733a2f2f766c616e672e696f2f696d672f70617472656f6e2e706e67' width=200></a>
 
 
 
@@ -118,6 +125,5 @@ Many bindings are missing, and the design is not scalable. Most of them are hard
 
 ![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
 
-You can also [have a look at an old demo](https://volt-app.com/img/lang.webm).
 
 
