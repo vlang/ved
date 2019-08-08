@@ -15,6 +15,9 @@ v .
 
 Vid should build in under a second.
 
+
+Discord (primary community): https://discord.gg/n7c74HM. Join the #vid channel.
+
 ### This is pre-alpha software.
 
 I've been using Vid as my main editor since June 2017 (it was re-writtein in V in June 2018). I've set it up to my liking, I know its limitations and how to bypass them. 
