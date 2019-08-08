@@ -1,7 +1,16 @@
 # Vid
 ## Text editor written in V with the performance of Sublime Text
 
-Open source release on August 7. 
+### Building from source
+
+You'll need to [install V](https://github.com/vlang/v#installing-v-from-source). This will take a couple of seconds.
+
+```
+git clone https://github.com/vlang/vid
+cd vid
+v .
+./vid
+```
 
 ### This is pre-alpha software.
 
