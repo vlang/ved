@@ -21,7 +21,7 @@ This will be gradually fixed. The goal is to have a stable and highly customizab
 
 ### Main features
 
-- Small size (~ 1 MB binary, zero dependencies)
+- Small size (~ 1 MB binary, builds in <1s)
 - Hardware accelerated text rendering
 - High performance (scrolling through 300k lines with syntax highlighting without any lag)
 - Vim mode
