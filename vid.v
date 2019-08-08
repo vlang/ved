@@ -8,7 +8,7 @@ import (
 	gl
 	gx 
 	gg
-	ft 
+	freetype 
 	glfw
 	os
 	//ospath
@@ -102,7 +102,7 @@ mut:
 	all_git_files    []string
 	top_tasks        []string
 	vg               *gg.GG
-	ft               *ft.GG 
+	ft               *freetype.Context 
 	query            string
 	search_query     string
 	query_type       int
@@ -191,7 +191,7 @@ fn main() {
 		retina: true
 	}
 	ctx.vg = gg.new_context(cfg)
-	ctx.ft = ft.new_context(cfg, 2) 
+	ctx.ft = freetype.new_context(cfg, 2) 
 	ctx.load_all_tasks()
 	w.set_user_ptr(ctx)
 	$if mac {
