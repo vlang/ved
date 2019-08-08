@@ -179,7 +179,7 @@ fn main() {
 		borderless: !is_window 
 		title: 'Vid' 
 		ptr: ctx 
-	}
+	})
 	ctx.main_wnd = w
 	w.make_context_current()
 	gl.init_glad()
