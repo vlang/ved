@@ -32,6 +32,7 @@ This will be gradually fixed. The goal is to have a stable and highly customizab
 - Vim-mode only
 - No mouse support
 - No word wrap (I'm used to 80 character lines)
+- Only ASCII and Cyrillic letters are supported right now
 
 Most of these are relatively easy to fix.
 
@@ -91,7 +92,7 @@ zz
 y d p J
 .
 < >
-/ *
+/ * n
 gg G
 x r
 ```
