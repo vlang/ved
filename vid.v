@@ -475,6 +475,9 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 			for i < line.len - 1 && line[i] != `\'` {
 				i++
 			}
+			if i >= line.len {
+				i = line.len - 1
+			}
 			ctx.add_chunk(STRING, start, i + 1)
 		}
 		// Key
