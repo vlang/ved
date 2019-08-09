@@ -193,7 +193,12 @@ fn (view &View) char() int {
 
 fn (view mut View) set_line(newline string) {
 	// # view->lines.data[view->y] = newline;
-	view.lines[view.y] = newline
+	if view.y + 1 > view.lines.len {
+		view.lines << newline
+	}
+	else {
+		view.lines[view.y] = newline
+	}
 	view.changed = true
 }
 
