@@ -373,11 +373,21 @@ fn (view mut View) insert_text(s string) {
 
 fn (view mut View) backspace() {
 	if view.x == 0 {
+		if view.y > 0 {
+			view.x = 0
+			view.y--
+			view.x = view.lines[view.y].len
+			view.lines.delete(view.y+1)
+			view.changed = true
+		}
 		return
 	}
 	uline := view.uline()
 	left := uline.left(view.x - 1)
-	right := uline.right(view.x)
+	mut right := ''
+	if view.x < uline.len  {
+		right = uline.right(view.x)
+	}
 	view.set_line('${left}${right}')
 	view.x--
 }
@@ -428,7 +438,10 @@ fn (view mut View) enter() {
 		return
 	}
 	uline := line.ustring()
-	right := uline.right(pos)
+	mut right := ''
+	if pos < uline.len{
+		right = uline.right(pos)
+	}
 	left := uline.left(pos)
 	view.set_line(left)
 	view.o()
