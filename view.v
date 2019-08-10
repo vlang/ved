@@ -150,7 +150,6 @@ fn (view mut View) save_file() {
 	println('line[0].len=$line0.len')
 	file := os.create(path) or {
 		panic('fail')
-		return
 	}
 	for line in view.lines {
 		file.writeln(line)
