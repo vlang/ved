@@ -1243,7 +1243,7 @@ fn (ctx &Vid) move_to_line(n int) {
 
 fn (ctx &Vid) save_session() {
 	println('saving session...')
-	f := os.create(SESSION_PATH) or {panic('ff') return}
+	f := os.create(SESSION_PATH) or { panic('fail') }
 	for view in ctx.views {
 		// if view.path == '' {
 		// continue
@@ -1423,7 +1423,6 @@ fn (ctx mut Vid) build_app(extra string) {
 	}
 	f2 := os.create('$dir/out') or {
 		panic('fail')
-		return
 	}
 	f2.writeln(out)
 	f2.close()
@@ -1469,7 +1468,7 @@ fn (ctx mut Vid) run_file() {
 	dir := view.path.left(pos)
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
-	f := os.create('$dir/out') or { panic('foo') return } 
+	f := os.create('$dir/out') or { panic('foo') } 
 	f.writeln(out)
 	f.close()
 	// TODO COPYPASTA
