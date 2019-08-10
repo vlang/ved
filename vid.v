@@ -1440,7 +1440,7 @@ fn (ctx mut Vid) build_app(extra string) {
 	glfw.post_empty_event()
 	time.sleep(4)// delay is_building to prevent flickering in the right split
 	ctx.is_building = false
-	return
+	/*
 	// Reopen files (they were formatted)
 	for _view in ctx.views {
 		// ui.alert('reopening path')
@@ -1448,6 +1448,7 @@ fn (ctx mut Vid) build_app(extra string) {
 		println(view.path)
 		view.open_file(view.path)
 	}
+	*/
 }
 
 // Run file in current view (go run [file], v run [file], python [file] etc)
