@@ -716,7 +716,7 @@ fn (ctx mut Vid) key_insert(key int, super bool) {
 	case GLFW_KEY_TAB:
 		ctx.view.insert_text('\t')
 	}
-	if key == GLFW_KEY_L && super {
+	if (key == GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
 		ctx.view.save_file()
 		ctx.mode = NORMAL
 		return
