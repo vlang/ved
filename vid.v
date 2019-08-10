@@ -41,6 +41,7 @@ const (
 	SEARCH = 1
 	CAM    = 2
 	OPEN   = 3
+	OPEN_WORKSPACE   = 7
 	CTRLJ  = 4
 	TASK   = 5
 	GREP   = 6
@@ -901,7 +902,13 @@ fn (ctx mut Vid) key_normal(key int, super, shift bool) {
 			ctx.search(false)
 		}
 	case GLFW_KEY_O:
-		if super {
+		if shift && super {
+			println('RRRR')
+			ctx.mode = QUERY
+			ctx.query_type = OPEN_WORKSPACE
+			ctx.query = ''
+		}
+		else if super {
 			ctx.mode = QUERY
 			ctx.query_type = OPEN
 			ctx.query = ''

@@ -45,6 +45,8 @@ fn (ctx &Vid) typ_to_str() string {
 		return 'ctrl p'
 	case OPEN:
 		return 'open'
+	case OPEN_WORKSPACE:
+		return 'open workspace'
 	case CAM:
 		return 'git commit -am'
 	case CTRLJ:
