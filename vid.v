@@ -21,15 +21,6 @@ import (
 ) 
 
 const ( 
-	vcolor       = gx.Color{226, 233, 241} // selection color 
-	split_color  = gx.Color{223, 223, 223} 
-	bgcolor      = gx.Color{245, 245, 245}
-	string_color = gx.Color{179, 58, 44}
-	key_color    = gx.Color{74, 103, 154}
-	title_color  = gx.Color{40, 40, 40}
-) 
-
-const ( 
 	SESSION_PATH = os.home_dir() + '/.vppsession' // TODO rename consts 
 	TIMER_PATH   = os.home_dir() + '/.vpptimer'
 	DefaultDir   = os.home_dir() + '/code'
@@ -42,23 +33,6 @@ const (
 	QUERY  = 2
 	VISUAL = 3
 	TIMER  = 4
-)
-
-const (
-	file_name_cfg = gx.TextCfg { color: gx.White, size: 18, }
-	plus_cfg      = gx.TextCfg { color: gx.Green, size: 18, }
-	minus_cfg     = gx.TextCfg { color: gx.Green, size: 18, }
-	line_nr_cfg   = gx.TextCfg { color: gx.DarkGray, size: 18, align: gx.ALIGN_RIGHT, }
-	key_cfg       = gx.TextCfg { size: 18, color: key_color, }
-	string_cfg    = gx.TextCfg { size: 18, color: string_color, }
-	comment_cfg   = gx.TextCfg { size: 18, color: gx.DarkGray, }
-	green_cfg     = gx.TextCfg { size: 18, color: gx.Green, }
-	red_cfg       = gx.TextCfg { size: 18, color: gx.Red}
-)
-
-const (
-	TAB          = int(`\t`) 
-	TAB_SIZE     = 8
 )
 
 // Query type
@@ -126,6 +100,7 @@ mut:
 	is_ml_comment    bool
 	gg_lines         []string
 	gg_pos           int
+	cfg              Config
 }
 
 struct ViSize {
@@ -134,6 +109,10 @@ struct ViSize {
 }
 
 fn main() {
+	if '-h' in os.args || '--help' in os.args {
+		println(HelpText)
+		return
+	}
 	glfw.init()
 	mut nr_splits := 3
 	is_window := '-window' in os.args 
@@ -167,6 +146,7 @@ fn main() {
 		main_wnd: 0
 	}
 	ctx.handle_segfault()
+	ctx.cfg.init_colors()
 	ctx.page_height = size.height / ctx.line_height - 1
 	// TODO V keys only 
 	keys := 'pub struct interface in default sizeof assert enum import go return module package '+
@@ -220,12 +200,12 @@ fn main() {
 	//println(int(glfw.get_time() -t))
 	go ctx.loop()
 	gl.clear()
-	gl.clear_color(245, 245, 245, 255)
+	gl.clear_color(ctx.cfg.bgcolor.r, ctx.cfg.bgcolor.g, ctx.cfg.bgcolor.b, 255)
 	ctx.refresh = true
 	for !ctx.main_wnd.should_close() {
 		if ctx.refresh || ctx.mode == TIMER {
 			gl.clear()
-			gl.clear_color(245, 245, 245, 255)
+			gl.clear_color(ctx.cfg.bgcolor.r, ctx.cfg.bgcolor.g, ctx.cfg.bgcolor.b, 255)
 		}
 		ctx.draw()
 		//if ctx.mode == TIMER {
@@ -253,14 +233,14 @@ fn (ctx mut Vid) draw() {
 	// Not a full refresh? Means we need to refresh only current split.
 	if !ctx.refresh {
 		split_x := split_width * (ctx.cur_split - from)
-		ctx.vg.draw_rect(split_x, 0, split_width - 1, ctx.win_height, bgcolor)
+		ctx.vg.draw_rect(split_x, 0, split_width - 1, ctx.win_height, ctx.cfg.bgcolor)
 	}
 	now := time.now()
 	// Coords
 	y := (ctx.view.y - ctx.view.from) * ctx.line_height + ctx.line_height
 	// Cur line
 	line_x := split_width * (ctx.cur_split - from) + ctx.view.padding_left + 10
-	ctx.vg.draw_rect(line_x, y - 1, split_width - ctx.view.padding_left - 10, ctx.line_height, vcolor)
+	ctx.vg.draw_rect(line_x, y - 1, split_width - ctx.view.padding_left - 10, ctx.line_height, ctx.cfg.vcolor)
 	// V selection
 	mut v_from := ctx.view.vstart + 1
 	mut v_to := ctx.view.vend + 1
@@ -271,20 +251,20 @@ fn (ctx mut Vid) draw() {
 	}
 	for yy := v_from; yy <= v_to; yy++ {
 		ctx.vg.draw_rect(line_x, (yy - ctx.view.from) * ctx.line_height,
-		split_width - ctx.view.padding_left, ctx.line_height, vcolor)
+		split_width - ctx.view.padding_left, ctx.line_height, ctx.cfg.vcolor)
 	}
 	// Tab offset for cursor
 	line := ctx.view.line()
 	mut cursor_tab_off := 0
 	for i := 0; i < line.len && i < ctx.view.x; i++ {
 		// if rune != '\t' {
-		if int(line[i]) != TAB {
+		if int(line[i]) != ctx.cfg.tab {
 			break
 		}
 		cursor_tab_off++
 	}
 	// Black title background
-	ctx.vg.draw_rect(0, 0, ctx.win_width, ctx.line_height, title_color)
+	ctx.vg.draw_rect(0, 0, ctx.win_width, ctx.line_height, ctx.cfg.title_color)
 	// Current split has dark blue title
 	// ctx.vg.draw_rect(split_x, 0, split_width, ctx.line_height, gx.rgb(47, 11, 105))
 	// Title (file paths)
@@ -294,23 +274,23 @@ fn (ctx mut Vid) draw() {
 		if v.changed && !v.path.ends_with('/out') {
 			name = '$name [+]' !
 		}
-		ctx.ft.draw_text(ctx.split_x(i - from) + v.padding_left + 10, 1, name, file_name_cfg)
+		ctx.ft.draw_text(ctx.split_x(i - from) + v.padding_left + 10, 1, name, ctx.cfg.file_name_cfg)
 	}
 	// Git diff stats
 	if ctx.git_diff_plus != '+' {
-		ctx.ft.draw_text(ctx.win_width - 400, 1, ctx.git_diff_plus, plus_cfg)
+		ctx.ft.draw_text(ctx.win_width - 400, 1, ctx.git_diff_plus, ctx.cfg.plus_cfg)
 	}
 	if ctx.git_diff_minus != '-' {
-		ctx.ft.draw_text(ctx.win_width - 350, 1, ctx.git_diff_minus, minus_cfg)
+		ctx.ft.draw_text(ctx.win_width - 350, 1, ctx.git_diff_minus, ctx.cfg.minus_cfg)
 	}
 	// Workspaces
 	nr_spaces := ctx.workspaces.len
 	cur_space := ctx.workspace_idx + 1
 	space_name := short_space(ctx.workspace)
-	ctx.ft.draw_text(ctx.win_width - 220, 1, '[$space_name]' !, file_name_cfg)
-	ctx.ft.draw_text(ctx.win_width - 150, 1, '$cur_space/$nr_spaces' !, file_name_cfg)
+	ctx.ft.draw_text(ctx.win_width - 220, 1, '[$space_name]' !, ctx.cfg.file_name_cfg)
+	ctx.ft.draw_text(ctx.win_width - 150, 1, '$cur_space/$nr_spaces' !, ctx.cfg.file_name_cfg)
 	// Time
-	ctx.ft.draw_text(ctx.win_width - 50, 1, now.hhmm(), file_name_cfg)
+	ctx.ft.draw_text(ctx.win_width - 50, 1, now.hhmm(), ctx.cfg.file_name_cfg)
 	// ctx.vg.draw_text(ctx.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
 /* 
@@ -341,8 +321,8 @@ fn (ctx mut Vid) draw() {
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cursor
-	cursor_x := line_x + (ctx.view.x + cursor_tab_off * TAB_SIZE) * ctx.char_width
-	ctx.vg.draw_empty_rect(cursor_x, y - 1, ctx.char_width, ctx.line_height, gx.Black)
+	cursor_x := line_x + (ctx.view.x + cursor_tab_off * ctx.cfg.tab_size) * ctx.char_width
+	ctx.vg.draw_empty_rect(cursor_x, y - 1, ctx.char_width, ctx.line_height, ctx.cfg.cursor_color)
 	// query window
 	if ctx.mode == QUERY {
 		ctx.draw_query()
@@ -359,7 +339,7 @@ fn (ctx mut Vid) draw_split(i, split_from int) {
 	split_width := ctx.split_width()
 	split_x := split_width * (i - split_from)
 	// Vertical split line
-	ctx.vg.draw_line_c(split_x, ctx.line_height + 1, split_x, ctx.win_height, split_color) 
+	ctx.vg.draw_line_c(split_x, ctx.line_height + 1, split_x, ctx.win_height, ctx.cfg.split_color)
 	// Lines
 	mut line_nr := 1// relative y
 	for j := view.from; j < view.from + ctx.page_height && j < view.lines.len; j++ {
@@ -371,11 +351,11 @@ fn (ctx mut Vid) draw_split(i, split_from int) {
 		y := line_nr * ctx.line_height
 		// Error bg
 		if view.error_y == j {
-			ctx.vg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, ctx.line_height, gx.rgb(240, 0, 0))
+			ctx.vg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, ctx.line_height, ctx.cfg.errorbgcolor)
 		}
 		// Line number
 		line_number := j + 1
-		ctx.ft.draw_text(x+3, y, '$line_number'!, line_nr_cfg)
+		ctx.ft.draw_text(x+3, y, '$line_number'!, ctx.cfg.line_nr_cfg)
 		// Tab offset
 		mut line_x := x + 10
 		mut nr_tabs := 0
@@ -386,7 +366,7 @@ fn (ctx mut Vid) draw_split(i, split_from int) {
 				break
 			}
 			nr_tabs++
-			line_x += ctx.char_width * TAB_SIZE
+			line_x += ctx.char_width * ctx.cfg.tab_size
 		}
 		// Number of chars to display in this view
 		if line.len > 0 {
@@ -405,7 +385,7 @@ fn (ctx mut Vid) draw_split(i, split_from int) {
 				ctx.draw_line(line_x, y, s)// SYNTAX HL
 			}
 			else {
-				ctx.ft.draw_text(line_x, y, line, txt_cfg)// NO SYNTAX
+				ctx.ft.draw_text(line_x, y, line, ctx.cfg.txt_cfg)// NO SYNTAX
 			}
 		}
 		line_nr++
@@ -413,7 +393,7 @@ fn (ctx mut Vid) draw_split(i, split_from int) {
 }
 
 fn (ctx &Vid) max_chars(nr_tabs int) int {
-	width := ctx.split_width() -ctx.view.padding_left - ctx.char_width * TAB_SIZE * nr_tabs
+	width := ctx.split_width() -ctx.view.padding_left - ctx.char_width * ctx.cfg.tab_size * nr_tabs
 	return width / ctx.char_width - 1
 }
 
@@ -427,19 +407,15 @@ fn (ctx mut Vid) add_chunk(typ, start, end int) {
 }
 
 fn (ctx mut Vid) draw_line(x, y int, line string) {
-	txt_cfg := gx.TextCfg {
-		size: 18,
-		color: gx.Black,
-	}
 	// Red/green test hack
 	if line.contains('[32m') &&
 	line.contains('PASS') {
-		ctx.ft.draw_text(x, y, line.right(5), green_cfg)
+		ctx.ft.draw_text(x, y, line.right(5), ctx.cfg.green_cfg)
 		return
 	}
 	if line.contains('[31m') &&
 	line.contains('FAIL') {
-		ctx.ft.draw_text(x, y, line.right(5), red_cfg)
+		ctx.ft.draw_text(x, y, line.right(5), ctx.cfg.red_cfg)
 		return
 	}
 	// ctx.chunks = []Chunk{}
@@ -494,12 +470,12 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 		}
 	}
 	if ctx.is_ml_comment {
-		ctx.ft.draw_text(x, y, line, comment_cfg)
+		ctx.ft.draw_text(x, y, line, ctx.cfg.comment_cfg)
 		return
 	}
 	if ctx.chunks.len == 0 {
 		// println('no chunks')
-		ctx.ft.draw_text(x, y, line, txt_cfg)
+		ctx.ft.draw_text(x, y, line, ctx.cfg.txt_cfg)
 		return
 	}
 	mut pos := 0
@@ -513,18 +489,18 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 		// since we don't have a seperate chunk for text)
 		if chunk.start > pos + 1 {
 			s := line.substr(pos, chunk.start)
-			ctx.ft.draw_text(x + pos * ctx.char_width, y, s, txt_cfg)
+			ctx.ft.draw_text(x + pos * ctx.char_width, y, s, ctx.cfg.txt_cfg)
 		}
 		// Keyword string etc
-		mut cfg := txt_cfg
+		mut cfg := ctx.cfg.txt_cfg
 		typ := chunk.typ
 		switch typ {
 		case KEY:
-			cfg = key_cfg
+			cfg = ctx.cfg.key_cfg
 		case STRING:
-			cfg = string_cfg
+			cfg = ctx.cfg.string_cfg
 		case COMMENT:
-			cfg = comment_cfg
+			cfg = ctx.cfg.comment_cfg
 		}
 		s := line.substr(chunk.start, chunk.end)
 		ctx.ft.draw_text(x + chunk.start * ctx.char_width, y, s, cfg)
@@ -532,7 +508,7 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 		// Final text chunk
 		if i == ctx.chunks.len - 1 && chunk.end < line.len {
 			final := line.substr(chunk.end, line.len)
-			ctx.ft.draw_text(x + pos * ctx.char_width, y, final, txt_cfg)
+			ctx.ft.draw_text(x + pos * ctx.char_width, y, final, ctx.cfg.txt_cfg)
 		}
 	}
 }
@@ -1618,3 +1594,14 @@ fn (ctx mut Vid) handle_segfault() {
 	*/
 }
 
+const (
+	HelpText = '
+Usage: vid [options] [files]
+
+Options:
+  -h, --help  Display this information.
+  -window     Launch in a window.
+  -dark       Launch in dark mode.
+  -two_splits
+'
+)
