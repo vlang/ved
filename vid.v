@@ -694,6 +694,18 @@ fn (ctx mut Vid) key_insert(key int, super bool) {
 		ctx.mode = NORMAL
 	case GLFW_KEY_TAB:
 		ctx.view.insert_text('\t')
+	case GLFW_KEY_LEFT:
+		if ctx.view.x > 0 {
+			ctx.view.x--
+		}
+	case GLFW_KEY_RIGHT:
+		ctx.view.l()
+	case GLFW_KEY_UP:
+		ctx.view.k()
+		ctx.refresh = false
+	case GLFW_KEY_DOWN:
+		ctx.view.j()
+		ctx.refresh = false
 	}
 	if (key == GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
 		ctx.view.save_file()
@@ -1017,6 +1029,18 @@ fn (ctx mut Vid) key_normal(key int, super, shift bool) {
 		if shift {
 			ctx.star()
 		}
+	case GLFW_KEY_LEFT:
+		if ctx.view.x > 0 {
+			ctx.view.x--
+		}
+	case GLFW_KEY_RIGHT:
+		ctx.view.l()
+	case GLFW_KEY_UP:
+		ctx.view.k()
+		ctx.refresh = false
+	case GLFW_KEY_DOWN:
+		ctx.view.j()
+		ctx.refresh = false
 	}
 	if key != GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
