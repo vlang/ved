@@ -234,6 +234,15 @@ fn (view mut View) k() {
 	if view.y < view.from && view.y > 0 {
 		view.from--
 	}
+	// Line above is shorter, move to the end of it
+	line := view.line()
+	if view.x > line.len - 1 {
+		view.prev_x = view.x
+		view.x = line.len - 1
+		if view.x < 0 {
+			view.x = 0
+		}
+	}
 }
 
 fn (view mut View) H() {
