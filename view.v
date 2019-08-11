@@ -268,7 +268,7 @@ fn (view mut View) A() {
 
 fn (view mut View) I() {
 	view.x = 0
-	for view.char() == TAB {
+	for view.char() == view.ctx.cfg.tab {
 		view.x++
 	}
 }

@@ -78,10 +78,10 @@ fn (ctx &Vid) draw_query() {
 	y := (ctx.win_height - height) / 2
 	ctx.vg.draw_rect(x, y, width, height, gx.White)
 	// query window title
-	ctx.vg.draw_rect(x, y, width, ctx.line_height, title_color)
-	ctx.ft.draw_text(x + 10, y, ctx.typ_to_str(), file_name_cfg)
+	ctx.vg.draw_rect(x, y, width, ctx.line_height, ctx.cfg.title_color)
+	ctx.ft.draw_text(x + 10, y, ctx.typ_to_str(), ctx.cfg.file_name_cfg)
 	// query background
-	ctx.vg.draw_rect(0, 0, ctx.win_width, ctx.line_height, title_color)
+	ctx.vg.draw_rect(0, 0, ctx.win_width, ctx.line_height, ctx.cfg.title_color)
 	mut q := ctx.query
 	if ctx.query_type == SEARCH || ctx.query_type == GREP {
 		q = ctx.search_query
@@ -142,7 +142,7 @@ fn (ctx &Vid) draw_git_grep(x, y int) {
 		text := line.right(pos2 + 1).trim_space().left(70)
 		yy := y + 60 + 30 * i
 		if i == ctx.gg_pos {
-			ctx.vg.draw_rect(x, yy, QueryWidth * 2, 30, vcolor)
+			ctx.vg.draw_rect(x, yy, QueryWidth * 2, 30, ctx.cfg.vcolor)
 		}
 		ctx.ft.draw_text(x + 10, yy, path, txt_cfg)
 		ctx.ft.draw_text(x + 210, yy, text, txt_cfg)
