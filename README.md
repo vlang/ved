@@ -1,5 +1,7 @@
 # Vid - small and fast text editor written in V
 
+[![Build Status](https://travis-ci.org/vlang/vid.svg?branch=master)](https://travis-ci.org/vlang/vid)
+
 
 
 ### Building from source
