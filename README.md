@@ -8,6 +8,7 @@
 
 First you need to [install V](https://github.com/vlang/v#installing-v-from-source). This will take a couple of seconds.
 
+
 ```
 git clone https://github.com/vlang/vid
 cd vid
@@ -17,6 +18,20 @@ v .
 
 Vid should build in under a second.
 
+There are two dependencies: `freetype` and `glfw`. (`glfw` dependency will be removed soon.)
+
+Ubuntu:
+
+```
+sudo apt install libglfw3 libglfw3-dev libfreetype6-dev
+```
+
+macOS:
+```
+brew install glfw freetype
+```
+
+### Communities:
 
 Discord (primary community): https://discord.gg/n7c74HM. Join the #vid channel.
 
