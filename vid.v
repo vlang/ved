@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 
 module main
-Travis
+
 import (
 	gl
 	gx 
