@@ -4,7 +4,6 @@
 
 module main
 import os
- 
 
 struct View {
 mut:
@@ -187,7 +186,7 @@ fn (view &View) uline() ustring {
 
 fn (view &View) char() int {
 	line := view.line()
-	return int(line[view.x])
+	return if (line.len > 0) { int(line[view.x]) } else { 0 }
 }
 
 fn (view mut View) set_line(newline string) {
@@ -254,8 +253,7 @@ fn (view mut View) move_to_page_bot() {
 }
 
 fn (view mut View) l() {
-	line := view.lines[view.y]
-	// line := view.line()
+	line := view.line()
 	if view.x < line.len - 1 {
 		view.x++
 	}
@@ -304,13 +302,15 @@ fn (view mut View) B() {
 }
 
 fn (view mut View) dd() {
-	mut ctx := view.ctx
-	ctx.prev_key = -1
-	ctx.prev_cmd = 'dd'
-	ctx.ylines = []string{}
-	ctx.ylines << view.line()
-	view.lines.delete(view.y)
-	view.changed = true
+	if (view.lines.len != 0) {
+		mut ctx := view.ctx
+		ctx.prev_key = -1
+		ctx.prev_cmd = 'dd'
+		ctx.ylines = []string{}
+		ctx.ylines << view.line()
+		view.lines.delete(view.y)
+		view.changed = true
+	}
 }
 
 fn (view mut View) shift_right() {
@@ -533,11 +533,11 @@ fn (view mut View) w() {
 	line := view.line()
 	typ := is_alpha_underscore(view.char())
 	// Go to end of current word
-	for view.x < line.len && typ == is_alpha_underscore(view.char()) {
+	for view.x < line.len - 1 && typ == is_alpha_underscore(view.char()) {
 		view.x++
 	}
 	// Go to start of next word
-	for view.x < line.len && view.char() == 32 {
+	for view.x < line.len - 1 && view.char() == 32 {
 		view.x++
 	}
 }
