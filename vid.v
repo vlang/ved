@@ -1447,12 +1447,12 @@ fn (ctx mut Vid) build_app(extra string) {
 	f2 := os.create('$dir/out') or {
 		panic('fail')
 	}
-	f2.writeln(out)
+	f2.writeln(out.output)
 	f2.close()
 	last_view.open_file('$dir/out')
 	last_view.G()
 	// error line
-	lines := out.split_into_lines()
+	lines := out.output.split_into_lines()
 	for line in lines {
 		if line.contains('.v:') {
 			ctx.go_to_error(line)
@@ -1493,7 +1493,7 @@ fn (ctx mut Vid) run_file() {
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
 	f := os.create('$dir/out') or { panic('foo') }
-	f.writeln(out)
+	f.writeln(out.output)
 	f.close()
 	// TODO COPYPASTA
 	mut last_view := ctx.get_last_view()
@@ -1501,7 +1501,7 @@ fn (ctx mut Vid) run_file() {
 	last_view.G()
 	ctx.is_building = false
 	// error line
-	lines := out.split_into_lines()
+	lines := out.output.split_into_lines()
 	for line in lines {
 		if line.contains('.v:') {
 			ctx.go_to_error(line)
@@ -1540,7 +1540,7 @@ fn (ctx mut Vid) go_to_error(line string) {
 	}
 	// File with the error is not open right now, do it
 	s := os.exec('git -C $ctx.workspace ls-files') or { return }
-	mut lines := s.split_into_lines()
+	mut lines := s.output.split_into_lines()
 	lines.sort_by_len()
 	for _ in lines {
 		if line.contains(filename) {

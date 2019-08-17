@@ -21,7 +21,7 @@ fn (ctx mut Vid) load_git_tree() {
 		dir = '.'
 	}
 	s := os.exec('git -C $dir ls-files') or { return }
-	ctx.all_git_files = s.split_into_lines()
+	ctx.all_git_files = s.output.split_into_lines()
 	ctx.all_git_files.sort_by_len()
 }
 
@@ -175,7 +175,7 @@ fn (ctx mut Vid) ctrlp_open() {
 fn (ctx mut Vid) git_grep() {
 	ctx.gg_pos = -1
 	s := os.exec('git -C "$ctx.workspace" grep -n "$ctx.search_query"') or { return }
-	ctx.gg_lines = s.split_into_lines()
+	ctx.gg_lines = s.output.split_into_lines()
 }
 
 fn (ctx &Vid) search(goback bool) {
