@@ -137,7 +137,7 @@ fn main() {
 		cur_split: 0
 		mode: 0
 		//timer: timer
-		file_y_pos: map[string]int{}
+		file_y_pos: map[string]int
 		line_height: 20
 		char_width: 8
 		font_size: 13
