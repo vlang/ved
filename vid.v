@@ -6,9 +6,9 @@ module main
 
 import (
 	gl
-	gx 
+	gx
 	gg
-	freetype 
+	freetype
 	glfw
 	os
 	//ospath
@@ -18,15 +18,15 @@ import (
 	//gx
 	//ui
 	//darwin
-) 
+)
 
-const ( 
-	SESSION_PATH = os.home_dir() + '/.vppsession' // TODO rename consts 
+const (
+	SESSION_PATH = os.home_dir() + '/.vppsession' // TODO rename consts
 	TIMER_PATH   = os.home_dir() + '/.vpptimer'
 	DefaultDir   = os.home_dir() + '/code'
 )
 
-// TODO enum 
+// TODO enum
 const (
 	NORMAL = 0
 	INSERT = 1
@@ -47,7 +47,7 @@ const (
 	GREP   = 6
 )
 
-// For syntax highlighting 
+// For syntax highlighting
 const (
 	STRING  = 1
 	COMMENT = 2
@@ -77,7 +77,7 @@ mut:
 	all_git_files    []string
 	top_tasks        []string
 	vg               *gg.GG
-	ft               *freetype.Context 
+	ft               *freetype.Context
 	query            string
 	search_query     string
 	query_type       int
@@ -116,8 +116,8 @@ fn main() {
 	}
 	glfw.init()
 	mut nr_splits := 3
-	is_window := '-window' in os.args 
-	if '-two_splits' in os.args { 
+	is_window := '-window' in os.args
+	if '-two_splits' in os.args {
 		nr_splits = 2
 	}
 	if is_window {
@@ -152,17 +152,17 @@ fn main() {
 	ctx.handle_segfault()
 	ctx.cfg.init_colors()
 	ctx.page_height = size.height / ctx.line_height - 1
-	// TODO V keys only 
+	// TODO V keys only
 	keys := 'pub struct interface in default sizeof assert enum import go return module package '+
-		 'fn if for break continue range mut type const else switch case true else for false use' 
+		 'fn if for break continue range mut type const else switch case true else for false use'
 	ctx.keys = keys.split(' ')
 	//println(ctx.keys)
 	mut w := glfw.create_window(glfw.WinCfg {
-		width: size.width 
-		height: size.height 
-		borderless: !is_window 
-		title: 'Vid' 
-		ptr: ctx 
+		width: size.width
+		height: size.height
+		borderless: !is_window
+		title: 'Vid'
+		ptr: ctx
 	})
 	ctx.main_wnd = w
 	w.make_context_current()
@@ -187,7 +187,7 @@ fn main() {
 	w.onchar(on_char)
 	// Open workspaces or a file
 	println(os.args)
-	cur_dir := os.getwd() 
+	cur_dir := os.getwd()
 	// Open a single text file
 	if os.args.len == 2 && !os.is_dir(os.args[1]) {
 		if !os.file_exists(os.args[1]) {
@@ -195,21 +195,21 @@ fn main() {
 			println('file "$path" does not exist')
 			exit(1)
 		}
-		ctx.add_workspace(cur_dir) 
+		ctx.add_workspace(cur_dir)
 		ctx.open_workspace(0)
 		ctx.view.open_file(os.args[1])
 	} else {
 		for i, arg in os.args {
 			if i == 0 {
-				continue 
-			} 
-			if !arg.starts_with('-') { 
-				ctx.add_workspace(cur_dir + '/' + arg) 
+				continue
+			}
+			if !arg.starts_with('-') {
+				ctx.add_workspace(cur_dir + '/' + arg)
 			}
 		}
-		if ctx.workspaces.len == 0 { 
-			ctx.add_workspace(cur_dir) 
-		} 
+		if ctx.workspaces.len == 0 {
+			ctx.add_workspace(cur_dir)
+		}
 		ctx.open_workspace(0)
 	}
 	ctx.load_session()
@@ -310,7 +310,7 @@ fn (ctx mut Vid) draw() {
 	ctx.ft.draw_text(ctx.win_width - 50, 1, now.hhmm(), ctx.cfg.file_name_cfg)
 	// ctx.vg.draw_text(ctx.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
-/* 
+/*
 	if ctx.timer.start_unix > 0 {
 		minutes := ctx.timer.minutes()
 		ctx.timer.vg.draw_text(ctx.win_width - 300, 1, '${minutes}m' !, file_name_cfg)
@@ -325,7 +325,7 @@ fn (ctx mut Vid) draw() {
 		task_time_x := (ctx.nr_splits - 1) * split_width - 50
 		ctx.timer.vg.draw_text(task_time_x, 1, '${ctx.timer.task_minutes()}m' !, file_name_cfg)
 	}
-*/ 
+*/
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ctx.views.len refresh=$ctx.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -530,7 +530,7 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 	}
 }
 
-// mouse click 
+// mouse click
 //fn on_click(cwnd *C.GLFWwindow, button, action, mods int) {
 	// wnd := glfw.Window {
 	// data: cwnd
@@ -586,10 +586,10 @@ fn on_char(wnd *glfw.Window, code u32, mods int) {
 		ctx.just_switched = false
 		return
 	}
-	buf := [0, 0, 0, 0, 0] ! 
-	s := utf32_to_str_no_malloc(code,  buf.data) 
+	buf := [0, 0, 0, 0, 0] !
+	s := utf32_to_str_no_malloc(code,  buf.data)
 	//s := utf32_to_str(code)
-	//println('s="$s" s0="$s0"') 
+	//println('s="$s" s0="$s0"')
 	switch mode {
 	case INSERT:
 		ctx.char_insert(s)
@@ -685,7 +685,7 @@ fn (ctx mut Vid) key_query(key int, super bool) {
 	case GLFW_KEY_V:
 		if super {
 			clip := ctx.main_wnd.get_clipboard_text()
-			ctx.query = ctx.query + clip 
+			ctx.query = ctx.query + clip
 		}
 	}
 }
@@ -1099,7 +1099,7 @@ fn (ctx mut Vid) char_insert(s string) {
 		return
 	}
 	ctx.view.insert_text(s)
-	ctx.prev_insert = ctx.prev_insert + s 
+	ctx.prev_insert = ctx.prev_insert + s
 }
 
 fn (ctx mut Vid) char_query(s string) {
@@ -1112,7 +1112,7 @@ fn (ctx mut Vid) char_query(s string) {
 		ctx.search_query = '${q}${s}'
 	}
 	else {
-		ctx.query = q + s 
+		ctx.query = q + s
 	}
 }
 
@@ -1244,9 +1244,9 @@ fn (ctx mut Vid) add_workspace(path string) {
 	// if ! os.file_exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
-	ctx.workspaces << path 
+	ctx.workspaces << path
 	for i := 0; i < ctx.nr_splits; i++ {
-		ctx.views << ctx.new_view() 
+		ctx.views << ctx.new_view()
 	}
 }
 
@@ -1285,7 +1285,7 @@ fn toi(s string) int {
 }
 
 fn (ctx &Vid) save_timer() {
-/* 
+/*
 	f := os.create(TIMER_PATH) or { return }
 	f.writeln('task=$ctx.timer.cur_task')
 	f.writeln('task_start=$ctx.timer.task_start_unix')
@@ -1297,7 +1297,7 @@ fn (ctx &Vid) save_timer() {
 		f.writeln('timer_start=0')
 	}
 	f.close()
-*/ 
+*/
 }
 
 fn (ctx mut Vid) load_timer() {
@@ -1305,7 +1305,7 @@ fn (ctx mut Vid) load_timer() {
 	// task_start=1223212221
 	// timer_typ=7
 	// timer_start=12321321
-/* 
+/*
 	lines := os.read_lines(TIMER_PATH)
 	if lines.len == 0 {
 		return
@@ -1330,7 +1330,7 @@ fn (ctx mut Vid) load_timer() {
 	ctx.timer.cur_type = toi(vals[2])
 	ctx.timer.start_unix = toi(vals[3])
 	ctx.timer.started = ctx.timer.start_unix != 0
-*/ 
+*/
 }
 
 fn (ctx mut Vid) load_session() {
@@ -1355,7 +1355,7 @@ fn (ctx mut Vid) load_views(paths[]string) {
 
 fn (ctx mut Vid) get_git_diff() {
 	return
-	/* 
+	/*
 	dir := ctx.workspace
 	mut s := os.system('git -C $dir diff --shortstat')
 	vals := s.split(',')
@@ -1396,7 +1396,7 @@ fn (ctx &Vid) get_git_diff_full() string {
 
 fn (ctx &Vid) open_blog() {
 	now := time.now()
-	dir := 'blog' 
+	dir := 'blog'
 	path := '$dir/$now.year/${now.month:02d}/${now.day:02d}'
 	if !os.file_exists(path) {
 		os.system('touch $path')
@@ -1492,7 +1492,7 @@ fn (ctx mut Vid) run_file() {
 	dir := view.path.left(pos)
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
-	f := os.create('$dir/out') or { panic('foo') } 
+	f := os.create('$dir/out') or { panic('foo') }
 	f.writeln(out)
 	f.close()
 	// TODO COPYPASTA
@@ -1583,8 +1583,8 @@ fn (ctx mut Vid) go_to_def() {
 			return
 		}
 	}
-	// Not found in current file, try all files in the git tree 
-	for _file in ctx.all_git_files { 
+	// Not found in current file, try all files in the git tree
+	for _file in ctx.all_git_files {
 		mut file := _file.to_lower()
 		file = file.trim_space()
 		if !file.ends_with('.v') {

@@ -151,7 +151,7 @@ fn (view mut View) save_file() {
 		panic('fail')
 	}
 	for line in view.lines {
-		file.writeln(line)
+		file.writeln(line.trim_right(' '))
 	}
 	file.close()
 	// Run formatters 
