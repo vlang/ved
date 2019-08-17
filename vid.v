@@ -180,8 +180,8 @@ fn main() {
 	ctx.load_all_tasks()
 	w.set_user_ptr(ctx)
 	$if mac {
-		// TODO global shortcut, defined in ui module
-		//C.reg_key_vid()
+		// TODO linux and windows
+		reg_key_vid()
 	}
 	w.onkeydown(key_down)
 	w.onchar(on_char)

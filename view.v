@@ -432,9 +432,13 @@ fn (view mut View) o() {
 		i++
 	}
 	mut new_line := strings.repeat(`\t`, nr_tabs) + strings.repeat(` `, nr_spaces)
-	if !new_line.ends_with(' ') {
+	if prev_line.ends_with('{') || prev_line.ends_with('{ ') {
+		new_line += '\t '
+	} else if !new_line.ends_with(' ') {
 		new_line += ' '
 	}
+
+
 	view.x = new_line.len-1
 	if view.y >= view.lines.len {
 		view.lines << new_line
@@ -457,7 +461,7 @@ fn (view mut View) enter() {
 			view.insert_text('}')
 			view.y--
 			view.o()
-			view.insert_text('\t')
+			//view.insert_text('\t')
 			//view.x = 0
 		} else {
 			view.o()
