@@ -431,7 +431,10 @@ fn (view mut View) o() {
 		}
 		i++
 	}
-	new_line := strings.repeat(`\t`, nr_tabs) + strings.repeat(` `, nr_spaces)+' '
+	mut new_line := strings.repeat(`\t`, nr_tabs) + strings.repeat(` `, nr_spaces)
+	if !new_line.ends_with(' ') {
+		new_line += ' '
+	}
 	view.x = new_line.len-1
 	if view.y >= view.lines.len {
 		view.lines << new_line
@@ -447,10 +450,24 @@ fn (view mut View) enter() {
 	// And move everything to the right of the cursor to it
 	pos := view.x
 	line := view.line()
-	if line == '' {
-		view.o()
+	if pos >= line.len-1 && line != '' && line != ' ' {
+		// {} insertion
+		if line.ends_with('{ ') {
+			view.o()
+			view.insert_text('}')
+			view.y--
+			view.o()
+			view.insert_text('\t')
+			//view.x = 0
+		} else {
+			view.o()
+		}
 		return
 	}
+	//if line == '' {
+		//view.o()
+		//return
+	//}
 	uline := line.ustring()
 	right := uline.right(pos)
 	left := uline.left(pos)
@@ -458,17 +475,6 @@ fn (view mut View) enter() {
 	view.o()
 	view.set_line(right)
 	view.x = 0
-	// {} insertion
-	prev_line := view.lines[view.y - 1]
-	if prev_line.len > 0 {
-		last_char := prev_line[prev_line.len - 1]
-		if prev_line.len > 0 && last_char == `{` {
-			view.o()
-			view.insert_text('}')
-			view.y--
-			view.x = 0
-		}
-	}
 }
 
 fn (view mut View) join() {
