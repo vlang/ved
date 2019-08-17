@@ -129,6 +129,9 @@ fn main() {
 	else {
 		glfw.get_monitor_size()
 	}
+	if size.width < 1500 {
+		nr_splits = 2
+	}
 	//t := glfw.get_time()
 	mut ctx := &Vid {
 		win_width: size.width
