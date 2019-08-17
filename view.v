@@ -3,7 +3,11 @@
 // that can be found in the LICENSE file.
 
 module main
-import os
+
+import (
+	os
+	strings
+)
 
 struct View {
 mut:
@@ -410,24 +414,31 @@ fn (view mut View) p() {
 }
 
 fn (view mut View) o() {
-	// view.lines.push('')
 	view.y++
 	lines := view.lines
-	// lines.insert(view.y, '')
 	view.lines = lines
-	empty := ''
+	// Insert the same amount of spaces/tabs as in prev line
+	prev_line := view.lines[view.y - 1] 
+	mut nr_spaces := 0 
+	mut nr_tabs := 0 
+	mut i := 0
+	for i < prev_line.len && (prev_line[i] == ` ` || prev_line[i] == `\t`) {
+		if prev_line[i] == ` ` {
+			nr_spaces++
+		}
+		if prev_line[i] == `\t` {
+			nr_tabs++
+		}
+		i++
+	}
+	new_line := strings.repeat(`\t`, nr_tabs) + strings.repeat(` `, nr_spaces)+' '
+	view.x = new_line.len-1
 	if view.y >= view.lines.len {
-		view.lines << ''
+		view.lines << new_line
 	}
 	else {
-		view.lines.insert(view.y, empty)
+		view.lines.insert(view.y, new_line)
 	}
-	view.x = 0
-	// Insert the same amount of spaces as on prev line
-	// for view.X < len(view.lines[view.Y-1]) && view.lines[view.Y-1][view.X] == ' ' {
-	// view.X++
-	// view.lines[view.Y] += " "
-	// }
 	view.changed = true
 }
 
