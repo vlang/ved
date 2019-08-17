@@ -185,20 +185,33 @@ fn main() {
 	}
 	w.onkeydown(key_down)
 	w.onchar(on_char)
-	// Open workspaces 
+	// Open workspaces or a file
+	println(os.args)
 	cur_dir := os.getwd() 
-	for i, arg in os.args {
-		if i == 0 {
-			continue 
-		} 
-		if !arg.starts_with('-') { 
-			ctx.add_workspace(cur_dir + '/' + arg) 
+	// Open a single text file
+	if os.args.len == 2 && !os.is_dir(os.args[1]) {
+		if !os.file_exists(os.args[1]) {
+			path := os.args[1]
+			println('file "$path" does not exist')
+			exit(1)
 		}
-	}
-	if ctx.workspaces.len == 0 { 
 		ctx.add_workspace(cur_dir) 
-	} 
-	ctx.open_workspace(0)
+		ctx.open_workspace(0)
+		ctx.view.open_file(os.args[1])
+	} else {
+		for i, arg in os.args {
+			if i == 0 {
+				continue 
+			} 
+			if !arg.starts_with('-') { 
+				ctx.add_workspace(cur_dir + '/' + arg) 
+			}
+		}
+		if ctx.workspaces.len == 0 { 
+			ctx.add_workspace(cur_dir) 
+		} 
+		ctx.open_workspace(0)
+	}
 	ctx.load_session()
 	ctx.load_timer()
 	//println(int(glfw.get_time() -t))
