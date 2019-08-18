@@ -25,7 +25,7 @@ mut:
 	vend         int // visual borders
 	changed      bool
 	error_y      int
-	ctx          *Vid
+	ctx          &Vid
 	prev_y       int
 	hash_comment bool
 	hl_on        bool
@@ -33,24 +33,24 @@ mut:
 
 fn (ctx &Vid) new_view() View {
 	res := View {
-		padding_left: 0 
-		path: '' 
-		from: 0 
-		y: 0 
-		x: 0 
-		prev_x: 0 
-		page_height: ctx.page_height 
-		vstart: -1 
-		vend: -1 
-		ctx: ctx 
-		error_y: -1 
-		prev_y: -1 
+		padding_left: 0
+		path: ''
+		from: 0
+		y: 0
+		x: 0
+		prev_x: 0
+		page_height: ctx.page_height
+		vstart: -1
+		vend: -1
+		ctx: ctx
+		error_y: -1
+		prev_y: -1
 	}
 	return res
 }
 
-// `mut res := word.clone()` ==> 
-// ['mut' 'res' 'word' 'clone'] 
+// `mut res := word.clone()` ==>
+// ['mut' 'res' 'word' 'clone']
 fn get_clean_words(line string) []string {
 	mut res := []string{}
 	mut i := 0
@@ -149,8 +149,8 @@ fn (view mut View) save_file() {
 	path := view.path
 	println('saving file "$path"')
 	println('lines.len=$view.lines.len')
-	line0 := view.lines[0]
-	println('line[0].len=$line0.len')
+	//line0 := view.lines[0]
+	//println('line[0].len=$line0.len')
 	file := os.create(path) or {
 		panic('fail')
 	}
@@ -158,9 +158,9 @@ fn (view mut View) save_file() {
 		file.writeln(line.trim_right(' '))
 	}
 	file.close()
-	// Run formatters 
+	// Run formatters
 	if path.ends_with('.go') {
-		println('calling go imports')
+		println('running goimports')
 		os.system('goimports -w "$path"')
 	}
 	if path.ends_with('.scss') {
@@ -172,9 +172,9 @@ fn (view mut View) save_file() {
 	view.ctx.get_git_diff()
 	view.changed = false
 	println('end of save file()')
-	println('_lines.len=$view.lines.len')
-	line0_ := view.lines[0]
-	println('_line[0].len=$line0_.len')
+	//println('_lines.len=$view.lines.len')
+	//line0_ := view.lines[0]
+	//println('_line[0].len=$line0_.len')
 }
 
 fn (view &View) line() string {
@@ -353,7 +353,7 @@ fn (v mut View) delete_char() {
 		left := u.left(v.x)
 		right := u.right(v.x + 1)
 		v.set_line('${left}${right}')
-	} 
+	}
 }
 
 fn (view mut View) C() string {
@@ -418,9 +418,9 @@ fn (view mut View) o() {
 	lines := view.lines
 	view.lines = lines
 	// Insert the same amount of spaces/tabs as in prev line
-	prev_line := view.lines[view.y - 1] 
-	mut nr_spaces := 0 
-	mut nr_tabs := 0 
+	prev_line := view.lines[view.y - 1]
+	mut nr_spaces := 0
+	mut nr_tabs := 0
 	mut i := 0
 	for i < prev_line.len && (prev_line[i] == ` ` || prev_line[i] == `\t`) {
 		if prev_line[i] == ` ` {
@@ -646,7 +646,7 @@ fn (view mut View) gq() {
 }
 
 fn is_alpha(r byte) bool {
-	return ((r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || 
+	return ((r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) ||
 	(r >= `0` && r <= `9`))
 }
 

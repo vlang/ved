@@ -68,7 +68,7 @@ mut:
 	page_height      int
 	views            []View
 	cur_split        int
-	view             *View
+	view             &View
 	mode             int
 	just_switched    bool // for keydown/char events to avoid dup keys
 	prev_key         int
@@ -76,12 +76,12 @@ mut:
 	prev_insert      string
 	all_git_files    []string
 	top_tasks        []string
-	vg               *gg.GG
-	ft               *freetype.Context
+	vg               &gg.GG
+	ft               &freetype.Context
 	query            string
 	search_query     string
 	query_type       int
-	main_wnd         *glfw.Window
+	main_wnd         &glfw.Window
 	workspace        string
 	workspace_idx    int
 	workspaces       []string

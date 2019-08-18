@@ -4,10 +4,10 @@
 
 module main
 
-// TODO rename to query.v once the order bug is fixed. 
+// TODO rename to query.v once the order bug is fixed.
 
-import os 
-import gx 
+import os
+import gx
 
 const (
 	txt_cfg = gx.TextCfg { size: 25 }
@@ -26,14 +26,14 @@ fn (ctx mut Vid) load_git_tree() {
 }
 
 fn (ctx mut Vid) load_all_tasks() {
-/* 
+/*
 	mut rows := ctx.timer.db.q_strings('select distinct name from tasks')
 	for row in rows {
 		t := row.vals[0]
 		ctx.top_tasks << t
 	}
 	println(ctx.top_tasks)
-*/ 
+*/
 }
 
 fn (ctx &Vid) typ_to_str() string {
