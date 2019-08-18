@@ -92,6 +92,8 @@ mut:
 	chunks           []Chunk
 	is_building      bool
 	//timer            *Timer
+	start_unix       int
+	cur_task         string
 	words            []string
 	file_y_pos       map[string]int
 	refresh          bool
@@ -310,22 +312,22 @@ fn (ctx mut Vid) draw() {
 	ctx.ft.draw_text(ctx.win_width - 50, 1, now.hhmm(), ctx.cfg.file_name_cfg)
 	// ctx.vg.draw_text(ctx.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
-/*
-	if ctx.timer.start_unix > 0 {
-		minutes := ctx.timer.minutes()
-		ctx.timer.vg.draw_text(ctx.win_width - 300, 1, '${minutes}m' !, file_name_cfg)
+	if ctx.start_unix > 0 {
+		minutes := '1m' //ctx.timer.minutes()
+		ctx.ft.draw_text(ctx.win_width - 300, 1, '${minutes}m' !,
+			ctx.cfg.file_name_cfg)
 	}
-	if ctx.timer.cur_task != '' {
+	if ctx.cur_task != '' {
 		// Draw current task
-		task_text_width := ctx.timer.cur_task.len * ctx.char_width
+		task_text_width := ctx.cur_task.len * ctx.char_width
 		task_x := ctx.win_width - split_width - task_text_width - 10
 		// ctx.timer.vg.draw_text(task_x, 1, ctx.timer.cur_task.to_upper(), file_name_cfg)
-		ctx.timer.vg.draw_text(task_x, 1, ctx.timer.cur_task, file_name_cfg)
+		ctx.ft.draw_text(task_x, 1, ctx.cur_task, ctx.cfg.file_name_cfg)
 		// Draw current task time
 		task_time_x := (ctx.nr_splits - 1) * split_width - 50
-		ctx.timer.vg.draw_text(task_time_x, 1, '${ctx.timer.task_minutes()}m' !, file_name_cfg)
+		ctx.ft.draw_text(task_time_x, 1, '{ctx.task_minutes()}m',
+			ctx.cfg.file_name_cfg)
 	}
-*/
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ctx.views.len refresh=$ctx.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -639,7 +641,7 @@ fn (ctx mut Vid) key_query(key int, super bool) {
 		}
 		else if ctx.query_type == TASK {
 			//ctx.timer.insert_task()
-			//ctx.timer.cur_task = ctx.query
+			ctx.cur_task = ctx.query
 			//ctx.save_timer()
 		}
 		else if ctx.query_type == GREP {
