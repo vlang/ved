@@ -38,6 +38,6 @@ script:
       cd v
       make
       cd ..
-      v/v install glfw
+      #v/v install glfw
       v/v .
     fi
