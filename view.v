@@ -25,13 +25,13 @@ mut:
 	vend         int // visual borders
 	changed      bool
 	error_y      int
-	ctx          &Vid
+	vid          &Vid
 	prev_y       int
 	hash_comment bool
 	hl_on        bool
 }
 
-fn (ctx &Vid) new_view() View {
+fn (vid &Vid) new_view() View {
 	res := View {
 		padding_left: 0
 		path: ''
@@ -39,10 +39,10 @@ fn (ctx &Vid) new_view() View {
 		y: 0
 		x: 0
 		prev_x: 0
-		page_height: ctx.page_height
+		page_height: vid.page_height
 		vstart: -1
 		vend: -1
-		ctx: ctx
+		vid: vid
 		error_y: -1
 		prev_y: -1
 	}
@@ -77,12 +77,12 @@ fn (view mut View) open_file(path string) {
 	if path == '' {
 		return
 	}
-	mut ctx := view.ctx
+	mut vid := view.vid
 	mut is_new := false
 	if path != view.path {
 		is_new = true
 		// Save cursor pos (Y)
-		// view.ctx.file_y_pos.set(view.path, view.y)
+		// view.vid.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
 	view.lines = os.read_lines(path)
@@ -98,8 +98,8 @@ fn (view mut View) open_file(path string) {
 				// if clean_word == '' {
 				// continue
 				// }
-				if !ctx.words.contains(word) {
-					ctx.words << word
+				if !vid.words.contains(word) {
+					vid.words << word
 				}
 			}
 		}
@@ -117,8 +117,8 @@ fn (view mut View) open_file(path string) {
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'
-	view.padding_left = s.len * ctx.char_width + 8
-	view.ctx.save_session()
+	view.padding_left = s.len * vid.char_width + 8
+	view.vid.save_session()
 	// Go to old y
 	if is_new {
 		tmp := view.y
@@ -129,7 +129,7 @@ fn (view mut View) open_file(path string) {
 		view.prev_y = tmp
 	}
 	if false {
-		y := view.ctx.file_y_pos[view.path]
+		y := view.vid.file_y_pos[view.path]
 		if y > 0 {
 			view.y = y
 		}
@@ -169,7 +169,7 @@ fn (view mut View) save_file() {
 	}
 	view.reopen()
 	// update git diff
-	view.ctx.get_git_diff()
+	view.vid.get_git_diff()
 	view.changed = false
 	println('end of save file()')
 	//println('_lines.len=$view.lines.len')
@@ -279,7 +279,7 @@ fn (view mut View) A() {
 
 fn (view mut View) I() {
 	view.x = 0
-	for view.char() == view.ctx.cfg.tab {
+	for view.char() == view.vid.cfg.tab {
 		view.x++
 	}
 }
@@ -307,11 +307,11 @@ fn (view mut View) B() {
 
 fn (view mut View) dd() {
 	if (view.lines.len != 0) {
-		mut ctx := view.ctx
-		ctx.prev_key = -1
-		ctx.prev_cmd = 'dd'
-		ctx.ylines = []string{}
-		ctx.ylines << view.line()
+		mut vid := view.vid
+		vid.prev_key = -1
+		vid.prev_cmd = 'dd'
+		vid.ylines = []string{}
+		vid.ylines << view.line()
 		view.lines.delete(view.y)
 		view.changed = true
 	}
@@ -400,14 +400,14 @@ fn (view mut View) backspace() {
 }
 
 fn (view mut View) yy() {
-	mut ctx := view.ctx
+	mut vid := view.vid
 	mut ylines := []string{}
 	ylines << (view.line())
-	ctx.ylines = ylines
+	vid.ylines = ylines
 }
 
 fn (view mut View) p() {
-	for line in view.ctx.ylines {
+	for line in view.vid.ylines {
 		view.o()
 		view.set_line(line)
 	}
@@ -501,8 +501,8 @@ fn (v mut View) y_visual() {
 	for i := v.vstart; i <= v.vend; i++ {
 		ylines << v.lines[i]
 	}
-	mut ctx := v.ctx
-	ctx.ylines = ylines
+	mut vid := v.vid
+	vid.ylines = ylines
 	// Copy YY to clipboard TODO
 	// mainWindow.SetClipboardString(strings.Join(ylines, "\n"))
 	v.vstart = -1
@@ -511,20 +511,20 @@ fn (v mut View) y_visual() {
 
 fn (view mut View) d_visual() {
 	view.y_visual()
-	for i := 0; i < view.ctx.ylines.len; i++ {
+	for i := 0; i < view.vid.ylines.len; i++ {
 		view.lines.delete(view.y)
 	}
 }
 
 fn (view mut View) cw() {
-	mut ctx := view.ctx
+	mut vid := view.vid
 	view.dw()
-	ctx.prev_cmd = 'cw'
-	view.ctx.set_insert()
+	vid.prev_cmd = 'cw'
+	view.vid.set_insert()
 }
 
 fn (view mut View) dw() {
-	mut ctx := view.ctx
+	mut vid := view.vid
 	typ := is_alpha(view.char())
 	// While cur char has the same type - delete it
 	for {
@@ -538,16 +538,16 @@ fn (view mut View) dw() {
 			break
 		}
 	}
-	ctx.prev_cmd = 'dw'
+	vid.prev_cmd = 'dw'
 }
 
 // TODO COPY PASTA
 // same as cw but deletes underscores
 fn (view mut View) ce() {
-	mut ctx := view.ctx
+	mut vid := view.vid
 	view.de()
-	ctx.prev_cmd = 'ce'
-	view.ctx.set_insert()
+	vid.prev_cmd = 'ce'
+	view.vid.set_insert()
 }
 
 fn (view mut View) w() {
@@ -577,7 +577,7 @@ fn (view mut View) b() {
 }
 
 fn (view mut View) de() {
-	mut ctx := view.ctx
+	mut vid := view.vid
 	typ := is_alpha_underscore(view.char())
 	// While cur char has the same type - delete it
 	for {
@@ -589,11 +589,11 @@ fn (view mut View) de() {
 			break
 		}
 	}
-	ctx.prev_cmd = 'de'
+	vid.prev_cmd = 'de'
 }
 
 fn (view mut View) zz() {
-	view.from = view.y - view.ctx.page_height / 2
+	view.from = view.y - view.vid.page_height / 2
 	if view.from < 0 {
 		view.from = 0
 	}
@@ -609,8 +609,8 @@ fn (view mut View) tt() {
 	if view.prev_path == '' {
 		return
 	}
-	mut ctx := view.ctx
-	ctx.prev_key = -1
+	mut vid := view.vid
+	vid.prev_key = -1
 	view.open_file(view.prev_path)
 }
 
@@ -622,16 +622,16 @@ fn (view mut View) move_to_line(line int) {
 
 // Fit lines  into 80 chars
 fn (view mut View) gq() {
-	mut ctx := view.ctx
-	if ctx.mode != VISUAL {
+	mut vid := view.vid
+	if vid.mode != VISUAL {
 		return
 	}
 	view.y_visual()
-	max := ctx.max_chars(0)
+	max := vid.max_chars(0)
 	// Join all selected lines into a single string
-	joined := ctx.ylines.join('\n')
+	joined := vid.ylines.join('\n')
 	// Delete what we selected
-	for yline in ctx.ylines {
+	for yline in vid.ylines {
 		if yline == '' {
 			continue
 		}
@@ -642,7 +642,7 @@ fn (view mut View) gq() {
 		view.insert_text(line)
 		view.o()
 	}
-	ctx.mode = NORMAL
+	vid.mode = NORMAL
 }
 
 fn is_alpha(r byte) bool {

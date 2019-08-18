@@ -135,7 +135,7 @@ fn main() {
 		nr_splits = 2
 	}
 	//t := glfw.get_time()
-	mut ctx := &Vid {
+	mut vid := &Vid {
 		win_width: size.width
 		win_height: size.height
 		nr_splits: nr_splits
@@ -151,36 +151,36 @@ fn main() {
 		vg: 0
 		main_wnd: 0
 	}
-	ctx.handle_segfault()
-	ctx.cfg.init_colors()
-	ctx.page_height = size.height / ctx.line_height - 1
+	vid.handle_segfault()
+	vid.cfg.init_colors()
+	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
 	keys := 'pub struct interface in default sizeof assert enum import go return module package '+
 		 'fn if for break continue range mut type const else switch case true else for false use'
-	ctx.keys = keys.split(' ')
-	//println(ctx.keys)
+	vid.keys = keys.split(' ')
+	//println(vid.keys)
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
 		height: size.height
 		borderless: !is_window
 		title: 'Vid'
-		ptr: ctx
+		ptr: vid
 	})
-	ctx.main_wnd = w
+	vid.main_wnd = w
 	w.make_context_current()
 	gl.init_glad()
 	cfg := gg.Cfg {
 		width: size.width
 		height: size.height
-		font_size: ctx.font_size
+		font_size: vid.font_size
 		use_ortho: true
 		retina: true
 		scale: 2
 	}
-	ctx.vg = gg.new_context(cfg)
-	ctx.ft = freetype.new_context(cfg)
-	ctx.load_all_tasks()
-	w.set_user_ptr(ctx)
+	vid.vg = gg.new_context(cfg)
+	vid.ft = freetype.new_context(cfg)
+	vid.load_all_tasks()
+	w.set_user_ptr(vid)
 	$if mac {
 		// TODO linux and windows
 		ui.reg_key_vid()
@@ -197,37 +197,37 @@ fn main() {
 			println('file "$path" does not exist')
 			exit(1)
 		}
-		ctx.add_workspace(cur_dir)
-		ctx.open_workspace(0)
-		ctx.view.open_file(os.args[1])
+		vid.add_workspace(cur_dir)
+		vid.open_workspace(0)
+		vid.view.open_file(os.args[1])
 	} else {
 		for i, arg in os.args {
 			if i == 0 {
 				continue
 			}
 			if !arg.starts_with('-') {
-				ctx.add_workspace(cur_dir + '/' + arg)
+				vid.add_workspace(cur_dir + '/' + arg)
 			}
 		}
-		if ctx.workspaces.len == 0 {
-			ctx.add_workspace(cur_dir)
+		if vid.workspaces.len == 0 {
+			vid.add_workspace(cur_dir)
 		}
-		ctx.open_workspace(0)
+		vid.open_workspace(0)
 	}
-	ctx.load_session()
-	ctx.load_timer()
+	vid.load_session()
+	vid.load_timer()
 	//println(int(glfw.get_time() -t))
-	go ctx.loop()
+	go vid.loop()
 	gl.clear()
-	gl.clear_color(ctx.cfg.bgcolor.r, ctx.cfg.bgcolor.g, ctx.cfg.bgcolor.b, 255)
-	ctx.refresh = true
-	for !ctx.main_wnd.should_close() {
-		if ctx.refresh || ctx.mode == TIMER {
+	gl.clear_color(vid.cfg.bgcolor.r, vid.cfg.bgcolor.g, vid.cfg.bgcolor.b, 255)
+	vid.refresh = true
+	for !vid.main_wnd.should_close() {
+		if vid.refresh || vid.mode == TIMER {
 			gl.clear()
-			gl.clear_color(ctx.cfg.bgcolor.r, ctx.cfg.bgcolor.g, ctx.cfg.bgcolor.b, 255)
+			gl.clear_color(vid.cfg.bgcolor.r, vid.cfg.bgcolor.g, vid.cfg.bgcolor.b, 255)
 		}
-		ctx.draw()
-		//if ctx.mode == TIMER {
+		vid.draw()
+		//if vid.mode == TIMER {
 			//timer.draw()
 		//}
 		w.swap_buffers()
@@ -235,146 +235,146 @@ fn main() {
 	}
 }
 
-fn (ctx &Vid) split_width() int {
-	mut split_width := ctx.win_width / ctx.nr_splits + 60
+fn (vid &Vid) split_width() int {
+	mut split_width := vid.win_width / vid.nr_splits + 60
 	if split_width < 300 {
-		split_width = ctx.win_width
+		split_width = vid.win_width
 	}
 	return split_width
 }
 
-fn (ctx mut Vid) draw() {
-	view := ctx.view
-	split_width := ctx.split_width()
+fn (vid mut Vid) draw() {
+	view := vid.view
+	split_width := vid.split_width()
 	// Splits from and to
-	from := ctx.workspace_idx * ctx.splits_per_workspace
-	to := from + ctx.splits_per_workspace
+	from := vid.workspace_idx * vid.splits_per_workspace
+	to := from + vid.splits_per_workspace
 	// Not a full refresh? Means we need to refresh only current split.
-	if !ctx.refresh {
-		split_x := split_width * (ctx.cur_split - from)
-		ctx.vg.draw_rect(split_x, 0, split_width - 1, ctx.win_height, ctx.cfg.bgcolor)
+	if !vid.refresh {
+		split_x := split_width * (vid.cur_split - from)
+		vid.vg.draw_rect(split_x, 0, split_width - 1, vid.win_height, vid.cfg.bgcolor)
 	}
 	now := time.now()
 	// Coords
-	y := (ctx.view.y - ctx.view.from) * ctx.line_height + ctx.line_height
+	y := (vid.view.y - vid.view.from) * vid.line_height + vid.line_height
 	// Cur line
-	line_x := split_width * (ctx.cur_split - from) + ctx.view.padding_left + 10
-	ctx.vg.draw_rect(line_x, y - 1, split_width - ctx.view.padding_left - 10, ctx.line_height, ctx.cfg.vcolor)
+	line_x := split_width * (vid.cur_split - from) + vid.view.padding_left + 10
+	vid.vg.draw_rect(line_x, y - 1, split_width - vid.view.padding_left - 10, vid.line_height, vid.cfg.vcolor)
 	// V selection
-	mut v_from := ctx.view.vstart + 1
-	mut v_to := ctx.view.vend + 1
+	mut v_from := vid.view.vstart + 1
+	mut v_to := vid.view.vend + 1
 	if view.vend < view.vstart {
 		// Swap start and end if we go beyond the start
-		v_from = ctx.view.vend + 1
-		v_to = ctx.view.vstart + 1
+		v_from = vid.view.vend + 1
+		v_to = vid.view.vstart + 1
 	}
 	for yy := v_from; yy <= v_to; yy++ {
-		ctx.vg.draw_rect(line_x, (yy - ctx.view.from) * ctx.line_height,
-		split_width - ctx.view.padding_left, ctx.line_height, ctx.cfg.vcolor)
+		vid.vg.draw_rect(line_x, (yy - vid.view.from) * vid.line_height,
+		split_width - vid.view.padding_left, vid.line_height, vid.cfg.vcolor)
 	}
 	// Tab offset for cursor
-	line := ctx.view.line()
+	line := vid.view.line()
 	mut cursor_tab_off := 0
-	for i := 0; i < line.len && i < ctx.view.x; i++ {
+	for i := 0; i < line.len && i < vid.view.x; i++ {
 		// if rune != '\t' {
-		if int(line[i]) != ctx.cfg.tab {
+		if int(line[i]) != vid.cfg.tab {
 			break
 		}
 		cursor_tab_off++
 	}
 	// Black title background
-	ctx.vg.draw_rect(0, 0, ctx.win_width, ctx.line_height, ctx.cfg.title_color)
+	vid.vg.draw_rect(0, 0, vid.win_width, vid.line_height, vid.cfg.title_color)
 	// Current split has dark blue title
-	// ctx.vg.draw_rect(split_x, 0, split_width, ctx.line_height, gx.rgb(47, 11, 105))
+	// vid.vg.draw_rect(split_x, 0, split_width, vid.line_height, gx.rgb(47, 11, 105))
 	// Title (file paths)
 	for i := to - 1; i >= from; i-- {
-		v := ctx.views[i]
+		v := vid.views[i]
 		mut name := v.short_path
 		if v.changed && !v.path.ends_with('/out') {
 			name = '$name [+]' !
 		}
-		ctx.ft.draw_text(ctx.split_x(i - from) + v.padding_left + 10, 1, name, ctx.cfg.file_name_cfg)
+		vid.ft.draw_text(vid.split_x(i - from) + v.padding_left + 10, 1, name, vid.cfg.file_name_cfg)
 	}
 	// Git diff stats
-	if ctx.git_diff_plus != '+' {
-		ctx.ft.draw_text(ctx.win_width - 400, 1, ctx.git_diff_plus, ctx.cfg.plus_cfg)
+	if vid.git_diff_plus != '+' {
+		vid.ft.draw_text(vid.win_width - 400, 1, vid.git_diff_plus, vid.cfg.plus_cfg)
 	}
-	if ctx.git_diff_minus != '-' {
-		ctx.ft.draw_text(ctx.win_width - 350, 1, ctx.git_diff_minus, ctx.cfg.minus_cfg)
+	if vid.git_diff_minus != '-' {
+		vid.ft.draw_text(vid.win_width - 350, 1, vid.git_diff_minus, vid.cfg.minus_cfg)
 	}
 	// Workspaces
-	nr_spaces := ctx.workspaces.len
-	cur_space := ctx.workspace_idx + 1
-	space_name := short_space(ctx.workspace)
-	ctx.ft.draw_text(ctx.win_width - 220, 1, '[$space_name]' !, ctx.cfg.file_name_cfg)
-	ctx.ft.draw_text(ctx.win_width - 150, 1, '$cur_space/$nr_spaces' !, ctx.cfg.file_name_cfg)
+	nr_spaces := vid.workspaces.len
+	cur_space := vid.workspace_idx + 1
+	space_name := short_space(vid.workspace)
+	vid.ft.draw_text(vid.win_width - 220, 1, '[$space_name]' !, vid.cfg.file_name_cfg)
+	vid.ft.draw_text(vid.win_width - 150, 1, '$cur_space/$nr_spaces' !, vid.cfg.file_name_cfg)
 	// Time
-	ctx.ft.draw_text(ctx.win_width - 50, 1, now.hhmm(), ctx.cfg.file_name_cfg)
-	// ctx.vg.draw_text(ctx.win_width - 550, 1, now.hhmmss(), file_name_cfg)
+	vid.ft.draw_text(vid.win_width - 50, 1, now.hhmm(), vid.cfg.file_name_cfg)
+	// vid.vg.draw_text(vid.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
-	if ctx.start_unix > 0 {
-		minutes := '1m' //ctx.timer.minutes()
-		ctx.ft.draw_text(ctx.win_width - 300, 1, '${minutes}m' !,
-			ctx.cfg.file_name_cfg)
+	if vid.start_unix > 0 {
+		minutes := '1m' //vid.timer.minutes()
+		vid.ft.draw_text(vid.win_width - 300, 1, '${minutes}m' !,
+			vid.cfg.file_name_cfg)
 	}
-	if ctx.cur_task != '' {
+	if vid.cur_task != '' {
 		// Draw current task
-		task_text_width := ctx.cur_task.len * ctx.char_width
-		task_x := ctx.win_width - split_width - task_text_width - 10
-		// ctx.timer.vg.draw_text(task_x, 1, ctx.timer.cur_task.to_upper(), file_name_cfg)
-		ctx.ft.draw_text(task_x, 1, ctx.cur_task, ctx.cfg.file_name_cfg)
+		task_text_width := vid.cur_task.len * vid.char_width
+		task_x := vid.win_width - split_width - task_text_width - 10
+		// vid.timer.vg.draw_text(task_x, 1, vid.timer.cur_task.to_upper(), file_name_cfg)
+		vid.ft.draw_text(task_x, 1, vid.cur_task, vid.cfg.file_name_cfg)
 		// Draw current task time
-		task_time_x := (ctx.nr_splits - 1) * split_width - 50
-		ctx.ft.draw_text(task_time_x, 1, '{ctx.task_minutes()}m',
-			ctx.cfg.file_name_cfg)
+		task_time_x := (vid.nr_splits - 1) * split_width - 50
+		vid.ft.draw_text(task_time_x, 1, '{vid.task_minutes()}m',
+			vid.cfg.file_name_cfg)
 	}
 	// Splits
-	// println('\nsplit from=$from to=$to nrviews=$ctx.views.len refresh=$ctx.refresh')
+	// println('\nsplit from=$from to=$to nrviews=$vid.views.len refresh=$vid.refresh')
 	for i := to - 1; i >= from; i-- {
 		// J or K is pressed (full refresh disabled for performance), only redraw current split
-		if !ctx.refresh && i != ctx.cur_split {
+		if !vid.refresh && i != vid.cur_split {
 			continue
 		}
 		// t := glfw.get_time()
-		ctx.draw_split(i, from)
+		vid.draw_split(i, from)
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cursor
-	cursor_x := line_x + (ctx.view.x + cursor_tab_off * ctx.cfg.tab_size) * ctx.char_width
-	ctx.vg.draw_empty_rect(cursor_x, y - 1, ctx.char_width, ctx.line_height, ctx.cfg.cursor_color)
+	cursor_x := line_x + (vid.view.x + cursor_tab_off * vid.cfg.tab_size) * vid.char_width
+	vid.vg.draw_empty_rect(cursor_x, y - 1, vid.char_width, vid.line_height, vid.cfg.cursor_color)
 	// query window
-	if ctx.mode == QUERY {
-		ctx.draw_query()
+	if vid.mode == QUERY {
+		vid.draw_query()
 	}
 }
 
-fn (ctx &Vid) split_x(i int) int {
-	return ctx.split_width() * (i)
+fn (vid &Vid) split_x(i int) int {
+	return vid.split_width() * (i)
 }
 
-fn (ctx mut Vid) draw_split(i, split_from int) {
-	view := ctx.views[i]
-	ctx.is_ml_comment = false
-	split_width := ctx.split_width()
+fn (vid mut Vid) draw_split(i, split_from int) {
+	view := vid.views[i]
+	vid.is_ml_comment = false
+	split_width := vid.split_width()
 	split_x := split_width * (i - split_from)
 	// Vertical split line
-	ctx.vg.draw_line_c(split_x, ctx.line_height + 1, split_x, ctx.win_height, ctx.cfg.split_color)
+	vid.vg.draw_line_c(split_x, vid.line_height + 1, split_x, vid.win_height, vid.cfg.split_color)
 	// Lines
 	mut line_nr := 1// relative y
-	for j := view.from; j < view.from + ctx.page_height && j < view.lines.len; j++ {
+	for j := view.from; j < view.from + vid.page_height && j < view.lines.len; j++ {
 		line := view.lines[j]
 		if line.len > 5000 {
-			panic('line len too big! views[$i].lines[$j] ($line.len) path=$ctx.view.path')
+			panic('line len too big! views[$i].lines[$j] ($line.len) path=$vid.view.path')
 		}
 		x := split_x + view.padding_left
-		y := line_nr * ctx.line_height
+		y := line_nr * vid.line_height
 		// Error bg
 		if view.error_y == j {
-			ctx.vg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, ctx.line_height, ctx.cfg.errorbgcolor)
+			vid.vg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, vid.line_height, vid.cfg.errorbgcolor)
 		}
 		// Line number
 		line_number := j + 1
-		ctx.ft.draw_text(x+3, y, '$line_number'!, ctx.cfg.line_nr_cfg)
+		vid.ft.draw_text(x+3, y, '$line_number'!, vid.cfg.line_nr_cfg)
 		// Tab offset
 		mut line_x := x + 10
 		mut nr_tabs := 0
@@ -385,83 +385,83 @@ fn (ctx mut Vid) draw_split(i, split_from int) {
 				break
 			}
 			nr_tabs++
-			line_x += ctx.char_width * ctx.cfg.tab_size
+			line_x += vid.char_width * vid.cfg.tab_size
 		}
 		// Number of chars to display in this view
 		if line.len > 0 {
-			// mut max := (split_width - view.padding_left - ctx.char_width * TAB_SIZE *
-			// nr_tabs) / ctx.char_width - 1
-			max := ctx.max_chars(nr_tabs)
+			// mut max := (split_width - view.padding_left - vid.char_width * TAB_SIZE *
+			// nr_tabs) / vid.char_width - 1
+			max := vid.max_chars(nr_tabs)
 			if view.y == j {
 				// Display entire line if its current
 				// if line.len > max {
-				// ctx.vg.draw_rect(line_x, y - 1, ctx.win_width, line_height, vcolor)
+				// vid.vg.draw_rect(line_x, y - 1, vid.win_width, line_height, vcolor)
 				// }
 				// max = line.len
 			}
 			s := line.left(max)
 			if view.hl_on {
-				ctx.draw_line(line_x, y, s)// SYNTAX HL
+				vid.draw_line(line_x, y, s)// SYNTAX HL
 			}
 			else {
-				ctx.ft.draw_text(line_x, y, line, ctx.cfg.txt_cfg)// NO SYNTAX
+				vid.ft.draw_text(line_x, y, line, vid.cfg.txt_cfg)// NO SYNTAX
 			}
 		}
 		line_nr++
 	}
 }
 
-fn (ctx &Vid) max_chars(nr_tabs int) int {
-	width := ctx.split_width() -ctx.view.padding_left - ctx.char_width * ctx.cfg.tab_size * nr_tabs
-	return width / ctx.char_width - 1
+fn (vid &Vid) max_chars(nr_tabs int) int {
+	width := vid.split_width() -vid.view.padding_left - vid.char_width * vid.cfg.tab_size * nr_tabs
+	return width / vid.char_width - 1
 }
 
-fn (ctx mut Vid) add_chunk(typ, start, end int) {
+fn (vid mut Vid) add_chunk(typ, start, end int) {
 	chunk := Chunk {
 		typ: typ
 		start: start
 		end: end
 	}
-	ctx.chunks << chunk
+	vid.chunks << chunk
 }
 
-fn (ctx mut Vid) draw_line(x, y int, line string) {
+fn (vid mut Vid) draw_line(x, y int, line string) {
 	// Red/green test hack
 	if line.contains('[32m') &&
 	line.contains('PASS') {
-		ctx.ft.draw_text(x, y, line.right(5), ctx.cfg.green_cfg)
+		vid.ft.draw_text(x, y, line.right(5), vid.cfg.green_cfg)
 		return
 	}
 	if line.contains('[31m') &&
 	line.contains('FAIL') {
-		ctx.ft.draw_text(x, y, line.right(5), ctx.cfg.red_cfg)
+		vid.ft.draw_text(x, y, line.right(5), vid.cfg.red_cfg)
 		return
 	}
-	// ctx.chunks = []Chunk{}
-	ctx.chunks.len = 0
+	// vid.chunks = []Chunk{}
+	vid.chunks.len = 0
 	for i := 0; i < line.len; i++ {
 		start := i
 		// Comment // #
 		if i > 0 && line[i - 1] == `/` && line[i] == `/` {
-			ctx.add_chunk(COMMENT, start - 1, line.len)
+			vid.add_chunk(COMMENT, start - 1, line.len)
 			break
 		}
 		if line[i] == `#` {
-			ctx.add_chunk(COMMENT, start, line.len)
+			vid.add_chunk(COMMENT, start, line.len)
 			break
 		}
 		// Comment   /*
 		if i > 0 && line[i - 1] == `/` && line[i] == `*` {
 			// All after /* is  a comment
-			ctx.add_chunk(COMMENT, start, line.len)
-			ctx.is_ml_comment = true
+			vid.add_chunk(COMMENT, start, line.len)
+			vid.is_ml_comment = true
 			break
 		}
 		// End of /**/
 		if i > 0 && line[i - 1] == `*` && line[i] == `/` {
 			// All before */ is still a comment
-			ctx.add_chunk(COMMENT, 0, start + 1)
-			ctx.is_ml_comment = false
+			vid.add_chunk(COMMENT, 0, start + 1)
+			vid.is_ml_comment = false
 			break
 		}
 		// String
@@ -474,7 +474,7 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 			if i >= line.len {
 				i = line.len - 1
 			}
-			ctx.add_chunk(STRING, start, i + 1)
+			vid.add_chunk(STRING, start, i + 1)
 		}
 		// Key
 		for i < line.len && is_alpha_underscore(int(line[i])) {
@@ -482,52 +482,52 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 		}
 		word := line.substr(start, i)
 		// println('word="$word"')
-		if ctx.keys.contains(word) {
+		if vid.keys.contains(word) {
 			// println('$word is key')
-			ctx.add_chunk(KEY, start, i)
-			// println('adding key. len=$ctx.chunks.len')
+			vid.add_chunk(KEY, start, i)
+			// println('adding key. len=$vid.chunks.len')
 		}
 	}
-	if ctx.is_ml_comment {
-		ctx.ft.draw_text(x, y, line, ctx.cfg.comment_cfg)
+	if vid.is_ml_comment {
+		vid.ft.draw_text(x, y, line, vid.cfg.comment_cfg)
 		return
 	}
-	if ctx.chunks.len == 0 {
+	if vid.chunks.len == 0 {
 		// println('no chunks')
-		ctx.ft.draw_text(x, y, line, ctx.cfg.txt_cfg)
+		vid.ft.draw_text(x, y, line, vid.cfg.txt_cfg)
 		return
 	}
 	mut pos := 0
-	// println('"$line" nr chunks=$ctx.chunks.len')
+	// println('"$line" nr chunks=$vid.chunks.len')
 	// TODO use runes
 	// runes := msg.runes.slice_fast(chunk.pos, chunk.end)
 	// txt := join_strings(runes)
-	for i, chunk in ctx.chunks {
+	for i, chunk in vid.chunks {
 		// println('chunk #$i start=$chunk.start end=$chunk.end typ=$chunk.typ')
 		// Initial text chunk (not initial, but the one right before current chunk,
 		// since we don't have a seperate chunk for text)
 		if chunk.start > pos + 1 {
 			s := line.substr(pos, chunk.start)
-			ctx.ft.draw_text(x + pos * ctx.char_width, y, s, ctx.cfg.txt_cfg)
+			vid.ft.draw_text(x + pos * vid.char_width, y, s, vid.cfg.txt_cfg)
 		}
 		// Keyword string etc
-		mut cfg := ctx.cfg.txt_cfg
+		mut cfg := vid.cfg.txt_cfg
 		typ := chunk.typ
 		switch typ {
 		case KEY:
-			cfg = ctx.cfg.key_cfg
+			cfg = vid.cfg.key_cfg
 		case STRING:
-			cfg = ctx.cfg.string_cfg
+			cfg = vid.cfg.string_cfg
 		case COMMENT:
-			cfg = ctx.cfg.comment_cfg
+			cfg = vid.cfg.comment_cfg
 		}
 		s := line.substr(chunk.start, chunk.end)
-		ctx.ft.draw_text(x + chunk.start * ctx.char_width, y, s, cfg)
+		vid.ft.draw_text(x + chunk.start * vid.char_width, y, s, cfg)
 		pos = chunk.end
 		// Final text chunk
-		if i == ctx.chunks.len - 1 && chunk.end < line.len {
+		if i == vid.chunks.len - 1 && chunk.end < line.len {
 			final := line.substr(chunk.end, line.len)
-			ctx.ft.draw_text(x + pos * ctx.char_width, y, final, ctx.cfg.txt_cfg)
+			vid.ft.draw_text(x + pos * vid.char_width, y, final, vid.cfg.txt_cfg)
 		}
 	}
 }
@@ -542,8 +542,8 @@ fn (ctx mut Vid) draw_line(x, y int, line string) {
 	// mut ctx := &Vid(wnd.get_user_ptr())
 	// # printf("mouse click %p\n", glfw__Window_get_user_ptr(&wnd));
 	// Mouse coords to x,y
-	// ctx.view.y = pos.y / line_height - 1
-	// ctx.view.x = (pos.x - ctx.view.padding_left) / char_width - 1
+	// vid.view.y = pos.y / line_height - 1
+	// vid.view.x = (pos.x - vid.view.padding_left) / char_width - 1
 //}
 
 // fn key_down(wnd * ui.Window, c char, mods int, code int) {
@@ -557,35 +557,35 @@ fn key_down(wnd *glfw.Window, key int, code int, action, mods int) {
 	if key == glfw.KEY_LEFT_SUPER {
 		return
 	}
-	mut ctx := &Vid(glfw.get_window_user_pointer(wnd))
-	mode := ctx.mode
+	mut vid := &Vid(glfw.get_window_user_pointer(wnd))
+	mode := vid.mode
 	super := mods == 8 || mods == 2
 	shift := mods == 1
 	if key == glfw.KEY_ESCAPE {
-		ctx.mode = NORMAL
+		vid.mode = NORMAL
 	}
 	// Reset error line
-	mut view := ctx.view
+	mut view := vid.view
 	view.error_y = -1
 	switch mode {
 	case NORMAL:
-		ctx.key_normal(key, super, shift)
+		vid.key_normal(key, super, shift)
 	case VISUAL:
-		ctx.key_visual(key, super, shift)
+		vid.key_visual(key, super, shift)
 	case INSERT:
-		ctx.key_insert(key, super)
+		vid.key_insert(key, super)
 	case QUERY:
-		ctx.key_query(key, super)
+		vid.key_query(key, super)
 	//case TIMER:
-		//ctx.timer.key_down(key, super)
+		//vid.timer.key_down(key, super)
 	}
 }
 
 fn on_char(wnd *glfw.Window, code u32, mods int) {
-	mut ctx := &Vid(glfw.get_window_user_pointer(wnd))
-	mode := ctx.mode
-	if ctx.just_switched {
-		ctx.just_switched = false
+	mut vid := &Vid(glfw.get_window_user_pointer(wnd))
+	mode := vid.mode
+	if vid.just_switched {
+		vid.just_switched = false
 		return
 	}
 	buf := [0, 0, 0, 0, 0] !
@@ -594,169 +594,169 @@ fn on_char(wnd *glfw.Window, code u32, mods int) {
 	//println('s="$s" s0="$s0"')
 	switch mode {
 	case INSERT:
-		ctx.char_insert(s)
+		vid.char_insert(s)
 	case QUERY:
-		ctx.gg_pos = -1
-		ctx.char_query(s)
+		vid.gg_pos = -1
+		vid.char_query(s)
 	case NORMAL:
 		// on char on normal only for replace with r
-		if !ctx.just_switched && ctx.prev_key == GLFW_KEY_R {
+		if !vid.just_switched && vid.prev_key == GLFW_KEY_R {
 			if s != 'r' {
-				ctx.view.r(s)
-				ctx.prev_key = 0
-				ctx.prev_cmd = 'r'
-				ctx.prev_insert = s
+				vid.view.r(s)
+				vid.prev_key = 0
+				vid.prev_cmd = 'r'
+				vid.prev_insert = s
 			}
 			return
 		}
 	}
 }
 
-fn (ctx mut Vid) key_query(key int, super bool) {
+fn (vid mut Vid) key_query(key int, super bool) {
 	switch key {
 	case GLFW_KEY_BACKSPACE:
-		ctx.gg_pos = -1
-		if ctx.query_type != SEARCH && ctx.query_type != GREP {
-			if ctx.query.len == 0 {
+		vid.gg_pos = -1
+		if vid.query_type != SEARCH && vid.query_type != GREP {
+			if vid.query.len == 0 {
 				return
 			}
-			ctx.query = ctx.query.left(ctx.query.len - 1)
+			vid.query = vid.query.left(vid.query.len - 1)
 		}
 		else {
-			if ctx.search_query.len == 0 {
+			if vid.search_query.len == 0 {
 				return
 			}
-			ctx.search_query = ctx.search_query.left(ctx.search_query.len - 1)
+			vid.search_query = vid.search_query.left(vid.search_query.len - 1)
 		}
 		return
 	case GLFW_KEY_ENTER:
-		if ctx.query_type == CTRLP {
-			ctx.ctrlp_open()
+		if vid.query_type == CTRLP {
+			vid.ctrlp_open()
 		}
-		else if ctx.query_type == CAM {
-			ctx.git_commit()
+		else if vid.query_type == CAM {
+			vid.git_commit()
 		}
-		else if ctx.query_type == OPEN {
-			ctx.view.open_file(ctx.query)
+		else if vid.query_type == OPEN {
+			vid.view.open_file(vid.query)
 		}
-		else if ctx.query_type == TASK {
-			//ctx.timer.insert_task()
-			ctx.cur_task = ctx.query
-			//ctx.save_timer()
+		else if vid.query_type == TASK {
+			//vid.timer.insert_task()
+			vid.cur_task = vid.query
+			//vid.save_timer()
 		}
-		else if ctx.query_type == GREP {
+		else if vid.query_type == GREP {
 			// Key down was pressed after typing, now pressing enter opens the file
-			if ctx.gg_pos > -1 && ctx.gg_lines.len > 0 {
-				line := ctx.gg_lines[ctx.gg_pos]
+			if vid.gg_pos > -1 && vid.gg_lines.len > 0 {
+				line := vid.gg_lines[vid.gg_pos]
 				path := line.all_before(':')
 				line_nr := line.right(path.len + 1).int() -1
-				ctx.view.open_file(ctx.workspace + '/' + path)
-				ctx.view.move_to_line(line_nr)
-				ctx.view.zz()
-				ctx.mode = NORMAL
+				vid.view.open_file(vid.workspace + '/' + path)
+				vid.view.move_to_line(line_nr)
+				vid.view.zz()
+				vid.mode = NORMAL
 			}
 			else {
 				// Otherwise just do a git grep on a submitted query
-				ctx.git_grep()
+				vid.git_grep()
 			}
 			return
 		}
 		else {
-			ctx.search(false)
+			vid.search(false)
 		}
-		ctx.mode = NORMAL
+		vid.mode = NORMAL
 		return
 	case GLFW_KEY_ESCAPE:
-		ctx.mode = NORMAL
+		vid.mode = NORMAL
 		return
 	case GLFW_KEY_DOWN:
-		if ctx.mode == QUERY && ctx.query_type == GREP {
-			ctx.gg_pos++
+		if vid.mode == QUERY && vid.query_type == GREP {
+			vid.gg_pos++
 		}
 	case GLFW_KEY_TAB:// TODO COPY PASTA
-		if ctx.mode == QUERY && ctx.query_type == GREP {
-			ctx.gg_pos++
+		if vid.mode == QUERY && vid.query_type == GREP {
+			vid.gg_pos++
 		}
 	case GLFW_KEY_UP:
-		if ctx.mode == QUERY && ctx.query_type == GREP {
-			ctx.gg_pos--
-			if ctx.gg_pos < 0 {
-				ctx.gg_pos = 0
+		if vid.mode == QUERY && vid.query_type == GREP {
+			vid.gg_pos--
+			if vid.gg_pos < 0 {
+				vid.gg_pos = 0
 			}
 		}
 	case GLFW_KEY_V:
 		if super {
-			clip := ctx.main_wnd.get_clipboard_text()
-			ctx.query = ctx.query + clip
+			clip := vid.main_wnd.get_clipboard_text()
+			vid.query = vid.query + clip
 		}
 	}
 }
 
-fn (ctx &Vid) is_in_blog() bool {
-	return ctx.view.path.contains('/blog/') && ctx.view.path.contains('2019')
+fn (vid &Vid) is_in_blog() bool {
+	return vid.view.path.contains('/blog/') && vid.view.path.contains('2019')
 }
 
-fn (ctx &Vid) git_commit() {
-	text := ctx.query
-	dir := ctx.workspace
+fn (vid &Vid) git_commit() {
+	text := vid.query
+	dir := vid.workspace
 	os.system('git -C $dir commit -am "$text"')
 	//os.system('gitter $dir')
 }
 
-fn (ctx mut Vid) key_insert(key int, super bool) {
+fn (vid mut Vid) key_insert(key int, super bool) {
 	switch key {
 	case GLFW_KEY_BACKSPACE:
-		ctx.view.backspace()
+		vid.view.backspace()
 	case GLFW_KEY_ENTER:
-		ctx.view.enter()
+		vid.view.enter()
 	case GLFW_KEY_ESCAPE:
-		ctx.mode = NORMAL
+		vid.mode = NORMAL
 	case GLFW_KEY_TAB:
-		ctx.view.insert_text('\t')
+		vid.view.insert_text('\t')
 	case GLFW_KEY_LEFT:
-		if ctx.view.x > 0 {
-			ctx.view.x--
+		if vid.view.x > 0 {
+			vid.view.x--
 		}
 	case GLFW_KEY_RIGHT:
-		ctx.view.l()
+		vid.view.l()
 	case GLFW_KEY_UP:
-		ctx.view.k()
-		ctx.refresh = false
+		vid.view.k()
+		vid.refresh = false
 	case GLFW_KEY_DOWN:
-		ctx.view.j()
-		ctx.refresh = false
+		vid.view.j()
+		vid.refresh = false
 	}
 	if (key == GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
-		ctx.view.save_file()
-		ctx.mode = NORMAL
+		vid.view.save_file()
+		vid.mode = NORMAL
 		return
 	}
 	if super && key == GLFW_KEY_U {
-		ctx.mode = NORMAL
-		ctx.key_u()
+		vid.mode = NORMAL
+		vid.key_u()
 		return
 	}
 	// Insert macro   TODO  customize
 	if super && key == GLFW_KEY_G {
-		ctx.view.insert_text('<code></code>')
-		ctx.view.x -= 7
+		vid.view.insert_text('<code></code>')
+		vid.view.x -= 7
 	}
 	// Autocomplete
 	if key == GLFW_KEY_N && super {
-		ctx.ctrl_n()
+		vid.ctrl_n()
 		return
 	}
 	if key == GLFW_KEY_V && super {
-		// ctx.view.insert_text(ui.get_clipboard_text())
-		clip := ctx.main_wnd.get_clipboard_text()
-		ctx.view.insert_text(clip)
+		// vid.view.insert_text(ui.get_clipboard_text())
+		clip := vid.main_wnd.get_clipboard_text()
+		vid.view.insert_text(clip)
 		return
 	}
 }
 
-fn (ctx mut Vid) ctrl_n() {
-	line := ctx.view.line()
-	mut i := ctx.view.x - 1
+fn (vid mut Vid) ctrl_n() {
+	line := vid.view.line()
+	mut i := vid.view.x - 1
 	end := i
 	for i > 0 && is_alpha_underscore(int(line[i])) {
 		i--
@@ -770,177 +770,177 @@ fn (ctx mut Vid) ctrl_n() {
 	if word.len < 3 {
 		return
 	}
-	for map_word in ctx.words {
+	for map_word in vid.words {
 		// If any word starts with our subword, add the rest
 		if map_word.starts_with(word) {
-			ctx.view.insert_text(map_word.right(word.len))
+			vid.view.insert_text(map_word.right(word.len))
 			return
 		}
 	}
 }
 
-fn (ctx mut Vid) key_normal(key int, super, shift bool) {
-	mut view := ctx.view
-	ctx.refresh = true
-	if ctx.prev_key == GLFW_KEY_R {
+fn (vid mut Vid) key_normal(key int, super, shift bool) {
+	mut view := vid.view
+	vid.refresh = true
+	if vid.prev_key == GLFW_KEY_R {
 		return
 	}
 	switch key {
 		// Full screen => window
 	case GLFW_KEY_ENTER:
 		if false && super {
-			ctx.nr_splits = 1
-			ctx.win_width = 600
-			ctx.win_height = 500
+			vid.nr_splits = 1
+			vid.win_width = 600
+			vid.win_height = 500
 			glfw.post_empty_event()
 		}
 	case GLFW_KEY_PERIOD:
 		if shift {
 			// >
-			ctx.view.shift_right()
+			vid.view.shift_right()
 		}
 		else {
-			ctx.dot()
+			vid.dot()
 		}
 	case GLFW_KEY_COMMA:
 		if shift {
 			// <
-			ctx.view.shift_left()
+			vid.view.shift_left()
 		}
 	case GLFW_KEY_SLASH:
 		if shift {
-			ctx.search_query = ''
-			ctx.mode = QUERY
-			ctx.just_switched = true
-			ctx.query_type = GREP
+			vid.search_query = ''
+			vid.mode = QUERY
+			vid.just_switched = true
+			vid.query_type = GREP
 		}
 		else {
-			ctx.search_query = ''
-			ctx.mode = QUERY
-			ctx.just_switched = true
-			ctx.query_type = SEARCH
+			vid.search_query = ''
+			vid.mode = QUERY
+			vid.just_switched = true
+			vid.query_type = SEARCH
 		}
 	case GLFW_KEY_F5:
-		ctx.run_file()
-		// ctx.char_width -= 1
-		// ctx.line_height -= 1
-		// ctx.font_size -= 1
-		// ctx.page_height = WIN_HEIGHT / ctx.line_height - 1
+		vid.run_file()
+		// vid.char_width -= 1
+		// vid.line_height -= 1
+		// vid.font_size -= 1
+		// vid.page_height = WIN_HEIGHT / vid.line_height - 1
 		// case GLFW_KEY_F6:
-		// ctx.char_width += 1
-		// ctx.line_height += 1
-		// ctx.font_size += 1
-		// ctx.page_height = WIN_HEIGHT / ctx.line_height - 1
-		// ctx.vg = gg.new_context(WIN_WIDTH, WIN_HEIGHT, ctx.font_size)
+		// vid.char_width += 1
+		// vid.line_height += 1
+		// vid.font_size += 1
+		// vid.page_height = WIN_HEIGHT / vid.line_height - 1
+		// vid.vg = gg.new_context(WIN_WIDTH, WIN_HEIGHT, vid.font_size)
 	case GLFW_KEY_MINUS:
 		if super {
-			ctx.get_git_diff_full()
+			vid.get_git_diff_full()
 		}
 	case GLFW_KEY_EQUAL:
-		ctx.open_blog()
+		vid.open_blog()
 	case GLFW_KEY_A:
 		if super {
-			ctx.query = ''
-			ctx.mode = QUERY
-			ctx.query_type = TASK
+			vid.query = ''
+			vid.mode = QUERY
+			vid.query_type = TASK
 		}
 		else {
-			ctx.view.A()
-			ctx.prev_cmd = 'A'
-			ctx.set_insert()
+			vid.view.A()
+			vid.prev_cmd = 'A'
+			vid.set_insert()
 		}
 	case GLFW_KEY_C:
 		if super {
-			ctx.query = ''
-			ctx.mode = QUERY
-			ctx.query_type = CAM
+			vid.query = ''
+			vid.mode = QUERY
+			vid.query_type = CAM
 		}
 		if shift {
-			ctx.prev_insert = ctx.view.C()
-			ctx.set_insert()
+			vid.prev_insert = vid.view.C()
+			vid.set_insert()
 		}
 	case GLFW_KEY_D:
 		if super {
-			ctx.prev_split()
+			vid.prev_split()
 			return
 		}
-		if ctx.prev_key == GLFW_KEY_D {
-			ctx.view.dd()
+		if vid.prev_key == GLFW_KEY_D {
+			vid.view.dd()
 			return
 		}
-		else if ctx.prev_key == GLFW_KEY_G {
-			ctx.go_to_def()
+		else if vid.prev_key == GLFW_KEY_G {
+			vid.go_to_def()
 		}
 	case GLFW_KEY_E:
 		if super {
-			ctx.next_split()
+			vid.next_split()
 			return
 		}
-		if ctx.prev_key == GLFW_KEY_C {
+		if vid.prev_key == GLFW_KEY_C {
 			view.ce()
 		}
-		else if ctx.prev_key == GLFW_KEY_D {
+		else if vid.prev_key == GLFW_KEY_D {
 			view.de()
 		}
 	case GLFW_KEY_I:
 		if shift {
-			ctx.view.I()
-			ctx.set_insert()
-			ctx.prev_cmd = 'I'
+			vid.view.I()
+			vid.set_insert()
+			vid.prev_cmd = 'I'
 		}
 		else {
-			ctx.set_insert()
+			vid.set_insert()
 		}
 	case GLFW_KEY_J:
 		if shift {
-			ctx.view.join()
+			vid.view.join()
 		}
 		else if super {
-			// ctx.mode = QUERY
-			// ctx.query_type = CTRLJ
+			// vid.mode = QUERY
+			// vid.query_type = CTRLJ
 		}
 		else {
-			// println('J isb=$ctx.is_building')
-			ctx.view.j()
-			// if !ctx.is_building {
-			ctx.refresh = false
+			// println('J isb=$vid.is_building')
+			vid.view.j()
+			// if !vid.is_building {
+			vid.refresh = false
 			// }
 		}
 	case GLFW_KEY_K:
-		ctx.view.k()
-		// if !ctx.is_building {
-		ctx.refresh = false
+		vid.view.k()
+		// if !vid.is_building {
+		vid.refresh = false
 		// }
 	case GLFW_KEY_N:
 		if shift {
 			// backwards search
-			ctx.search(true)
+			vid.search(true)
 		}
 		else {
-			ctx.search(false)
+			vid.search(false)
 		}
 	case GLFW_KEY_O:
 		if shift && super {
 			println('RRRR')
-			ctx.mode = QUERY
-			ctx.query_type = OPEN_WORKSPACE
-			ctx.query = ''
+			vid.mode = QUERY
+			vid.query_type = OPEN_WORKSPACE
+			vid.query = ''
 		}
 		else if super {
-			ctx.mode = QUERY
-			ctx.query_type = OPEN
-			ctx.query = ''
+			vid.mode = QUERY
+			vid.query_type = OPEN
+			vid.query = ''
 			return
 		}
 		else {
-			ctx.view.o()
-			ctx.set_insert()
+			vid.view.o()
+			vid.set_insert()
 		}
 	case GLFW_KEY_P:
 		if super {
-			ctx.mode = QUERY
-			ctx.query_type = CTRLP
-			ctx.load_git_tree()
+			vid.mode = QUERY
+			vid.query_type = CTRLP
+			vid.load_git_tree()
 			return
 		}
 		else {
@@ -951,33 +951,33 @@ fn (ctx mut Vid) key_normal(key int, super, shift bool) {
 			view.reopen()
 		}
 		else {
-			ctx.prev_key = GLFW_KEY_R
+			vid.prev_key = GLFW_KEY_R
 		}
 	case GLFW_KEY_T:
 		if super {
-			//ctx.timer.get_data(false)
-			//ctx.mode = TIMER
+			//vid.timer.get_data(false)
+			//vid.mode = TIMER
 		}
 		else {
-			// if ctx.prev_key == GLFW_KEY_T {
+			// if vid.prev_key == GLFW_KEY_T {
 			view.tt()
 		}
 	case GLFW_KEY_H:
 		if shift {
-			ctx.view.H()
+			vid.view.H()
 		}
-		else if ctx.view.x > 0 {
-			ctx.view.x--
+		else if vid.view.x > 0 {
+			vid.view.x--
 		}
 	case GLFW_KEY_L:
 		if super {
-			ctx.view.save_file()
+			vid.view.save_file()
 		}
 		else if shift {
-			ctx.view.move_to_page_bot()
+			vid.view.move_to_page_bot()
 		}
 		else {
-			ctx.view.l()
+			vid.view.l()
 		}
 	case GLFW_KEY_F6:
 		if super {
@@ -985,104 +985,104 @@ fn (ctx mut Vid) key_normal(key int, super, shift bool) {
 	case GLFW_KEY_G:
 		// go to end
 		if shift && !super {
-			ctx.view.G()
+			vid.view.G()
 		}
 		// copy file path to clipboard
 		else if super {
-			ctx.main_wnd.set_clipboard_text(ctx.view.path)
+			vid.main_wnd.set_clipboard_text(vid.view.path)
 		}
 		// go to beginning
 		else {
-			if ctx.prev_key == GLFW_KEY_G {
-				ctx.view.gg()
+			if vid.prev_key == GLFW_KEY_G {
+				vid.view.gg()
 			}
 		}
 	case GLFW_KEY_F:
 		if super {
-			ctx.view.F()
+			vid.view.F()
 		}
 	case GLFW_KEY_B:
 		if super {
 			// force crash
 			// # void*a = 0; int b = *(int*)a;
-			ctx.view.B()
+			vid.view.B()
 		}
 		else {
-			ctx.view.b()
+			vid.view.b()
 		}
 	case GLFW_KEY_U:
 		if super {
-			ctx.key_u()
+			vid.key_u()
 		}
 	case GLFW_KEY_V:
-		ctx.mode = VISUAL
+		vid.mode = VISUAL
 		view.vstart = view.y
 		view.vend = view.y
 	case GLFW_KEY_W:
-		if ctx.prev_key == GLFW_KEY_C {
+		if vid.prev_key == GLFW_KEY_C {
 			view.cw()
 		}
-		else if ctx.prev_key == GLFW_KEY_D {
+		else if vid.prev_key == GLFW_KEY_D {
 			view.dw()
 		}
 		else {
 			view.w()
 		}
 	case GLFW_KEY_X:
-		ctx.view.delete_char()
+		vid.view.delete_char()
 	case GLFW_KEY_Y:
-		if ctx.prev_key == GLFW_KEY_Y {
-			ctx.view.yy()
+		if vid.prev_key == GLFW_KEY_Y {
+			vid.view.yy()
 		}
 		if super {
-			go ctx.build_app2()
+			go vid.build_app2()
 		}
 	case GLFW_KEY_Z:
-		if ctx.prev_key == GLFW_KEY_Z {
-			ctx.view.zz()
+		if vid.prev_key == GLFW_KEY_Z {
+			vid.view.zz()
 		}
 		// Next workspace
 	case GLFW_KEY_RIGHT_BRACKET:
 		if super {
-			ctx.open_workspace(ctx.workspace_idx + 1)
+			vid.open_workspace(vid.workspace_idx + 1)
 		}
 	case GLFW_KEY_LEFT_BRACKET:
 		if super {
-			ctx.open_workspace(ctx.workspace_idx - 1)
+			vid.open_workspace(vid.workspace_idx - 1)
 		}
 	case GLFW_KEY_8:
 		if shift {
-			ctx.star()
+			vid.star()
 		}
 	case GLFW_KEY_LEFT:
-		if ctx.view.x > 0 {
-			ctx.view.x--
+		if vid.view.x > 0 {
+			vid.view.x--
 		}
 	case GLFW_KEY_RIGHT:
-		ctx.view.l()
+		vid.view.l()
 	case GLFW_KEY_UP:
-		ctx.view.k()
-		ctx.refresh = false
+		vid.view.k()
+		vid.refresh = false
 	case GLFW_KEY_DOWN:
-		ctx.view.j()
-		ctx.refresh = false
+		vid.view.j()
+		vid.refresh = false
 	}
 	if key != GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
-		ctx.prev_key = key
+		vid.prev_key = key
 	}
 }
 
 // Find current word under cursor
-fn (ctx mut Vid) word_under_cursor() string {
-	line := ctx.view.line()
+fn (vid mut Vid) word_under_cursor() string {
+	line := vid.view.line()
 	// First go left
-	mut start := ctx.view.x
+	mut start := vid.view.x
 	for start > 0 && is_alpha_underscore(int(line[start])) {
 		start--
 	}
 	// Now go right
-	mut end := ctx.view.x
+	mut end := vid.view.x
 	for end < line.len && is_alpha_underscore(int(line[end])) {
 		end++
 	}
@@ -1091,38 +1091,38 @@ fn (ctx mut Vid) word_under_cursor() string {
 	return word
 }
 
-fn (ctx mut Vid) star() {
-	ctx.search_query = ctx.word_under_cursor()
-	ctx.search(false)
+fn (vid mut Vid) star() {
+	vid.search_query = vid.word_under_cursor()
+	vid.search(false)
 }
 
-fn (ctx mut Vid) char_insert(s string) {
+fn (vid mut Vid) char_insert(s string) {
 	if int(s[0]) < 32 {
 		return
 	}
-	ctx.view.insert_text(s)
-	ctx.prev_insert = ctx.prev_insert + s
+	vid.view.insert_text(s)
+	vid.prev_insert = vid.prev_insert + s
 }
 
-fn (ctx mut Vid) char_query(s string) {
+fn (vid mut Vid) char_query(s string) {
 	if int(s[0]) < 32 {
 		return
 	}
-	mut q := ctx.query
-	if ctx.query_type == SEARCH || ctx.query_type == GREP {
-		q = ctx.search_query
-		ctx.search_query = '${q}${s}'
+	mut q := vid.query
+	if vid.query_type == SEARCH || vid.query_type == GREP {
+		q = vid.search_query
+		vid.search_query = '${q}${s}'
 	}
 	else {
-		ctx.query = q + s
+		vid.query = q + s
 	}
 }
 
-fn (ctx mut Vid) key_visual(key int, super, shift bool) {
-	mut view := ctx.view
+fn (vid mut Vid) key_visual(key int, super, shift bool) {
+	mut view := vid.view
 	switch key {
 	case glfw.KEY_ESCAPE:
-		ctx.exit_visual()
+		vid.exit_visual()
 	case GLFW_KEY_J:
 		view.vend++
 		if view.vend >= view.lines.len {
@@ -1136,119 +1136,119 @@ fn (ctx mut Vid) key_visual(key int, super, shift bool) {
 		view.vend--
 	case GLFW_KEY_Y:
 		view.y_visual()
-		ctx.mode = NORMAL
+		vid.mode = NORMAL
 	case GLFW_KEY_D:
 		view.d_visual()
-		ctx.mode = NORMAL
+		vid.mode = NORMAL
 	case GLFW_KEY_Q:
-		if ctx.prev_key == GLFW_KEY_G {
-			ctx.view.gq()
+		if vid.prev_key == GLFW_KEY_G {
+			vid.view.gq()
 		}
 	case GLFW_KEY_PERIOD:
 		if shift {
 			// >
-			ctx.view.shift_right()
+			vid.view.shift_right()
 		}
 	case GLFW_KEY_COMMA:
 		if shift {
 			// >
-			ctx.view.shift_left()
+			vid.view.shift_left()
 		}
 	}
 	if key != GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
-		ctx.prev_key = key
+		vid.prev_key = key
 	}
 }
 
-fn (ctx mut Vid) update_view() {
-	ctx.view = &ctx.views[ctx.cur_split]
+fn (vid mut Vid) update_view() {
+	vid.view = &vid.views[vid.cur_split]
 }
 
-fn (ctx mut Vid) set_insert() {
-	ctx.mode = INSERT
-	ctx.prev_insert = ''
-	ctx.just_switched = true
+fn (vid mut Vid) set_insert() {
+	vid.mode = INSERT
+	vid.prev_insert = ''
+	vid.just_switched = true
 }
 
-fn (ctx mut Vid) exit_visual() {
-	ctx.mode = NORMAL
-	mut view := ctx.view
+fn (vid mut Vid) exit_visual() {
+	vid.mode = NORMAL
+	mut view := vid.view
 	view.vstart = -1
 	view.vend = -1
 }
 
-fn (ctx mut Vid) dot() {
-	prev_cmd := ctx.prev_cmd
+fn (vid mut Vid) dot() {
+	prev_cmd := vid.prev_cmd
 	switch prev_cmd {
 	case 'dd':
-		ctx.view.dd()
+		vid.view.dd()
 	case 'dw':
-		ctx.view.dw()
+		vid.view.dw()
 	case 'cw':
-		ctx.view.dw()
-		// println('dot cw prev i=$ctx.prev_insert')
-		ctx.view.insert_text(ctx.prev_insert)
-		ctx.prev_cmd = 'cw'
+		vid.view.dw()
+		// println('dot cw prev i=$vid.prev_insert')
+		vid.view.insert_text(vid.prev_insert)
+		vid.prev_cmd = 'cw'
 	case 'de':
-		ctx.view.de()
+		vid.view.de()
 	case 'J':
-		ctx.view.join()
+		vid.view.join()
 	case 'I':
-		ctx.view.I()
-		ctx.view.insert_text(ctx.prev_insert)
+		vid.view.I()
+		vid.view.insert_text(vid.prev_insert)
 	case 'A':
-		ctx.view.A()
-		ctx.view.insert_text(ctx.prev_insert)
+		vid.view.A()
+		vid.view.insert_text(vid.prev_insert)
 	case 'r':
-		ctx.view.r(ctx.prev_insert)
+		vid.view.r(vid.prev_insert)
 	}
 }
 
-fn (ctx mut Vid) next_split() {
-	ctx.cur_split++
-	if ctx.cur_split % ctx.splits_per_workspace == 0 {
-		ctx.cur_split -= ctx.splits_per_workspace
+fn (vid mut Vid) next_split() {
+	vid.cur_split++
+	if vid.cur_split % vid.splits_per_workspace == 0 {
+		vid.cur_split -= vid.splits_per_workspace
 	}
-	ctx.update_view()
+	vid.update_view()
 }
 
-fn (ctx mut Vid) prev_split() {
-	if ctx.cur_split % ctx.splits_per_workspace == 0 {
-		ctx.cur_split += ctx.splits_per_workspace - 1
+fn (vid mut Vid) prev_split() {
+	if vid.cur_split % vid.splits_per_workspace == 0 {
+		vid.cur_split += vid.splits_per_workspace - 1
 	}
 	else {
-		ctx.cur_split--
+		vid.cur_split--
 	}
-	ctx.update_view()
+	vid.update_view()
 }
 
-fn (ctx mut Vid) open_workspace(idx int) {
-	if idx >= ctx.workspaces.len {
-		ctx.open_workspace(0)
+fn (vid mut Vid) open_workspace(idx int) {
+	if idx >= vid.workspaces.len {
+		vid.open_workspace(0)
 		return
 	}
 	if idx < 0 {
-		ctx.open_workspace(ctx.workspaces.len - 1)
+		vid.open_workspace(vid.workspaces.len - 1)
 		return
 	}
-	diff := idx - ctx.workspace_idx
-	ctx.workspace_idx = idx
-	ctx.workspace = ctx.workspaces[idx]
+	diff := idx - vid.workspace_idx
+	vid.workspace_idx = idx
+	vid.workspace = vid.workspaces[idx]
 	// Update cur split index. If we are in space 0 split 1 and go to
 	// space 1, split is updated to 4 (1 + 3 * (1-0))
-	ctx.cur_split += diff * ctx.splits_per_workspace
-	ctx.update_view()
-	// ctx.get_git_diff()
+	vid.cur_split += diff * vid.splits_per_workspace
+	vid.update_view()
+	// vid.get_git_diff()
 }
 
-fn (ctx mut Vid) add_workspace(path string) {
+fn (vid mut Vid) add_workspace(path string) {
 	// if ! os.file_exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
-	ctx.workspaces << path
-	for i := 0; i < ctx.nr_splits; i++ {
-		ctx.views << ctx.new_view()
+	vid.workspaces << path
+	for i := 0; i < vid.nr_splits; i++ {
+		vid.views << vid.new_view()
 	}
 }
 
@@ -1260,16 +1260,16 @@ fn short_space(workspace string) string {
 	return workspace.right(pos + 1)
 }
 
-fn (ctx &Vid) move_to_line(n int) {
-	mut view := ctx.view
+fn (vid &Vid) move_to_line(n int) {
+	mut view := vid.view
 	view.from = n
 	view.y = n
 }
 
-fn (ctx &Vid) save_session() {
+fn (vid &Vid) save_session() {
 	println('saving session...')
 	f := os.create(SESSION_PATH) or { panic('fail') }
-	for view in ctx.views {
+	for view in vid.views {
 		// if view.path == '' {
 		// continue
 		// }
@@ -1286,14 +1286,14 @@ fn toi(s string) int {
 	return s.int()
 }
 
-fn (ctx &Vid) save_timer() {
+fn (vid &Vid) save_timer() {
 /*
 	f := os.create(TIMER_PATH) or { return }
-	f.writeln('task=$ctx.timer.cur_task')
-	f.writeln('task_start=$ctx.timer.task_start_unix')
-	f.writeln('timer_typ=$ctx.timer.cur_type')
-	if ctx.timer.started {
-		f.writeln('timer_start=$ctx.timer.start_unix')
+	f.writeln('task=$vid.timer.cur_task')
+	f.writeln('task_start=$vid.timer.task_start_unix')
+	f.writeln('timer_typ=$vid.timer.cur_type')
+	if vid.timer.started {
+		f.writeln('timer_start=$vid.timer.start_unix')
 	}
 	else {
 		f.writeln('timer_start=0')
@@ -1302,7 +1302,7 @@ fn (ctx &Vid) save_timer() {
 */
 }
 
-fn (ctx mut Vid) load_timer() {
+fn (vid mut Vid) load_timer() {
 	// task=do work
 	// task_start=1223212221
 	// timer_typ=7
@@ -1327,26 +1327,26 @@ fn (ctx mut Vid) load_timer() {
 	// mut task := lines[0]
 	println('vals=')
 	println(vals)
-	ctx.timer.cur_task = vals[0]
-	ctx.timer.task_start_unix = toi(vals[1])
-	ctx.timer.cur_type = toi(vals[2])
-	ctx.timer.start_unix = toi(vals[3])
-	ctx.timer.started = ctx.timer.start_unix != 0
+	vid.timer.cur_task = vals[0]
+	vid.timer.task_start_unix = toi(vals[1])
+	vid.timer.cur_type = toi(vals[2])
+	vid.timer.start_unix = toi(vals[3])
+	vid.timer.started = vid.timer.start_unix != 0
 */
 }
 
-fn (ctx mut Vid) load_session() {
+fn (vid mut Vid) load_session() {
 	println('load session "$SESSION_PATH"')
 	paths := os.read_lines(SESSION_PATH)
 	println(paths)
-	ctx.load_views(paths)
+	vid.load_views(paths)
 }
 
-fn (ctx mut Vid) load_views(paths[]string) {
-	for i := 0; i < paths.len && i < ctx.views.len; i++ {
+fn (vid mut Vid) load_views(paths[]string) {
+	for i := 0; i < paths.len && i < vid.views.len; i++ {
 		// println('loading path')
 		// println(paths[i])
-		mut view := &ctx.views[i]
+		mut view := &vid.views[i]
 		path := paths[i]
 		if path == '' || path.contains('=') {
 			continue
@@ -1355,10 +1355,10 @@ fn (ctx mut Vid) load_views(paths[]string) {
 	}
 }
 
-fn (ctx mut Vid) get_git_diff() {
+fn (vid mut Vid) get_git_diff() {
 	return
 	/*
-	dir := ctx.workspace
+	dir := vid.workspace
 	mut s := os.system('git -C $dir diff --shortstat')
 	vals := s.split(',')
 	if vals.len < 2 {
@@ -1369,21 +1369,21 @@ fn (ctx mut Vid) get_git_diff() {
 	mut plus := vals[1]
 	plus = plus.find_between(' ', 'insertion')
 	plus = plus.trim_space()
-	ctx.git_diff_plus = '$plus+'
+	vid.git_diff_plus = '$plus+'
 	if vals.len < 3 {
 		return
 	}
 	mut minus := vals[2]
 	minus = minus.find_between(' ', 'deletion')
 	minus = minus.trim_space()
-	ctx.git_diff_minus = '$minus-'
+	vid.git_diff_minus = '$minus-'
 */
 }
 
-fn (ctx &Vid) get_git_diff_full() string {
-	dir := ctx.workspace
+fn (vid &Vid) get_git_diff_full() string {
+	dir := vid.workspace
 	os.system('git -C $dir diff > $dir/out')
-	mut last_view := ctx.get_last_view()
+	mut last_view := vid.get_last_view()
 	last_view.open_file('$dir/out')
 	// nothing commited (diff = 0), shot git log)
 	if last_view.lines.len < 2 {
@@ -1396,33 +1396,33 @@ fn (ctx &Vid) get_git_diff_full() string {
 	return 's'
 }
 
-fn (ctx &Vid) open_blog() {
+fn (vid &Vid) open_blog() {
 	now := time.now()
 	dir := 'blog'
 	path := '$dir/$now.year/${now.month:02d}/${now.day:02d}'
 	if !os.file_exists(path) {
 		os.system('touch $path')
 	}
-	mut last_view := ctx.get_last_view()
+	mut last_view := vid.get_last_view()
 	last_view.open_file(path)
 	last_view.G()
 }
 
-fn (ctx &Vid) get_last_view() *View {
-	pos := (ctx.workspace_idx + 1) * ctx.splits_per_workspace - 1
-	return &ctx.views[pos]
+fn (vid &Vid) get_last_view() *View {
+	pos := (vid.workspace_idx + 1) * vid.splits_per_workspace - 1
+	return &vid.views[pos]
 }
 
-fn (ctx mut Vid) build_app1() {
-	ctx.build_app('')
+fn (vid mut Vid) build_app1() {
+	vid.build_app('')
 }
 
-fn (ctx mut Vid) build_app2() {
-	ctx.build_app('2')
+fn (vid mut Vid) build_app2() {
+	vid.build_app('2')
 }
 
-fn (ctx mut Vid) save_changed_files() {
-	for _view in ctx.views {
+fn (vid mut Vid) save_changed_files() {
+	for _view in vid.views {
 		mut view := _view
 		if view.changed {
 			view.save_file()
@@ -1430,14 +1430,14 @@ fn (ctx mut Vid) save_changed_files() {
 	}
 }
 
-fn (ctx mut Vid) build_app(extra string) {
-	ctx.is_building = true
+fn (vid mut Vid) build_app(extra string) {
+	vid.is_building = true
 	println('building...')
 	// Save each open file before building
-	ctx.save_changed_files()
-	os.chdir(ctx.workspace)
-	dir := ctx.workspace
-	mut last_view := ctx.get_last_view()
+	vid.save_changed_files()
+	os.chdir(vid.workspace)
+	dir := vid.workspace
+	mut last_view := vid.get_last_view()
 	//mut f := os.create('$dir/out') or {
 		//panic('ff')
 		//return
@@ -1457,17 +1457,17 @@ fn (ctx mut Vid) build_app(extra string) {
 	lines := out.output.split_into_lines()
 	for line in lines {
 		if line.contains('.v:') {
-			ctx.go_to_error(line)
+			vid.go_to_error(line)
 			break
 		}
 	}
-	// ctx.refresh = true
+	// vid.refresh = true
 	glfw.post_empty_event()
 	time.sleep(4)// delay is_building to prevent flickering in the right split
-	ctx.is_building = false
+	vid.is_building = false
 	/*
 	// Reopen files (they were formatted)
-	for _view in ctx.views {
+	for _view in vid.views {
 		// ui.alert('reopening path')
 		mut view := _view
 		println(view.path)
@@ -1478,9 +1478,9 @@ fn (ctx mut Vid) build_app(extra string) {
 
 // Run file in current view (go run [file], v run [file], python [file] etc)
 // Saves time for user since they don't have to define 'build' for every file
-fn (ctx mut Vid) run_file() {
-	mut view := ctx.view
-	ctx.is_building = true
+fn (vid mut Vid) run_file() {
+	mut view := vid.view
+	vid.is_building = true
 	println('start file run')
 	// Save the file before building
 	if view.changed {
@@ -1498,23 +1498,23 @@ fn (ctx mut Vid) run_file() {
 	f.writeln(out.output)
 	f.close()
 	// TODO COPYPASTA
-	mut last_view := ctx.get_last_view()
+	mut last_view := vid.get_last_view()
 	last_view.open_file('$dir/out')
 	last_view.G()
-	ctx.is_building = false
+	vid.is_building = false
 	// error line
 	lines := out.output.split_into_lines()
 	for line in lines {
 		if line.contains('.v:') {
-			ctx.go_to_error(line)
+			vid.go_to_error(line)
 			break
 		}
 	}
-	ctx.refresh = true
+	vid.refresh = true
 	glfw.post_empty_event()
 }
 
-fn (ctx mut Vid) go_to_error(line string) {
+fn (vid mut Vid) go_to_error(line string) {
 	// panic: volt/twitch.v:88
 	println('go to ERROR $line')
 	//if !line.contains('panic:') {
@@ -1529,76 +1529,76 @@ fn (ctx mut Vid) go_to_error(line string) {
 	path := line.left(pos)
 	filename := path.all_after('/')
 	line_nr := line.right(pos + 1)
-	for i := 0; i < ctx.views.len; i++ {
-		mut view := &ctx.views[i]
+	for i := 0; i < vid.views.len; i++ {
+		mut view := &vid.views[i]
 		if !view.path.contains(filename) {
 			continue
 		}
 		view.error_y = line_nr.int() -1
 		view.move_to_line(view.error_y)
-		// view.ctx.main_wnd.refresh()
+		// view.vid.main_wnd.refresh()
 		glfw.post_empty_event()
 		break// Done after the first view with the error
 	}
 	// File with the error is not open right now, do it
-	s := os.exec('git -C $ctx.workspace ls-files') or { return }
+	s := os.exec('git -C $vid.workspace ls-files') or { return }
 	mut lines := s.output.split_into_lines()
 	lines.sort_by_len()
 	for _ in lines {
 		if line.contains(filename) {
-			ctx.view.open_file(ctx.workspace + '/' + line)
-			ctx.view.error_y = line_nr.int() -1
-			ctx.view.move_to_line(ctx.view.error_y)
+			vid.view.open_file(vid.workspace + '/' + line)
+			vid.view.error_y = line_nr.int() -1
+			vid.view.move_to_line(vid.view.error_y)
 			glfw.post_empty_event()
 			return
 		}
 	}
 }
 
-fn (ctx mut Vid) loop() {
+fn (vid mut Vid) loop() {
 	for {
-		ctx.refresh = true
+		vid.refresh = true
 		glfw.post_empty_event()
-		//ctx.timer.tick(ctx)
+		//vid.timer.tick(vid)
 		time.sleep(5)
 	}
 }
 
-fn (ctx mut Vid) key_u() {
+fn (vid mut Vid) key_u() {
 	// Run a single test file
-	if ctx.view.path.ends_with('_test.v') {
-		ctx.run_file()
+	if vid.view.path.ends_with('_test.v') {
+		vid.run_file()
 	}
 	else {
-		go ctx.build_app1()
+		go vid.build_app1()
 		glfw.post_empty_event()
 	}
 }
 
-fn (ctx mut Vid) go_to_def() {
-	word := ctx.word_under_cursor()
+fn (vid mut Vid) go_to_def() {
+	word := vid.word_under_cursor()
 	query := ') $word'
-	mut view := ctx.view
+	mut view := vid.view
 	for i, line in view.lines {
 		if line.contains(query) {
-			ctx.move_to_line(i)
+			vid.move_to_line(i)
 			return
 		}
 	}
 	// Not found in current file, try all files in the git tree
-	for _file in ctx.all_git_files {
+	for _file in vid.all_git_files {
 		mut file := _file.to_lower()
 		file = file.trim_space()
 		if !file.ends_with('.v') {
 			continue
 		}
-		file = '$ctx.workspace/$file'
+		file = '$vid.workspace/$file'
 		lines := os.read_lines(file)
 		// println('trying file $file with $lines.len lines')
 		for j, line in lines {
 			if line.contains(query) {
 				view.open_file(file)
-				ctx.move_to_line(j)
+				vid.move_to_line(j)
 				break
 			}
 		}
@@ -1608,13 +1608,13 @@ fn (ctx mut Vid) go_to_def() {
 fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	println('crash!')
 	/*
-	mut ctx := &Vid{!}
-	//# ctx=g_ctx;
-	# ctx=arg;
-	println(ctx.line_height)
-	// ctx.save_session()
-	// ctx.save_timer()
-	ctx.save_changed_files()
+	mut vid := &Vid{!}
+	//# vid=g_vid;
+	# vid=arg;
+	println(vid.line_height)
+	// vid.save_session()
+	// vid.save_timer()
+	vid.save_changed_files()
 	// #const char buf[ ] = "your message\n";
 	// #write(STDOUT_FILENO, buf, strlen(buf));
 	// #printf("Caught segfault at address %p\n", si->si_addr);
@@ -1627,12 +1627,12 @@ fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	exit(1)
 }
 
-fn (ctx mut Vid) handle_segfault() {
+fn (vid mut Vid) handle_segfault() {
 	$if windows {
 		return
 	}
 	/*
-	# g_ctx= ctx ;
+	# g_vid= ctx ;
 	# struct sigaction sa;
 	# int *foo = NULL;
 	# memset(&sa, 0, sizeof(struct sigaction));
