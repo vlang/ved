@@ -189,7 +189,7 @@ fn main() {
 	println(os.args)
 	cur_dir := os.getwd()
 	// Open a single text file
-	if os.args.len == 2 && !os.is_dir(os.args[1]) {
+	if os.args.len == 2 && !os.is_dir(os.args[1]) && !os.args[1].starts_with('-') {
 		if !os.file_exists(os.args[1]) {
 			path := os.args[1]
 			println('file "$path" does not exist')
