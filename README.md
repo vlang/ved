@@ -3,6 +3,9 @@
 [![Build Status](https://travis-ci.org/vlang/vid.svg?branch=master)](https://travis-ci.org/vlang/vid)
 
 
+<img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
+
+
 
 ### Building from source
 
@@ -141,9 +144,6 @@ You can support the development of Vid and V on Patreon:
 
 
 
-
-
-![](https://user-images.githubusercontent.com/687996/53506877-2377f100-3ab7-11e9-8984-d185d632bcb7.png)
 
 
 
