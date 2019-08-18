@@ -16,7 +16,7 @@ import (
 	time
 	rand
 	//gx
-	//ui
+	ui
 	//darwin
 )
 
@@ -181,7 +181,7 @@ fn main() {
 	w.set_user_ptr(ctx)
 	$if mac {
 		// TODO linux and windows
-		reg_key_vid()
+		ui.reg_key_vid()
 	}
 	w.onkeydown(key_down)
 	w.onchar(on_char)
