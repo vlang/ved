@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	SESSION_PATH = os.home_dir() + '/.vppsession' // TODO rename consts
-	TIMER_PATH   = os.home_dir() + '/.vpptimer'
+	SESSION_PATH = os.home_dir() + '/.vid/session' // TODO rename consts
+	TIMER_PATH   = os.home_dir() + '/.vid/timer'
+	tasks_path   = os.home_dir() + '/.vid/tasks'
 	DefaultDir   = os.home_dir() + '/code'
 )
 
@@ -92,7 +93,7 @@ mut:
 	chunks           []Chunk
 	is_building      bool
 	//timer            *Timer
-	start_unix       int
+	task_start_unix  int
 	cur_task         string
 	words            []string
 	file_y_pos       map[string]int
@@ -115,6 +116,9 @@ fn main() {
 	if '-h' in os.args || '--help' in os.args {
 		println(HelpText)
 		return
+	}
+	if !os.file_exists(os.home_dir() + '/.vid') {
+		os.mkdir(os.home_dir() + '/.vid')
 	}
 	glfw.init()
 	mut nr_splits := 3
@@ -312,11 +316,13 @@ fn (vid mut Vid) draw() {
 	vid.ft.draw_text(vid.win_width - 50, 1, now.hhmm(), vid.cfg.file_name_cfg)
 	// vid.vg.draw_text(vid.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
+	/*
 	if vid.start_unix > 0 {
 		minutes := '1m' //vid.timer.minutes()
 		vid.ft.draw_text(vid.win_width - 300, 1, '${minutes}m' !,
 			vid.cfg.file_name_cfg)
 	}
+	*/
 	if vid.cur_task != '' {
 		// Draw current task
 		task_text_width := vid.cur_task.len * vid.char_width
@@ -325,7 +331,7 @@ fn (vid mut Vid) draw() {
 		vid.ft.draw_text(task_x, 1, vid.cur_task, vid.cfg.file_name_cfg)
 		// Draw current task time
 		task_time_x := (vid.nr_splits - 1) * split_width - 50
-		vid.ft.draw_text(task_time_x, 1, '{vid.task_minutes()}m',
+		vid.ft.draw_text(task_time_x, 1, '${vid.task_minutes()}m',
 			vid.cfg.file_name_cfg)
 	}
 	// Splits
@@ -640,8 +646,9 @@ fn (vid mut Vid) key_query(key int, super bool) {
 			vid.view.open_file(vid.query)
 		}
 		else if vid.query_type == TASK {
-			//vid.timer.insert_task()
+			vid.insert_task()
 			vid.cur_task = vid.query
+			vid.task_start_unix = time.now().uni
 			//vid.save_timer()
 		}
 		else if vid.query_type == GREP {
@@ -1642,6 +1649,27 @@ fn (vid mut Vid) handle_segfault() {
 	# sigaction(SIGSEGV, &sa, 0);
 	*/
 }
+
+fn (vid &Vid) task_minutes() int {
+	now := time.now()
+	mut seconds := now.uni - vid.task_start_unix
+	if vid.task_start_unix == 0 {
+		seconds = 0
+	}
+	return seconds / 60
+}
+
+fn (vid &Vid) insert_task() {
+	if vid.cur_task == '' {
+		return
+	}
+	f := os.open_append(tasks_path) or { panic(err) }
+	f.writeln(vid.cur_task + ' ' + vid.task_minutes().str() + 'm (' +
+		time.unix(vid.task_start_unix).format() + ' - ' +
+		time.now().format() + ')')
+	f.close()
+}
+
 
 const (
 	HelpText = '
