@@ -11,20 +11,17 @@ import (
 	freetype
 	glfw
 	os
-	//ospath
 	glm
 	time
 	rand
-	//gx
 	ui
 	//darwin
 )
 
 const (
-	SESSION_PATH = os.home_dir() + '/.vid/session' // TODO rename consts
-	TIMER_PATH   = os.home_dir() + '/.vid/timer'
+	session_path = os.home_dir() + '/.vid/session'
+	timer_path   = os.home_dir() + '/.vid/timer'
 	tasks_path   = os.home_dir() + '/.vid/tasks'
-	DefaultDir   = os.home_dir() + '/code'
 )
 
 // TODO enum
@@ -162,7 +159,6 @@ fn main() {
 	keys := 'pub struct interface in default sizeof assert enum import go return module package '+
 		 'fn if for break continue range mut type const else switch case true else for false use'
 	vid.keys = keys.split(' ')
-	//println(vid.keys)
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
 		height: size.height
@@ -196,21 +192,29 @@ fn main() {
 	cur_dir := os.getwd()
 	// Open a single text file
 	if os.args.len == 2 && !os.is_dir(os.args[1]) && !os.args[1].starts_with('-') {
-		if !os.file_exists(os.args[1]) {
-			path := os.args[1]
+		path := os.args[1]
+		if !os.file_exists(path) {
 			println('file "$path" does not exist')
 			exit(1)
 		}
-		vid.add_workspace(cur_dir)
+		mut workspace := os.dir(path)
+		vid.add_workspace(workspace)
 		vid.open_workspace(0)
-		vid.view.open_file(os.args[1])
+		vid.view.open_file(path)
 	} else {
 		for i, arg in os.args {
 			if i == 0 {
 				continue
 			}
-			if !arg.starts_with('-') {
+			if arg.starts_with('-') {
+				continue
+			}
+			// relative path
+			if !arg.starts_with('/') {
 				vid.add_workspace(cur_dir + '/' + arg)
+			} else {
+				// absolute path
+				vid.add_workspace(arg)
 			}
 		}
 		if vid.workspaces.len == 0 {
@@ -649,7 +653,7 @@ fn (vid mut Vid) key_query(key int, super bool) {
 			vid.insert_task()
 			vid.cur_task = vid.query
 			vid.task_start_unix = time.now().uni
-			//vid.save_timer()
+			vid.save_timer()
 		}
 		else if vid.query_type == GREP {
 			// Key down was pressed after typing, now pressing enter opens the file
@@ -1250,10 +1254,19 @@ fn (vid mut Vid) open_workspace(idx int) {
 }
 
 fn (vid mut Vid) add_workspace(path string) {
+	println('add_workspace("$path")')
 	// if ! os.file_exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
-	vid.workspaces << path
+	mut workspace := if path == '.' {
+		os.getwd()
+	} else {
+		path
+	}
+	if workspace.ends_with('/.') {
+		workspace = workspace.left(workspace.len - 2)
+	}
+	vid.workspaces << workspace
 	for i := 0; i < vid.nr_splits; i++ {
 		vid.views << vid.new_view()
 	}
@@ -1275,7 +1288,7 @@ fn (vid &Vid) move_to_line(n int) {
 
 fn (vid &Vid) save_session() {
 	println('saving session...')
-	f := os.create(SESSION_PATH) or { panic('fail') }
+	f := os.create(session_path) or { panic('fail') }
 	for view in vid.views {
 		// if view.path == '' {
 		// continue
@@ -1294,19 +1307,19 @@ fn toi(s string) int {
 }
 
 fn (vid &Vid) save_timer() {
-/*
-	f := os.create(TIMER_PATH) or { return }
-	f.writeln('task=$vid.timer.cur_task')
-	f.writeln('task_start=$vid.timer.task_start_unix')
-	f.writeln('timer_typ=$vid.timer.cur_type')
+	f := os.create(timer_path) or { return }
+	f.writeln('task=$vid.cur_task')
+	f.writeln('task_start=$vid.task_start_unix')
+	//f.writeln('timer_typ=$vid.timer.cur_type')
+	/*
 	if vid.timer.started {
 		f.writeln('timer_start=$vid.timer.start_unix')
 	}
 	else {
 		f.writeln('timer_start=0')
 	}
+	*/
 	f.close()
-*/
 }
 
 fn (vid mut Vid) load_timer() {
@@ -1314,11 +1327,8 @@ fn (vid mut Vid) load_timer() {
 	// task_start=1223212221
 	// timer_typ=7
 	// timer_start=12321321
-/*
-	lines := os.read_lines(TIMER_PATH)
-	if lines.len == 0 {
-		return
-	}
+	lines := os.read_lines(timer_path) //or { return }
+	if lines.len == 0 { return }
 	println(lines)
 	mut vals := []string
 	for line in lines {
@@ -1334,17 +1344,16 @@ fn (vid mut Vid) load_timer() {
 	// mut task := lines[0]
 	println('vals=')
 	println(vals)
-	vid.timer.cur_task = vals[0]
-	vid.timer.task_start_unix = toi(vals[1])
-	vid.timer.cur_type = toi(vals[2])
-	vid.timer.start_unix = toi(vals[3])
-	vid.timer.started = vid.timer.start_unix != 0
-*/
+	vid.cur_task = vals[0]
+	vid.task_start_unix = toi(vals[1])
+	//vid.timer.cur_type = toi(vals[2])
+	//vid.timer.start_unix = toi(vals[3])
+	//vid.timer.started = vid.timer.start_unix != 0
 }
 
 fn (vid mut Vid) load_session() {
-	println('load session "$SESSION_PATH"')
-	paths := os.read_lines(SESSION_PATH)
+	println('load session "$session_path"')
+	paths := os.read_lines(session_path)
 	println(paths)
 	vid.load_views(paths)
 }
@@ -1527,15 +1536,16 @@ fn (vid mut Vid) go_to_error(line string) {
 	//if !line.contains('panic:') {
 		//return
 	//}
-	line = line.replace('panic: ', '')
-	pos := line.index(':')
+	//line = line.replace('panic: ', '')
+	pos := line.index('.v:')
 	if pos == -1 {
 		println('no 2 :')
 		return
 	}
 	path := line.left(pos)
-	filename := path.all_after('/')
-	line_nr := line.right(pos + 1)
+	filename := path.all_after('/') + '.v'
+	line_nr := line.right(pos + 3)
+	println('path=$path filename=$filename linenr=$line_nr')
 	for i := 0; i < vid.views.len; i++ {
 		mut view := &vid.views[i]
 		if !view.path.contains(filename) {
@@ -1545,15 +1555,15 @@ fn (vid mut Vid) go_to_error(line string) {
 		view.move_to_line(view.error_y)
 		// view.vid.main_wnd.refresh()
 		glfw.post_empty_event()
-		break// Done after the first view with the error
+		return // Done after the first view with the error
 	}
 	// File with the error is not open right now, do it
 	s := os.exec('git -C $vid.workspace ls-files') or { return }
 	mut lines := s.output.split_into_lines()
 	lines.sort_by_len()
-	for _ in lines {
-		if line.contains(filename) {
-			vid.view.open_file(vid.workspace + '/' + line)
+	for git_file in lines {
+		if git_file.contains(filename) {
+			vid.view.open_file(git_file) //vid.workspace + '/' + line)
 			vid.view.error_y = line_nr.int() -1
 			vid.view.move_to_line(vid.view.error_y)
 			glfw.post_empty_event()

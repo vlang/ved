@@ -110,7 +110,7 @@ fn (view mut View) open_file(path string) {
 		view.lines << ''
 	}
 	view.path = path
-	view.short_path = path.replace(DefaultDir, '')
+	view.short_path = path.replace(view.vid.workspace, '')
 	if view.short_path.starts_with('/') {
 		view.short_path = view.short_path.right(1)
 	}
