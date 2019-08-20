@@ -42,7 +42,7 @@ fn (vid &Vid) typ_to_str() string {
 	case SEARCH:
 		return 'find'
 	case CTRLP:
-		return 'ctrl p'
+		return 'ctrl p (git files)'
 	case OPEN:
 		return 'open'
 	case OPEN_WORKSPACE:
@@ -65,7 +65,7 @@ const (
 )
 
 // Search, commit, open, ctrl p
-fn (vid &Vid) draw_query() {
+fn (vid mut Vid) draw_query() {
 	// println('DRAW Q type=$vid.query_type')
 	mut width := QueryWidth
 	mut height := 360
@@ -100,7 +100,7 @@ fn (vid &Vid) draw_query() {
 	}
 }
 
-fn (vid &Vid) draw_ctrlp_files(x, y int) {
+fn (vid mut Vid) draw_ctrlp_files(x, y int) {
 	mut j := 0
 	for _file in vid.all_git_files {
 		if j == 10 {
@@ -116,7 +116,7 @@ fn (vid &Vid) draw_ctrlp_files(x, y int) {
 	}
 }
 
-fn (vid &Vid) draw_top_tasks(x, y int) {
+fn (vid mut Vid) draw_top_tasks(x, y int) {
 	mut j := 0
 	q := vid.query.to_lower()
 	for _task in vid.top_tasks {
@@ -133,7 +133,7 @@ fn (vid &Vid) draw_top_tasks(x, y int) {
 	}
 }
 
-fn (vid &Vid) draw_git_grep(x, y int) {
+fn (vid mut Vid) draw_git_grep(x, y int) {
 	for i, line in vid.gg_lines {
 		if i == MaxGrepLines {
 			break

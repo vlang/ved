@@ -448,7 +448,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		return
 	}
 	// vid.chunks = []Chunk{}
-	vid.chunks.len = 0
+	vid.chunks.len = 0 // TODO V should not allow this
 	for i := 0; i < line.len; i++ {
 		start := i
 		// Comment // #
@@ -550,7 +550,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 	// pos := wnd.get_cursor_pos()
 	// println('CLICK $pos.x $pos.y')
 	// mut ctx := &Vid(wnd.get_user_ptr())
-	// # printf("mouse click %p\n", glfw__Window_get_user_ptr(&wnd));
+	//  printf("mouse click %p\n", glfw__Window_get_user_ptr(&wnd));
 	// Mouse coords to x,y
 	// vid.view.y = pos.y / line_height - 1
 	// vid.view.x = (pos.x - vid.view.padding_left) / char_width - 1
@@ -561,8 +561,8 @@ fn key_down(wnd *glfw.Window, key int, code int, action, mods int) {
 	if action != 2 && action != 1 {
 		return
 	}
-	// # printf("glfw vi.v key down key=%d key_char=%c code=%d action=%d mods=%d\n",
-	// # key,key, code, action, mods);
+	//  printf("glfw vi.v key down key=%d key_char=%c code=%d action=%d mods=%d\n",
+	//  key,key, code, action, mods);
 	// single super
 	if key == glfw.KEY_LEFT_SUPER {
 		return
@@ -1414,8 +1414,7 @@ fn (vid &Vid) get_git_diff_full() string {
 
 fn (vid &Vid) open_blog() {
 	now := time.now()
-	dir := 'blog'
-	path := '$dir/$now.year/${now.month:02d}/${now.day:02d}'
+	path := os.home_dir() + '/code/blog/$now.year/${now.month:02d}/${now.day:02d}'
 	if !os.file_exists(path) {
 		os.system('touch $path')
 	}
