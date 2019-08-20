@@ -1,6 +1,7 @@
 # Vid - small and fast text editor written in V
 
-[![Build Status](https://travis-ci.org/vlang/vid.svg?branch=master)](https://travis-ci.org/vlang/vid)
+[![Build Status](https://travis-ci.org/vlang/vid.svg?branch=master)](https://travis-ci.org/vlang/vid) 
+<img src='https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Fvlang%2Fpledges&style=for-the-badge' height='20'>
 
 
 <img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
@@ -130,6 +131,7 @@ y d p J
 / * n
 gg G
 x r
+C-n (autocomplete)
 ```
 
 
@@ -137,6 +139,7 @@ x r
 Many bindings are missing, and the design is not scalable. Most of them are hard-coded, so there needs to be extra logic for handling `db`, `cb` etc. This has to be improved.
 
 
+### Support the development
 
 You can support the development of Vid and V on Patreon:
 
