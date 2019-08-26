@@ -189,19 +189,27 @@ fn main() {
 	w.onchar(on_char)
 	// Open workspaces or a file
 	println(os.args)
-	cur_dir := os.getwd()
+	mut cur_dir := os.getwd()
+	if cur_dir.ends_with('/vid.app/Contents/Resources') {
+		cur_dir = cur_dir.replace('/vid.app/Contents/Resources', '')
+	}
 	// Open a single text file
-	if os.args.len == 2 && !os.is_dir(os.args[1]) && !os.args[1].starts_with('-') {
+	if os.args.len == 2 {
 		path := os.args[1]
 		if !os.file_exists(path) {
 			println('file "$path" does not exist')
 			exit(1)
 		}
-		mut workspace := os.dir(path)
-		vid.add_workspace(workspace)
-		vid.open_workspace(0)
-		vid.view.open_file(path)
-	} else {
+		println('PATH="$path" cur_dir="$cur_dir"')
+		if !os.is_dir(path) && !path.starts_with('-') {
+			mut workspace := os.dir(path)
+			vid.add_workspace(workspace)
+			vid.open_workspace(0)
+			vid.view.open_file(path)
+		}
+	} 
+	// Open multiple workspaces
+	else {
 		for i, arg in os.args {
 			if i == 0 {
 				continue
@@ -1405,7 +1413,8 @@ fn (vid &Vid) get_git_diff_full() string {
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
 		os.system(
-		'git -C $dir log -n 20 --pretty=format:"%%ad %%s" --simplify-merges --date=format:"%%Y-%%m-%%d %%H:%%M:%%S    "> $dir/out')
+		'git -C $dir log -n 20 --pretty=format:"%ad %s" ' +
+		'--simplify-merges --date=format:"%Y-%m-%d %H:%M:%S    "> $dir/out')
 		last_view.open_file('$dir/out')
 	}
 	last_view.gg()
