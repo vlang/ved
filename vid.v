@@ -156,7 +156,7 @@ fn main() {
 	vid.cfg.init_colors()
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
-	keys := 'pub struct interface in default sizeof assert enum import go return module package '+
+	keys := 'match pub struct interface in default sizeof assert enum import go return module package '+
 		 'fn if for break continue range mut type const else switch case true else for false use'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
