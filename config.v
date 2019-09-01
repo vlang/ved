@@ -76,7 +76,7 @@ fn (config mut Config) set_textsize() {
 }
 
 fn (config mut Config) set_tab() {
-  config.tab_size = 8
+  config.tab_size = 4
   config.tab = int(`\t`)
 }
 
