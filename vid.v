@@ -15,6 +15,7 @@ import (
 	time
 	rand
 	ui
+	strings
 	//darwin
 )
 
@@ -207,7 +208,7 @@ fn main() {
 			vid.open_workspace(0)
 			vid.view.open_file(path)
 		}
-	} 
+	}
 	// Open multiple workspaces
 	else {
 		for i, arg in os.args {
@@ -1677,14 +1678,23 @@ fn (vid &Vid) task_minutes() int {
 	return seconds / 60
 }
 
+const (
+	max_task_len = 40
+)
+
 fn (vid &Vid) insert_task() {
-	if vid.cur_task == '' {
+	if vid.cur_task == '' || vid.task_minutes() == 0 {
 		return
 	}
 	f := os.open_append(tasks_path) or { panic(err) }
-	f.writeln(vid.cur_task + ' ' + vid.task_minutes().str() + 'm (' +
-		time.unix(vid.task_start_unix).format() + ' - ' +
-		time.now().format() + ')')
+	task := vid.cur_task.limit(max_task_len) + strings.repeat(` `,
+		max_task_len - vid.cur_task.len)
+	mins := vid.task_minutes().str() + 'm'
+	mins_pad := strings.repeat(` `,		4 - mins.len)
+	f.writeln('| $task | $mins $mins_pad | ' +
+		time.unix(vid.task_start_unix + 3600 * 3).format() + ' | ' +
+		time.now().hhmm() + ' |')
+	f.writeln('|-----------------------------------------------------------------------------|')
 	f.close()
 }
 
