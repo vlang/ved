@@ -175,7 +175,14 @@ fn (vid mut Vid) ctrlp_open() {
 fn (vid mut Vid) git_grep() {
 	vid.gg_pos = -1
 	s := os.exec('git -C "$vid.workspace" grep -n "$vid.search_query"') or { return }
-	vid.gg_lines = s.output.split_into_lines()
+	lines := s.output.split_into_lines()
+	vid.gg_lines = []string
+	for line in lines {
+		if line.contains('thirdparty/') {
+			continue
+		}
+		vid.gg_lines << line
+	}
 }
 
 fn (vid &Vid) search(goback bool) {
