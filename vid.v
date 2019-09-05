@@ -566,7 +566,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 //}
 
 // fn key_down(wnd * ui.Window, c char, mods int, code int) {
-fn key_down(wnd *glfw.Window, key int, code int, action, mods int) {
+fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 	if action != 2 && action != 1 {
 		return
 	}
@@ -600,7 +600,7 @@ fn key_down(wnd *glfw.Window, key int, code int, action, mods int) {
 	}
 }
 
-fn on_char(wnd *glfw.Window, code u32, mods int) {
+fn on_char(wnd &glfw.Window, code u32, mods int) {
 	mut vid := &Vid(glfw.get_window_user_pointer(wnd))
 	mode := vid.mode
 	if vid.just_switched {
@@ -1433,7 +1433,7 @@ fn (vid &Vid) open_blog() {
 	last_view.G()
 }
 
-fn (vid &Vid) get_last_view() *View {
+fn (vid &Vid) get_last_view() &View {
 	pos := (vid.workspace_idx + 1) * vid.splits_per_workspace - 1
 	return &vid.views[pos]
 }

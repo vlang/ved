@@ -458,6 +458,7 @@ fn (view mut View) enter() {
 		// {} insertion
 		if line.ends_with('{ ') {
 			view.o()
+			view.x--
 			view.insert_text('}')
 			view.y--
 			view.o()
