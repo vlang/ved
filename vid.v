@@ -1467,6 +1467,7 @@ fn (vid mut Vid) build_app(extra string) {
 		//panic('ff')
 		//return
 	//}
+	os.write_file('$dir/out', 'Building...')
 	last_view.open_file('$dir/out')
 	out := os.exec('sh $dir/build$extra') or {
 		return
