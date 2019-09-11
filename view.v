@@ -98,7 +98,7 @@ fn (view mut View) open_file(path string) {
 				// if clean_word == '' {
 				// continue
 				// }
-				if !vid.words.contains(word) {
+				if !(word in vid.words) {
 					vid.words << word
 				}
 			}

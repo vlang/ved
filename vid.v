@@ -501,7 +501,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		}
 		word := line.substr(start, i)
 		// println('word="$word"')
-		if vid.keys.contains(word) {
+		if word in vid.keys {
 			// println('$word is key')
 			vid.add_chunk(KEY, start, i)
 			// println('adding key. len=$vid.chunks.len')
