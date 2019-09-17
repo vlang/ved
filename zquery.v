@@ -25,7 +25,7 @@ fn (vid mut Vid) load_git_tree() {
 	vid.all_git_files.sort_by_len()
 }
 
-fn (vid mut Vid) load_all_tasks() {
+fn (vid & Vid) load_all_tasks() {
 /*
 	mut rows := vid.timer.db.q_strings('select distinct name from tasks')
 	for row in rows {

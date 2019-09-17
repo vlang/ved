@@ -1367,7 +1367,8 @@ fn (vid mut Vid) load_session() {
 	vid.load_views(paths)
 }
 
-fn (vid mut Vid) load_views(paths[]string) {
+// TODO mutable
+fn (vid &Vid) load_views(paths[]string) {
 	for i := 0; i < paths.len && i < vid.views.len; i++ {
 		// println('loading path')
 		// println(paths[i])
@@ -1380,7 +1381,7 @@ fn (vid mut Vid) load_views(paths[]string) {
 	}
 }
 
-fn (vid mut Vid) get_git_diff() {
+fn (vid & Vid) get_git_diff() {
 	return
 	/*
 	dir := vid.workspace
@@ -1447,10 +1448,9 @@ fn (vid mut Vid) build_app2() {
 }
 
 fn (vid mut Vid) save_changed_files() {
-	for _view in vid.views {
-		mut view := _view
+	for i, view in vid.views {
 		if view.changed {
-			view.save_file()
+			vid.views[i].save_file()
 		}
 	}
 }
@@ -1654,7 +1654,7 @@ fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	exit(1)
 }
 
-fn (vid mut Vid) handle_segfault() {
+fn (vid & Vid) handle_segfault() {
 	$if windows {
 		return
 	}
