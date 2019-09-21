@@ -17,6 +17,7 @@ mut:
   text_size       int
   tab_size        int
   tab             int
+  backspace_go_up bool
   vcolor          gx.Color
   split_color     gx.Color
   bgcolor         gx.Color

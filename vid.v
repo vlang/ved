@@ -735,7 +735,7 @@ fn (vid &Vid) git_commit() {
 fn (vid mut Vid) key_insert(key int, super bool) {
 	switch key {
 	case C.GLFW_KEY_BACKSPACE:
-		vid.view.backspace()
+		vid.view.backspace(vid.cfg.backspace_go_up)
 	case C.GLFW_KEY_ENTER:
 		vid.view.enter()
 	case C.GLFW_KEY_ESCAPE:

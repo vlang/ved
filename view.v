@@ -388,9 +388,9 @@ fn (view mut View) insert_text(s string) {
 	view.changed = true
 }
 
-fn (view mut View) backspace() {
+fn (view mut View) backspace(go_up bool) {
 	if view.x == 0 {
-		if view.y > 0 {
+		if go_up && view.y > 0 {
 			view.x = 0
 			view.y--
 			view.x = view.lines[view.y].len
