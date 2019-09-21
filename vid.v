@@ -157,7 +157,7 @@ fn main() {
 	vid.cfg.init_colors()
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
-	keys := 'match pub struct interface in default sizeof assert enum import go return module package '+
+	keys := 'none match pub struct interface in default sizeof assert enum import go return module package '+
 		 'fn if for break continue range mut type const else switch case true else for false use'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
@@ -486,8 +486,17 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		// String
 		if line[i] == `\'` {
 			i++
-			// 39 == '
 			for i < line.len - 1 && line[i] != `\'` {
+				i++
+			}
+			if i >= line.len {
+				i = line.len - 1
+			}
+			vid.add_chunk(STRING, start, i + 1)
+		}
+		if line[i] == `"` {
+			i++
+			for i < line.len - 1 && line[i] != `"` {
 				i++
 			}
 			if i >= line.len {
