@@ -6,7 +6,6 @@ module main
 
 import (
 	gl
-	gx
 	gg
 	freetype
 	glfw
