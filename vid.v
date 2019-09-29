@@ -5,6 +5,7 @@
 module main
 
 import (
+gx
 	gl
 	gg
 	freetype
