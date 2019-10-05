@@ -35,6 +35,11 @@ macOS:
 brew install glfw freetype
 ```
 
+Windows:
+```
+git clone --depth=1 https://github.com/ubawurinna/freetype-windows-binaries [path to v repo]/thirdparty/freetype/
+```
+
 ### Communities:
 
 Discord (primary community): https://discord.gg/n7c74HM. Join the #vid channel.
