@@ -10,9 +10,7 @@ import (
 	freetype
 	glfw
 	os
-	glm
 	time
-	rand
 	ui
 	strings
 	//darwin
