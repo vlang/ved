@@ -116,7 +116,7 @@ fn main() {
 	if !os.file_exists(os.home_dir() + '/.vid') {
 		os.mkdir(os.home_dir() + '/.vid')
 	}
-	glfw.init()
+	glfw.init_glfw()
 	mut nr_splits := 3
 	is_window := '-window' in os.args
 	if '-two_splits' in os.args {
