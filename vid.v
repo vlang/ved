@@ -454,8 +454,8 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		vid.ft.draw_text(x, y, line.right(5), vid.cfg.red_cfg)
 		return
 	}
-	// vid.chunks = []Chunk{}
-	vid.chunks.len = 0 // TODO V should not allow this
+	vid.chunks = []Chunk
+	//vid.chunks.len = 0 // TODO V should not allow this
 	for i := 0; i < line.len; i++ {
 		start := i
 		// Comment // #
