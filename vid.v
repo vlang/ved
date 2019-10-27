@@ -155,8 +155,8 @@ fn main() {
 	vid.cfg.init_colors()
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
-	keys := 'none match pub struct interface in default sizeof assert enum import go return module package '+
-		 'fn if for break continue range mut type const else switch case true else for false use'
+	keys := 'none match pub struct interface in sizeof assert enum import go return module package '+
+		 'fn if for break continue range mut type const else true else for false use'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
@@ -182,6 +182,7 @@ fn main() {
 	w.set_user_ptr(vid)
 	$if mac {
 		// TODO linux and windows
+		//C.AXUIElementCreateApplication(234)
 		ui.reg_key_vid()
 	}
 	w.onkeydown(key_down)
@@ -537,15 +538,12 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 			vid.ft.draw_text(x + pos * vid.char_width, y, s, vid.cfg.txt_cfg)
 		}
 		// Keyword string etc
-		mut cfg := vid.cfg.txt_cfg
 		typ := chunk.typ
-		switch typ {
-		case KEY:
-			cfg = vid.cfg.key_cfg
-		case STRING:
-			cfg = vid.cfg.string_cfg
-		case COMMENT:
-			cfg = vid.cfg.comment_cfg
+		cfg := match typ {
+			KEY { vid.cfg.key_cfg }
+			STRING { vid.cfg.string_cfg }
+			COMMENT { vid.cfg.comment_cfg }
+			else { vid.cfg.txt_cfg }
 		}
 		s := line.substr(chunk.start, chunk.end)
 		vid.ft.draw_text(x + chunk.start * vid.char_width, y, s, cfg)
@@ -593,15 +591,11 @@ fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 	// Reset error line
 	mut view := vid.view
 	view.error_y = -1
-	switch mode {
-	case NORMAL:
-		vid.key_normal(key, super, shift)
-	case VISUAL:
-		vid.key_visual(key, super, shift)
-	case INSERT:
-		vid.key_insert(key, super)
-	case QUERY:
-		vid.key_query(key, super)
+	match mode {
+		NORMAL { 		vid.key_normal(key, super, shift) }
+		VISUAL { 		vid.key_visual(key, super, shift) }
+		INSERT { 		vid.key_insert(key, super) }
+		QUERY { 		vid.key_query(key, super) }
 	//case TIMER:
 		//vid.timer.key_down(key, super)
 	}
@@ -618,13 +612,13 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 	s := utf32_to_str_no_malloc(code,  buf.data)
 	//s := utf32_to_str(code)
 	//println('s="$s" s0="$s0"')
-	switch mode {
-	case INSERT:
-		vid.char_insert(s)
-	case QUERY:
+	match mode {
+	INSERT { vid.char_insert(s) }
+	QUERY {
 		vid.gg_pos = -1
 		vid.char_query(s)
-	case NORMAL:
+	}
+	NORMAL {
 		// on char on normal only for replace with r
 		if !vid.just_switched && vid.prev_key == C.GLFW_KEY_R {
 			if s != 'r' {
@@ -636,11 +630,12 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 			return
 		}
 	}
+	}
 }
 
 fn (vid mut Vid) key_query(key int, super bool) {
-	switch key {
-	case C.GLFW_KEY_BACKSPACE:
+	match key {
+	C.GLFW_KEY_BACKSPACE {
 		vid.gg_pos = -1
 		if vid.query_type != SEARCH && vid.query_type != GREP {
 			if vid.query.len == 0 {
@@ -655,7 +650,8 @@ fn (vid mut Vid) key_query(key int, super bool) {
 			vid.search_query = vid.search_query.left(vid.search_query.len - 1)
 		}
 		return
-	case C.GLFW_KEY_ENTER:
+	}
+	C.GLFW_KEY_ENTER {
 		if vid.query_type == CTRLP {
 			vid.ctrlp_open()
 		}
@@ -693,29 +689,35 @@ fn (vid mut Vid) key_query(key int, super bool) {
 		}
 		vid.mode = NORMAL
 		return
-	case C.GLFW_KEY_ESCAPE:
+	}
+	C.GLFW_KEY_ESCAPE {
 		vid.mode = NORMAL
 		return
-	case C.GLFW_KEY_DOWN:
+	}
+	C.GLFW_KEY_DOWN {
 		if vid.mode == QUERY && vid.query_type == GREP {
 			vid.gg_pos++
 		}
-	case C.GLFW_KEY_TAB:// TODO COPY PASTA
+	}
+	C.GLFW_KEY_TAB {// TODO COPY PASTA
 		if vid.mode == QUERY && vid.query_type == GREP {
 			vid.gg_pos++
 		}
-	case C.GLFW_KEY_UP:
+	}
+	C.GLFW_KEY_UP {
 		if vid.mode == QUERY && vid.query_type == GREP {
 			vid.gg_pos--
 			if vid.gg_pos < 0 {
 				vid.gg_pos = 0
 			}
 		}
-	case C.GLFW_KEY_V:
+		}
+	C.GLFW_KEY_V {
 		if super {
 			clip := vid.main_wnd.get_clipboard_text()
 			vid.query = vid.query + clip
 		}
+	}
 	}
 }
 
@@ -731,25 +733,32 @@ fn (vid &Vid) git_commit() {
 }
 
 fn (vid mut Vid) key_insert(key int, super bool) {
-	switch key {
-	case C.GLFW_KEY_BACKSPACE:
+	match key {
+	C.GLFW_KEY_BACKSPACE {
 		vid.view.backspace(vid.cfg.backspace_go_up)
-	case C.GLFW_KEY_ENTER:
+	}
+	C.GLFW_KEY_ENTER {
 		vid.view.enter()
-	case C.GLFW_KEY_ESCAPE:
+	}
+	C.GLFW_KEY_ESCAPE {
 		vid.mode = NORMAL
-	case C.GLFW_KEY_TAB:
+	}
+	C.GLFW_KEY_TAB {
 		vid.view.insert_text('\t')
-	case C.GLFW_KEY_LEFT:
+	}
+	C.GLFW_KEY_LEFT {
 		if vid.view.x > 0 {
 			vid.view.x--
 		}
-	case C.GLFW_KEY_RIGHT:
+	}
+	C.GLFW_KEY_RIGHT {
 		vid.view.l()
-	case C.GLFW_KEY_UP:
+	}
+	C.GLFW_KEY_UP {
 		vid.view.k()
 		vid.refresh = false
-	case C.GLFW_KEY_DOWN:
+	}
+	C.GLFW_KEY_DOWN {
 		vid.view.j()
 		vid.refresh = false
 	}
@@ -778,6 +787,7 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 		clip := vid.main_wnd.get_clipboard_text()
 		vid.view.insert_text(clip)
 		return
+	}
 	}
 }
 
@@ -1207,28 +1217,36 @@ fn (vid mut Vid) exit_visual() {
 
 fn (vid mut Vid) dot() {
 	prev_cmd := vid.prev_cmd
-	switch prev_cmd {
-	case 'dd':
+	match prev_cmd {
+	'dd' {
 		vid.view.dd()
-	case 'dw':
+	}
+	'dw' {
 		vid.view.dw()
-	case 'cw':
+		}
+	'cw' {
 		vid.view.dw()
 		// println('dot cw prev i=$vid.prev_insert')
 		vid.view.insert_text(vid.prev_insert)
 		vid.prev_cmd = 'cw'
-	case 'de':
+		}
+	'de' {
 		vid.view.de()
-	case 'J':
+		}
+	'J'{
 		vid.view.join()
-	case 'I':
+		}
+	'I' {
 		vid.view.I()
 		vid.view.insert_text(vid.prev_insert)
-	case 'A':
+		}
+	'A' {
 		vid.view.A()
 		vid.view.insert_text(vid.prev_insert)
-	case 'r':
+		}
+	 'r' {
 		vid.view.r(vid.prev_insert)
+		}
 	}
 }
 
