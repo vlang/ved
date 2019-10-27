@@ -822,16 +822,17 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	if vid.prev_key == C.GLFW_KEY_R {
 		return
 	}
-	switch key {
+	match key {
 		// Full screen => window
-	case C.GLFW_KEY_ENTER:
+	C.GLFW_KEY_ENTER {
 		if false && super {
 			vid.nr_splits = 1
 			vid.win_width = 600
 			vid.win_height = 500
 			glfw.post_empty_event()
 		}
-	case C.GLFW_KEY_PERIOD:
+	}
+	C.GLFW_KEY_PERIOD {
 		if shift {
 			// >
 			vid.view.shift_right()
@@ -839,12 +840,14 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			vid.dot()
 		}
-	case C.GLFW_KEY_COMMA:
+	}
+	C.GLFW_KEY_COMMA {
 		if shift {
 			// <
 			vid.view.shift_left()
 		}
-	case C.GLFW_KEY_SLASH:
+	}
+	C.GLFW_KEY_SLASH {
 		if shift {
 			vid.search_query = ''
 			vid.mode = QUERY
@@ -857,7 +860,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.just_switched = true
 			vid.query_type = SEARCH
 		}
-	case C.GLFW_KEY_F5:
+	}
+	C.GLFW_KEY_F5 {
 		vid.run_file()
 		// vid.char_width -= 1
 		// vid.line_height -= 1
@@ -869,13 +873,16 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		// vid.font_size += 1
 		// vid.page_height = WIN_HEIGHT / vid.line_height - 1
 		// vid.vg = gg.new_context(WIN_WIDTH, WIN_HEIGHT, vid.font_size)
-	case C.GLFW_KEY_MINUS:
+	}
+	C.GLFW_KEY_MINUS {
 		if super {
 			vid.get_git_diff_full()
 		}
-	case C.GLFW_KEY_EQUAL:
+	}
+	C.GLFW_KEY_EQUAL {
 		vid.open_blog()
-	case C.GLFW_KEY_A:
+	}
+	C.GLFW_KEY_A {
 		if super {
 			vid.query = ''
 			vid.mode = QUERY
@@ -886,7 +893,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.prev_cmd = 'A'
 			vid.set_insert()
 		}
-	case C.GLFW_KEY_C:
+	}
+	C.GLFW_KEY_C {
 		if super {
 			vid.query = ''
 			vid.mode = QUERY
@@ -896,7 +904,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.prev_insert = vid.view.C()
 			vid.set_insert()
 		}
-	case C.GLFW_KEY_D:
+	}
+	C.GLFW_KEY_D {
 		if super {
 			vid.prev_split()
 			return
@@ -908,7 +917,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else if vid.prev_key == C.GLFW_KEY_G {
 			vid.go_to_def()
 		}
-	case C.GLFW_KEY_E:
+	}
+	C.GLFW_KEY_E {
 		if super {
 			vid.next_split()
 			return
@@ -919,7 +929,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else if vid.prev_key == C.GLFW_KEY_D {
 			view.de()
 		}
-	case C.GLFW_KEY_I:
+	}
+	C.GLFW_KEY_I {
 		if shift {
 			vid.view.I()
 			vid.set_insert()
@@ -928,7 +939,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			vid.set_insert()
 		}
-	case C.GLFW_KEY_J:
+	}
+	C.GLFW_KEY_J {
 		if shift {
 			vid.view.join()
 		}
@@ -943,12 +955,14 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.refresh = false
 			// }
 		}
-	case C.GLFW_KEY_K:
+	}
+	C.GLFW_KEY_K {
 		vid.view.k()
 		// if !vid.is_building {
 		vid.refresh = false
 		// }
-	case C.GLFW_KEY_N:
+	}
+	C.GLFW_KEY_N {
 		if shift {
 			// backwards search
 			vid.search(true)
@@ -956,7 +970,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			vid.search(false)
 		}
-	case C.GLFW_KEY_O:
+	}
+	C.GLFW_KEY_O {
 		if shift && super {
 			println('RRRR')
 			vid.mode = QUERY
@@ -973,7 +988,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.view.o()
 			vid.set_insert()
 		}
-	case C.GLFW_KEY_P:
+	}
+	C.GLFW_KEY_P {
 		if super {
 			vid.mode = QUERY
 			vid.query_type = CTRLP
@@ -983,14 +999,16 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			view.p()
 		}
-	case C.GLFW_KEY_R:
+	}
+	C.GLFW_KEY_R {
 		if super {
 			view.reopen()
 		}
 		else {
 			vid.prev_key = C.GLFW_KEY_R
 		}
-	case C.GLFW_KEY_T:
+	}
+	C.GLFW_KEY_T {
 		if super {
 			//vid.timer.get_data(false)
 			//vid.mode = TIMER
@@ -999,14 +1017,16 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			// if vid.prev_key == C.GLFW_KEY_T {
 			view.tt()
 		}
-	case C.GLFW_KEY_H:
+	}
+	C.GLFW_KEY_H {
 		if shift {
 			vid.view.H()
 		}
 		else if vid.view.x > 0 {
 			vid.view.x--
 		}
-	case C.GLFW_KEY_L:
+	}
+	C.GLFW_KEY_L {
 		if super {
 			vid.view.save_file()
 		}
@@ -1016,10 +1036,12 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			vid.view.l()
 		}
-	case C.GLFW_KEY_F6:
+	}
+	C.GLFW_KEY_F6 {
 		if super {
 		}
-	case C.GLFW_KEY_G:
+	}
+	C.GLFW_KEY_G {
 		// go to end
 		if shift && !super {
 			vid.view.G()
@@ -1034,11 +1056,13 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 				vid.view.gg()
 			}
 		}
-	case C.GLFW_KEY_F:
+	}
+	C.GLFW_KEY_F {
 		if super {
 			vid.view.F()
 		}
-	case C.GLFW_KEY_B:
+	}
+	C.GLFW_KEY_B {
 		if super {
 			// force crash
 			// # void*a = 0; int b = *(int*)a;
@@ -1047,15 +1071,18 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			vid.view.b()
 		}
-	case C.GLFW_KEY_U:
+	}
+	C.GLFW_KEY_U {
 		if super {
 			vid.key_u()
 		}
-	case C.GLFW_KEY_V:
+	}
+	C.GLFW_KEY_V {
 		vid.mode = VISUAL
 		view.vstart = view.y
 		view.vend = view.y
-	case C.GLFW_KEY_W:
+	}
+	C.GLFW_KEY_W {
 		if vid.prev_key == C.GLFW_KEY_C {
 			view.cw()
 		}
@@ -1065,44 +1092,55 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		else {
 			view.w()
 		}
-	case C.GLFW_KEY_X:
+	}
+	C.GLFW_KEY_X {
 		vid.view.delete_char()
-	case C.GLFW_KEY_Y:
+	}
+	C.GLFW_KEY_Y {
 		if vid.prev_key == C.GLFW_KEY_Y {
 			vid.view.yy()
 		}
 		if super {
 			go vid.build_app2()
 		}
-	case C.GLFW_KEY_Z:
+	}
+	C.GLFW_KEY_Z {
 		if vid.prev_key == C.GLFW_KEY_Z {
 			vid.view.zz()
 		}
 		// Next workspace
-	case C.GLFW_KEY_RIGHT_BRACKET:
+	}
+	C.GLFW_KEY_RIGHT_BRACKET {
 		if super {
 			vid.open_workspace(vid.workspace_idx + 1)
 		}
-	case C.GLFW_KEY_LEFT_BRACKET:
+	}
+	C.GLFW_KEY_LEFT_BRACKET {
 		if super {
 			vid.open_workspace(vid.workspace_idx - 1)
 		}
-	case C.GLFW_KEY_8:
+	}
+	C.GLFW_KEY_8 {
 		if shift {
 			vid.star()
 		}
-	case C.GLFW_KEY_LEFT:
+	}
+	C.GLFW_KEY_LEFT {
 		if vid.view.x > 0 {
 			vid.view.x--
 		}
-	case C.GLFW_KEY_RIGHT:
+	}
+	C.GLFW_KEY_RIGHT {
 		vid.view.l()
-	case C.GLFW_KEY_UP:
+	}
+	C.GLFW_KEY_UP {
 		vid.view.k()
 		vid.refresh = false
-	case C.GLFW_KEY_DOWN:
+	}
+	C.GLFW_KEY_DOWN {
 		vid.view.j()
 		vid.refresh = false
+	}
 	}
 	if key != C.GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
@@ -1157,10 +1195,11 @@ fn (vid mut Vid) char_query(s string) {
 
 fn (vid mut Vid) key_visual(key int, super, shift bool) {
 	mut view := vid.view
-	switch key {
-	case glfw.KEY_ESCAPE:
+	match key {
+	glfw.KEY_ESCAPE {
 		vid.exit_visual()
-	case C.GLFW_KEY_J:
+	}
+	C.GLFW_KEY_J {
 		view.vend++
 		if view.vend >= view.lines.len {
 			view.vend = view.lines.len - 1
@@ -1169,28 +1208,35 @@ fn (vid mut Vid) key_visual(key int, super, shift bool) {
 		if view.vend >= view.from + view.page_height {
 			view.from++
 		}
-	case C.GLFW_KEY_K:
+	}
+	C.GLFW_KEY_K {
 		view.vend--
-	case C.GLFW_KEY_Y:
+	}
+	C.GLFW_KEY_Y {
 		view.y_visual()
 		vid.mode = NORMAL
-	case C.GLFW_KEY_D:
+	}
+	C.GLFW_KEY_D {
 		view.d_visual()
 		vid.mode = NORMAL
-	case C.GLFW_KEY_Q:
+	}
+	C.GLFW_KEY_Q {
 		if vid.prev_key == C.GLFW_KEY_G {
 			vid.view.gq()
 		}
-	case C.GLFW_KEY_PERIOD:
+	}
+	C.GLFW_KEY_PERIOD {
 		if shift {
 			// >
 			vid.view.shift_right()
 		}
-	case C.GLFW_KEY_COMMA:
+	}
+	C.GLFW_KEY_COMMA {
 		if shift {
 			// >
 			vid.view.shift_left()
 		}
+	}
 	}
 	if key != C.GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
