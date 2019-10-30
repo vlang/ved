@@ -38,22 +38,29 @@ fn (vid & Vid) load_all_tasks() {
 
 fn (vid &Vid) typ_to_str() string {
 	typ := vid.query_type
-	switch typ {
-	case SEARCH:
+	match typ {
+	SEARCH {
 		return 'find'
-	case CTRLP:
+	}
+	CTRLP {
 		return 'ctrl p (git files)'
-	case OPEN:
+	}
+	OPEN {
 		return 'open'
-	case OPEN_WORKSPACE:
+	}
+	OPEN_WORKSPACE {
 		return 'open workspace'
-	case CAM:
+	}
+	CAM {
 		return 'git commit -am'
-	case CTRLJ:
+	}
+	CTRLJ {
 		return 'ctrl j'
-	case TASK:
+	}
+	TASK {
 		return 'new task/activity'
-	case GREP: return 'git grep'
+	}
+	GREP { return 'git grep'	}
 	}
 	return ''
 }

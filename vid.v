@@ -156,7 +156,7 @@ fn main() {
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
 	keys := 'none match pub struct interface in sizeof assert enum import go return module package '+
-		 'fn if for break continue range mut type const else true else for false use'
+		 'fn if for break continue mut type const else true else for false use'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
@@ -762,6 +762,7 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 		vid.view.j()
 		vid.refresh = false
 	}
+	}
 	if (key == C.GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
 		vid.view.save_file()
 		vid.mode = NORMAL
@@ -787,7 +788,6 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 		clip := vid.main_wnd.get_clipboard_text()
 		vid.view.insert_text(clip)
 		return
-	}
 	}
 }
 
