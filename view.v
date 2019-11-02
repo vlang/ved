@@ -425,8 +425,6 @@ fn (view mut View) p() {
 
 fn (view mut View) o() {
 	view.y++
-	lines := view.lines
-	view.lines = lines
 	// Insert the same amount of spaces/tabs as in prev line
 	prev_line := view.lines[view.y - 1]
 	mut nr_spaces := 0
