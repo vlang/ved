@@ -366,7 +366,7 @@ fn (view mut View) C() string {
 }
 
 fn (view mut View) insert_text(s string) {
-	mut line := view.line()
+	line := view.line()
 	if line.len == 0 {
 		view.set_line('$s ')
 	}
@@ -410,10 +410,9 @@ fn (view mut View) backspace(go_up bool) {
 }
 
 fn (view mut View) yy() {
-	mut vid := view.vid
 	mut ylines := []string{}
 	ylines << (view.line())
-	vid.ylines = ylines
+	view.vid.ylines = ylines
 }
 
 fn (view mut View) p() {

@@ -192,7 +192,7 @@ fn (vid mut Vid) git_grep() {
 	}
 }
 
-fn (vid &Vid) search(goback bool) {
+fn (vid mut Vid) search(goback bool) {
 	if vid.search_query == '' {
 		return
 	}

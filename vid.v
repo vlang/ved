@@ -5,7 +5,6 @@
 module main
 
 import (
-gx
 	gl
 	gg
 	freetype
@@ -1149,7 +1148,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 }
 
 // Find current word under cursor
-fn (vid mut Vid) word_under_cursor() string {
+fn (vid &Vid) word_under_cursor() string {
 	line := vid.view.line()
 	// First go left
 	mut start := vid.view.x
@@ -1360,10 +1359,9 @@ fn short_space(workspace string) string {
 	return workspace.right(pos + 1)
 }
 
-fn (vid &Vid) move_to_line(n int) {
-	mut view := vid.view
-	view.from = n
-	view.y = n
+fn (vid mut Vid) move_to_line(n int) {
+	vid.view.from = n
+	vid.view.y = n
 }
 
 fn (vid &Vid) save_session() {
@@ -1438,17 +1436,17 @@ fn (vid mut Vid) load_session() {
 	vid.load_views(paths)
 }
 
-// TODO mutable
-fn (vid &Vid) load_views(paths[]string) {
+fn (vid mut Vid) load_views(paths[]string) {
 	for i := 0; i < paths.len && i < vid.views.len; i++ {
 		// println('loading path')
 		// println(paths[i])
-		mut view := &vid.views[i]
+		//mut view := &vid.views[i]
 		path := paths[i]
 		if path == '' || path.contains('=') {
 			continue
 		}
-		view.open_file(path)
+		//view.open_file(path)
+		vid.views[i].open_file(path)
 	}
 }
 
