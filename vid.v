@@ -87,7 +87,7 @@ mut:
 	keys             []string
 	chunks           []Chunk
 	is_building      bool
-	//timer            *Timer
+	timer            Timer
 	task_start_unix  int
 	cur_task         string
 	words            []string
@@ -133,7 +133,6 @@ fn main() {
 	if size.width < 1500 {
 		nr_splits = 2
 	}
-	//t := glfw.get_time()
 	mut vid := &Vid {
 		win_width: size.width
 		win_height: size.height
@@ -141,7 +140,6 @@ fn main() {
 		splits_per_workspace: nr_splits
 		cur_split: 0
 		mode: 0
-		//timer: timer
 		file_y_pos: map[string]int
 		line_height: 20
 		char_width: 8
@@ -155,7 +153,7 @@ fn main() {
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
 	keys := 'none match pub struct interface in sizeof assert enum import go return module package '+
-		 'fn if for break continue mut type const else true else for false use'
+		 'fn if for break continue unsafe mut type const else true else for false use'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
@@ -177,6 +175,7 @@ fn main() {
 	}
 	vid.vg = gg.new_context(cfg)
 	vid.ft = freetype.new_context(cfg)
+	vid.timer = new_timer(vid.vg, vid.ft)
 	vid.load_all_tasks()
 	w.set_user_ptr(vid)
 	$if mac {
@@ -242,9 +241,9 @@ fn main() {
 			gl.clear_color(vid.cfg.bgcolor.r, vid.cfg.bgcolor.g, vid.cfg.bgcolor.b, 255)
 		}
 		vid.draw()
-		//if vid.mode == TIMER {
-			//timer.draw()
-		//}
+		if vid.mode == TIMER {
+			vid.timer.draw()
+		}
 		w.swap_buffers()
 		glfw.wait_events()
 	}
@@ -595,8 +594,7 @@ fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 		VISUAL { 		vid.key_visual(key, super, shift) }
 		INSERT { 		vid.key_insert(key, super) }
 		QUERY { 		vid.key_query(key, super) }
-	//case TIMER:
-		//vid.timer.key_down(key, super)
+		TIMER { 		vid.timer.key_down(key, super) }
 	}
 }
 
@@ -704,13 +702,14 @@ fn (vid mut Vid) key_query(key int, super bool) {
 		}
 	}
 	C.GLFW_KEY_UP {
+		println('KEY UP')
 		if vid.mode == QUERY && vid.query_type == GREP {
 			vid.gg_pos--
 			if vid.gg_pos < 0 {
 				vid.gg_pos = 0
 			}
 		}
-		}
+	}
 	C.GLFW_KEY_V {
 		if super {
 			clip := vid.main_wnd.get_clipboard_text()
@@ -1010,7 +1009,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	C.GLFW_KEY_T {
 		if super {
 			//vid.timer.get_data(false)
-			//vid.mode = TIMER
+			vid.timer.load_tasks()
+			vid.mode = TIMER
 		}
 		else {
 			// if vid.prev_key == C.GLFW_KEY_T {

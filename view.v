@@ -52,7 +52,7 @@ fn (vid &Vid) new_view() View {
 // `mut res := word.clone()` ==>
 // ['mut' 'res' 'word' 'clone']
 fn get_clean_words(line string) []string {
-	mut res := []string{}
+	mut res := []string
 	mut i := 0
 	for i < line.len {
 		// Skip bad first
@@ -310,7 +310,7 @@ fn (view mut View) dd() {
 		mut vid := view.vid
 		vid.prev_key = -1
 		vid.prev_cmd = 'dd'
-		vid.ylines = []string{}
+		vid.ylines = []string
 		vid.ylines << view.line()
 		view.lines.delete(view.y)
 		view.changed = true
@@ -410,7 +410,7 @@ fn (view mut View) backspace(go_up bool) {
 }
 
 fn (view mut View) yy() {
-	mut ylines := []string{}
+	mut ylines := []string
 	ylines << (view.line())
 	view.vid.ylines = ylines
 }
@@ -512,7 +512,7 @@ fn (view mut View) join() {
 }
 
 fn (v mut View) y_visual() {
-	mut ylines := []string{}
+	mut ylines := []string
 	for i := v.vstart; i <= v.vend; i++ {
 		ylines << v.lines[i]
 	}
