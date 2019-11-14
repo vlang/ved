@@ -310,7 +310,7 @@ fn (view mut View) dd() {
 		mut vid := view.vid
 		vid.prev_key = -1
 		vid.prev_cmd = 'dd'
-		vid.ylines = []string
+		vid.ylines = []
 		vid.ylines << view.line()
 		view.lines.delete(view.y)
 		view.changed = true

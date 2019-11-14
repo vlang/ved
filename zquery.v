@@ -183,7 +183,7 @@ fn (vid mut Vid) git_grep() {
 	vid.gg_pos = -1
 	s := os.exec('git -C "$vid.workspace" grep -n "$vid.search_query"') or { return }
 	lines := s.output.split_into_lines()
-	vid.gg_lines = []string
+	vid.gg_lines = []
 	for line in lines {
 		if line.contains('thirdparty/') {
 			continue
