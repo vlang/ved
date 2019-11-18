@@ -1774,9 +1774,9 @@ const (
 Usage: vid [options] [files]
 
 Options:
-  -h, --help  Display this information.
-  -window     Launch in a window.
-  -dark       Launch in dark mode.
+  -h, --help              Display this information.
+  -window <window-name>   Launch in a window.
+  -dark                   Launch in dark mode.
   -two_splits
 '
 )
