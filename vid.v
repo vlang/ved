@@ -192,7 +192,7 @@ fn main() {
 		cur_dir = cur_dir.replace('/vid.app/Contents/Resources', '')
 	}
 	// Open a single text file
-	if os.args.len == 2 {
+	if os.args.len == 2 && !os.args[1].starts_with('-') {
 		path := os.args[1]
 		if !os.file_exists(path) {
 			println('file "$path" does not exist')
