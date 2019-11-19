@@ -153,7 +153,7 @@ fn main() {
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
 	keys := 'none match pub struct interface in sizeof assert enum import go return module package '+
-		 'fn if for break continue unsafe mut type const else true else for false use'
+		 'fn if for break continue asm unsafe mut type const else true else for false use'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
@@ -448,11 +448,12 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		vid.ft.draw_text(x, y, line.right(5), vid.cfg.green_cfg)
 		return
 	}
-	if line.contains('[31m') &&
+	else if line.contains('[31m') &&
 	line.contains('FAIL') {
 		vid.ft.draw_text(x, y, line.right(5), vid.cfg.red_cfg)
 		return
-	}
+	//} else if line[0] == `-` {
+	}	
 	vid.chunks = []
 	//vid.chunks.len = 0 // TODO V should not allow this
 	for i := 0; i < line.len; i++ {
@@ -1405,7 +1406,7 @@ fn (vid mut Vid) load_timer() {
 	// task_start=1223212221
 	// timer_typ=7
 	// timer_start=12321321
-	lines := os.read_lines(timer_path) //or { return }
+	lines := os.read_lines(timer_path) or { return }
 	if lines.len == 0 { return }
 	println(lines)
 	mut vals := []string
@@ -1431,7 +1432,7 @@ fn (vid mut Vid) load_timer() {
 
 fn (vid mut Vid) load_session() {
 	println('load session "$session_path"')
-	paths := os.read_lines(session_path)
+	paths := os.read_lines(session_path) or { panic(err) }
 	println(paths)
 	vid.load_views(paths)
 }
@@ -1510,6 +1511,14 @@ fn (vid &Vid) get_last_view() &View {
 
 fn (vid mut Vid) build_app1() {
 	vid.build_app('')
+	vid.next_split()
+	println('SDFSDF')
+	
+	glfw.post_empty_event()
+	
+	vid.prev_split()
+	glfw.post_empty_event()
+	vid.refresh = false
 }
 
 fn (vid mut Vid) build_app2() {
@@ -1666,6 +1675,7 @@ fn (vid mut Vid) key_u() {
 		vid.run_file()
 	}
 	else {
+		vid.refresh = true
 		go vid.build_app1()
 		glfw.post_empty_event()
 	}
@@ -1689,7 +1699,7 @@ fn (vid mut Vid) go_to_def() {
 			continue
 		}
 		file = '$vid.workspace/$file'
-		lines := os.read_lines(file)
+		lines := os.read_lines(file) or { panic(err) }
 		// println('trying file $file with $lines.len lines')
 		for j, line in lines {
 			if line.contains(query) {
