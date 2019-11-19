@@ -755,11 +755,11 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 	}
 	C.GLFW_KEY_UP {
 		vid.view.k()
-		vid.refresh = false
+		//vid.refresh = false
 	}
 	C.GLFW_KEY_DOWN {
 		vid.view.j()
-		vid.refresh = false
+		//vid.refresh = false
 	}
 	}
 	if (key == C.GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
@@ -951,14 +951,14 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			// println('J isb=$vid.is_building')
 			vid.view.j()
 			// if !vid.is_building {
-			vid.refresh = false
+			//vid.refresh = false
 			// }
 		}
 	}
 	C.GLFW_KEY_K {
 		vid.view.k()
 		// if !vid.is_building {
-		vid.refresh = false
+		//vid.refresh = false
 		// }
 	}
 	C.GLFW_KEY_N {
@@ -1135,11 +1135,11 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_UP {
 		vid.view.k()
-		vid.refresh = false
+		//vid.refresh = false
 	}
 	C.GLFW_KEY_DOWN {
 		vid.view.j()
-		vid.refresh = false
+		//vid.refresh = false
 	}
 	}
 	if key != C.GLFW_KEY_R {
@@ -1511,14 +1511,14 @@ fn (vid &Vid) get_last_view() &View {
 
 fn (vid mut Vid) build_app1() {
 	vid.build_app('')
-	vid.next_split()
-	println('SDFSDF')
+	//vid.next_split()
+	//println('SDFSDF')
 	
-	glfw.post_empty_event()
+	//glfw.post_empty_event()
 	
-	vid.prev_split()
-	glfw.post_empty_event()
-	vid.refresh = false
+	//vid.prev_split()
+	//glfw.post_empty_event()
+	//vid.refresh = false
 }
 
 fn (vid mut Vid) build_app2() {
