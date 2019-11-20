@@ -73,7 +73,7 @@ mut:
 	all_git_files    []string
 	top_tasks        []string
 	vg               &gg.GG
-	ft               &freetype.Context
+	ft               &freetype.FreeType
 	query            string
 	search_query     string
 	query_type       int
