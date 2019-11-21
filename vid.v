@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	session_path = os.home_dir() + '/.vid/session'
-	timer_path   = os.home_dir() + '/.vid/timer'
-	tasks_path   = os.home_dir() + '/.vid/tasks'
+	session_path = os.home_dir() + '.vid/session'
+	timer_path   = os.home_dir() + '.vid/timer'
+	tasks_path   = os.home_dir() + '.vid/tasks'
 )
 
 // TODO enum
@@ -112,8 +112,8 @@ fn main() {
 		println(HelpText)
 		return
 	}
-	if !os.file_exists(os.home_dir() + '/.vid') {
-		os.mkdir(os.home_dir() + '/.vid')
+	if !os.file_exists(os.home_dir() + '.vid') {
+		os.mkdir(os.home_dir() + '.vid')
 	}
 	glfw.init_glfw()
 	mut nr_splits := 3
@@ -1495,7 +1495,7 @@ fn (vid &Vid) get_git_diff_full() string {
 
 fn (vid &Vid) open_blog() {
 	now := time.now()
-	path := os.home_dir() + '/code/blog/$now.year/${now.month:02d}/${now.day:02d}'
+	path := os.home_dir() + 'code/blog/$now.year/${now.month:02d}/${now.day:02d}'
 	if !os.file_exists(path) {
 		os.system('touch $path')
 	}
