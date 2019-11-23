@@ -1432,7 +1432,7 @@ fn (vid mut Vid) load_timer() {
 
 fn (vid mut Vid) load_session() {
 	println('load session "$session_path"')
-	paths := os.read_lines(session_path) or { panic(err) }
+	paths := os.read_lines(session_path) or { return }
 	println(paths)
 	vid.load_views(paths)
 }
@@ -1699,7 +1699,7 @@ fn (vid mut Vid) go_to_def() {
 			continue
 		}
 		file = '$vid.workspace/$file'
-		lines := os.read_lines(file) or { panic(err) }
+		lines := os.read_lines(file) or { continue }
 		// println('trying file $file with $lines.len lines')
 		for j, line in lines {
 			if line.contains(query) {

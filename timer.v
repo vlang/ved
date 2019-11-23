@@ -40,7 +40,7 @@ struct Task {
 
 fn (t mut Timer) load_tasks() {
 	println('timer.load_tasks()')
-	lines := os.read_lines(tasks_path) or { panic(err) }
+	lines := os.read_lines(tasks_path) or { return }
 	mut tasks := []Task
 	today := t.date.ymmdd()
 	println('day=$today')
