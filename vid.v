@@ -112,8 +112,8 @@ fn main() {
 		println(HelpText)
 		return
 	}
-	if !os.file_exists(os.home_dir() + '.vid') {
-		os.mkdir(os.home_dir() + '.vid')
+	if !os.dir_exists(os.home_dir() + '.vid') {
+		os.mkdir(os.home_dir() + '.vid') or { panic(err) }
 	}
 	glfw.init_glfw()
 	mut nr_splits := 3
