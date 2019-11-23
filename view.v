@@ -85,7 +85,10 @@ fn (view mut View) open_file(path string) {
 		// view.vid.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
-	lines := os.read_lines(path) or { panic(err) }
+	
+	mut lines := []string
+	if rlines := os.read_lines(path) { lines = rlines }
+  
 	view.lines = lines
 	// get words map
 	if view.lines.len < 1000 {
