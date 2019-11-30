@@ -1633,8 +1633,7 @@ fn (vid mut Vid) go_to_error(line string) {
 		//return
 	//}
 	//line = line.replace('panic: ', '')
-	pos := line.index('.v:')
-	if pos == -1 {
+	pos := line.index('.v:') or {
 		println('no 2 :')
 		return
 	}

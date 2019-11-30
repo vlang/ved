@@ -145,8 +145,7 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 		if i == MaxGrepLines {
 			break
 		}
-		pos := line.index(':')
-		if pos == -1 {
+		pos := line.index(':') or {
 			continue
 		}
 		path := line[..pos].limit(20)
@@ -224,12 +223,11 @@ fn (vid mut Vid) search(goback bool) {
 			continue
 		}
 		line := view.lines[i]
-		pos := line.index(vid.search_query)
-		// Already here, skip
-		if pos == view.x && i == view.y {
-			continue
-		}
-		if pos > -1 {
+		if pos := line.index(vid.search_query) {
+			// Already here, skip
+			if pos == view.x && i == view.y {
+				continue
+			}
 			// Found in current screen, dont move it
 			if i >= view.from && i <= view.from + vid.page_height {
 				view.y = i
