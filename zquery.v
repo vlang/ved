@@ -211,6 +211,12 @@ fn (vid mut Vid) search(goback bool) {
 		if !goback && i >= to {
 			break
 		}
+		if i >= view.lines.len {
+			break
+		}
+		if i < 0 {
+			continue
+		}
 		line := view.lines[i]
 		pos := line.index(vid.search_query)
 		// Already here, skip

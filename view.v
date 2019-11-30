@@ -85,10 +85,10 @@ fn (view mut View) open_file(path string) {
 		// view.vid.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
-	
+
 	mut lines := []string
 	if rlines := os.read_lines(path) { lines = rlines }
-  
+
 	view.lines = lines
 	// get words map
 	if view.lines.len < 1000 {
@@ -159,7 +159,7 @@ fn (view mut View) save_file() {
 		panic('fail')
 	}
 	for line in view.lines {
-		file.writeln(line.trim_right(' '))
+		file.writeln(line.trim_right(' \t'))
 	}
 	file.close()
 	// Run formatters
@@ -182,7 +182,7 @@ fn (view mut View) save_file() {
 }
 
 fn (view &View) line() string {
-	if view.y >= view.lines.len {
+	if view.y < 0 || view.y >= view.lines.len {
 		return ''
 	}
 	return view.lines[view.y]
@@ -426,10 +426,18 @@ fn (view mut View) p() {
 	}
 }
 
+fn (view mut View) shift_o() {
+	view.o_generic(0)
+}
+
 fn (view mut View) o() {
-	view.y++
+	view.o_generic(1)
+}
+
+fn (view mut View) o_generic(delta int) {
+	view.y += delta
 	// Insert the same amount of spaces/tabs as in prev line
-	prev_line := if view.lines.len == 0 {
+	prev_line := if view.lines.len == 0 || view.y == 0 {
 		''
 	} else {
 		view.lines[view.y - 1]

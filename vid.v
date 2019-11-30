@@ -147,13 +147,15 @@ fn main() {
 		view: 0
 		vg: 0
 		main_wnd: 0
+		ft: 0
 	}
 	vid.handle_segfault()
 	vid.cfg.init_colors()
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
-	keys := 'none match pub struct interface in sizeof assert enum import go return module package '+
-		 'fn if for break continue asm unsafe mut type const else true else for false use'
+	keys := 'none match pub struct interface in sizeof assert enum import go ' +
+			'return module fn if for break continue asm unsafe mut ' +
+			'type const else true else for false use $' + 'if'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
@@ -172,6 +174,7 @@ fn main() {
 		use_ortho: true
 		retina: true
 		scale: 2
+		window_user_ptr: 0
 	}
 	vid.vg = gg.new_context(cfg)
 	vid.ft = freetype.new_context(cfg)
@@ -453,7 +456,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		vid.ft.draw_text(x, y, line.right(5), vid.cfg.red_cfg)
 		return
 	//} else if line[0] == `-` {
-	}	
+	}
 	vid.chunks = []
 	//vid.chunks.len = 0 // TODO V should not allow this
 	for i := 0; i < line.len; i++ {
@@ -972,7 +975,6 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_O {
 		if shift && super {
-			println('RRRR')
 			vid.mode = QUERY
 			vid.query_type = OPEN_WORKSPACE
 			vid.query = ''
@@ -982,6 +984,10 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.query_type = OPEN
 			vid.query = ''
 			return
+		}
+		else if shift {
+			vid.view.shift_o()
+			vid.set_insert()
 		}
 		else {
 			vid.view.o()
@@ -1513,9 +1519,9 @@ fn (vid mut Vid) build_app1() {
 	vid.build_app('')
 	//vid.next_split()
 	//println('SDFSDF')
-	
+
 	//glfw.post_empty_event()
-	
+
 	//vid.prev_split()
 	//glfw.post_empty_event()
 	//vid.refresh = false
