@@ -418,7 +418,7 @@ fn (vid mut Vid) draw_split(i, split_from int) {
 				// }
 				// max = line.len
 			}
-			s := line.left(max)
+			s := line.limit(max)
 			if view.hl_on {
 				vid.draw_line(line_x, y, s)// SYNTAX HL
 			}
@@ -448,12 +448,12 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 	// Red/green test hack
 	if line.contains('[32m') &&
 	line.contains('PASS') {
-		vid.ft.draw_text(x, y, line.right(5), vid.cfg.green_cfg)
+		vid.ft.draw_text(x, y, line[5..], vid.cfg.green_cfg)
 		return
 	}
 	else if line.contains('[31m') &&
 	line.contains('FAIL') {
-		vid.ft.draw_text(x, y, line.right(5), vid.cfg.red_cfg)
+		vid.ft.draw_text(x, y, line[5..], vid.cfg.red_cfg)
 		return
 	//} else if line[0] == `-` {
 	}
@@ -642,13 +642,13 @@ fn (vid mut Vid) key_query(key int, super bool) {
 			if vid.query.len == 0 {
 				return
 			}
-			vid.query = vid.query.left(vid.query.len - 1)
+			vid.query = vid.query[..vid.query.len - 1]
 		}
 		else {
 			if vid.search_query.len == 0 {
 				return
 			}
-			vid.search_query = vid.search_query.left(vid.search_query.len - 1)
+			vid.search_query = vid.search_query[..vid.search_query.len - 1]
 		}
 		return
 	}
@@ -673,7 +673,7 @@ fn (vid mut Vid) key_query(key int, super bool) {
 			if vid.gg_pos > -1 && vid.gg_lines.len > 0 {
 				line := vid.gg_lines[vid.gg_pos]
 				path := line.all_before(':')
-				line_nr := line.right(path.len + 1).int() -1
+				line_nr := line[path.len+1..].int() -1
 				vid.view.open_file(vid.workspace + '/' + path)
 				vid.view.move_to_line(line_nr)
 				vid.view.zz()
@@ -812,7 +812,7 @@ fn (vid mut Vid) ctrl_n() {
 	for map_word in vid.words {
 		// If any word starts with our subword, add the rest
 		if map_word.starts_with(word) {
-			vid.view.insert_text(map_word.right(word.len))
+			vid.view.insert_text(map_word[word.len..])
 			return
 		}
 	}
@@ -1352,7 +1352,7 @@ fn (vid mut Vid) add_workspace(path string) {
 		path
 	}
 	if workspace.ends_with('/.') {
-		workspace = workspace.left(workspace.len - 2)
+		workspace = workspace[..workspace.len-2]
 	}
 	vid.workspaces << workspace
 	for i := 0; i < vid.nr_splits; i++ {
@@ -1365,7 +1365,7 @@ fn short_space(workspace string) string {
 	if pos == -1 {
 		return workspace
 	}
-	return workspace.right(pos + 1)
+	return workspace[pos+1..]
 }
 
 fn (vid mut Vid) move_to_line(n int) {
@@ -1603,7 +1603,7 @@ fn (vid mut Vid) run_file() {
 	// cd to /a/b/
 	// dir := ospath.dir(view.path)
 	pos := view.path.last_index('/')
-	dir := view.path.left(pos)
+	dir := view.path[..pos]
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
 	f := os.create('$dir/out') or { panic('foo') }
@@ -1638,9 +1638,9 @@ fn (vid mut Vid) go_to_error(line string) {
 		println('no 2 :')
 		return
 	}
-	path := line.left(pos)
+	path := line[..pos]
 	filename := path.all_after('/') + '.v'
-	line_nr := line.right(pos + 3)
+	line_nr := line[pos+3..]
 	println('path=$path filename=$filename linenr=$line_nr')
 	for i := 0; i < vid.views.len; i++ {
 		mut view := &vid.views[i]

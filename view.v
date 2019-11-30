@@ -116,7 +116,7 @@ fn (view mut View) open_file(path string) {
 	view.path = path
 	view.short_path = path.replace(view.vid.workspace, '')
 	if view.short_path.starts_with('/') {
-		view.short_path = view.short_path.right(1)
+		view.short_path = view.short_path[1..]
 	}
 	// Calc padding_left
 	nr_lines := view.lines.len
@@ -340,7 +340,7 @@ fn (view mut View) shift_left() {
 		if !line.starts_with('\t') {
 			return
 		}
-		view.set_line(line.right(1))
+		view.set_line(line[1..])
 		return
 	}
 	for i := view.vstart; i <= view.vend; i++ {
@@ -348,7 +348,7 @@ fn (view mut View) shift_left() {
 		if !line.starts_with('\t') {
 			continue
 		}
-		view.lines[i] = (line.right(1))
+		view.lines[i] = line[1..]
 	}
 }
 
@@ -363,8 +363,8 @@ fn (v mut View) delete_char() {
 
 fn (view mut View) C() string {
 	line := view.line()
-	s := line.left(view.x)
-	deleted := line.right(view.x)
+	s := line[..view.x]
+	deleted := line[view.x..]
 	view.set_line('${s} ')
 	view.x = s.len
 	return deleted

@@ -146,9 +146,9 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 			break
 		}
 		pos := line.index(':')
-		path := line.left(pos)
+		path := line[..pos]
 		pos2 := line.index_after(':', pos + 1)
-		text := line.right(pos2 + 1).trim_space().left(70)
+		text := line[pos2+1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == vid.gg_pos {
 			vid.vg.draw_rect(x, yy, QueryWidth * 2, 30, vid.cfg.vcolor)
