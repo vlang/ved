@@ -146,8 +146,14 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 			break
 		}
 		pos := line.index(':')
-		path := line[..pos]
+		if pos == -1 {
+			continue
+		}
+		path := line[..pos].limit(20)
 		pos2 := line.index_after(':', pos + 1)
+		if pos2 == -1 || pos2 >= line.len - 1 {
+			continue
+		}
 		text := line[pos2+1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == vid.gg_pos {

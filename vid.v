@@ -509,7 +509,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		for i < line.len && is_alpha_underscore(int(line[i])) {
 			i++
 		}
-		word := line.substr(start, i)
+		word := line[start..i]
 		// println('word="$word"')
 		if word in vid.keys {
 			// println('$word is key')
@@ -536,7 +536,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		// Initial text chunk (not initial, but the one right before current chunk,
 		// since we don't have a seperate chunk for text)
 		if chunk.start > pos + 1 {
-			s := line.substr(pos, chunk.start)
+			s := line[pos..chunk.start]
 			vid.ft.draw_text(x + pos * vid.char_width, y, s, vid.cfg.txt_cfg)
 		}
 		// Keyword string etc
@@ -547,12 +547,12 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 			COMMENT { vid.cfg.comment_cfg }
 			else { vid.cfg.txt_cfg }
 		}
-		s := line.substr(chunk.start, chunk.end)
+		s := line[chunk.start..chunk.end]
 		vid.ft.draw_text(x + chunk.start * vid.char_width, y, s, cfg)
 		pos = chunk.end
 		// Final text chunk
 		if i == vid.chunks.len - 1 && chunk.end < line.len {
-			final := line.substr(chunk.end, line.len)
+			final := line[chunk.end..line.len]
 			vid.ft.draw_text(x + pos * vid.char_width, y, final, vid.cfg.txt_cfg)
 		}
 	}
@@ -803,7 +803,7 @@ fn (vid mut Vid) ctrl_n() {
 	if !is_alpha_underscore(int(line[i])) {
 		i++
 	}
-	mut word := line.substr(i, end + 1)
+	mut word := line[i..end + 1]
 	word = word.trim_space()
 	// Dont autocomplete if  fewer than 3 chars
 	if word.len < 3 {
@@ -1169,7 +1169,7 @@ fn (vid &Vid) word_under_cursor() string {
 	for end < line.len && is_alpha_underscore(int(line[end])) {
 		end++
 	}
-	mut word := line.substr(start + 1, end)
+	mut word := line[start + 1..end]
 	word = word.trim_space()
 	return word
 }

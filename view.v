@@ -65,7 +65,7 @@ fn get_clean_words(line string) []string {
 			i++
 		}
 		// End of word, save it
-		word := line.substr(start2, i)
+		word := line[start2..i]
 		res << word
 		i++
 	}
@@ -383,8 +383,8 @@ fn (view mut View) insert_text(s string) {
 		if view.x >= uline.len {
 			return
 		}
-		left := uline.substr(0, view.x)
-		right := uline.substr(view.x, uline.len)
+		left := uline.substr(0,view.x)
+		right := uline.substr(view.x,uline.len)
 		// Insert chat in the middle
 		res := '${left}${s}${right}'
 		view.set_line(res)
@@ -688,11 +688,11 @@ fn break_text(s string, max int) []string {
 	for i := 0; i < s.len; i++ {
 		if i == s.len - 1 {
 			// Include the very last char
-			lines << s.substr(start, i + 1)
+			lines << s[start..i + 1]
 			break
 		}
 		if i - start >= max {
-			lines << s.substr(start, i)
+			lines << s[start..i]
 			start = i
 		}
 	}
