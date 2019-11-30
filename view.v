@@ -144,6 +144,7 @@ fn (view mut View) open_file(path string) {
 
 fn (view mut View) reopen() {
 	view.open_file(view.path)
+	view.changed = false
 }
 
 fn (view mut View) save_file() {

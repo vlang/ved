@@ -884,13 +884,15 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	C.GLFW_KEY_EQUAL {
 		vid.open_blog()
 	}
-	C.GLFW_KEY_A {
+	C.GLFW_KEY_0 {
 		if super {
 			vid.query = ''
 			vid.mode = QUERY
 			vid.query_type = TASK
 		}
-		else {
+	}
+	C.GLFW_KEY_A {
+		if shift {
 			vid.view.A()
 			vid.prev_cmd = 'A'
 			vid.set_insert()
