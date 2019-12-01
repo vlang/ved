@@ -557,15 +557,25 @@ fn (view mut View) dw() {
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
-		// println('line=$line x=$view.x')
-		if view.x >= 0 && view.x < line.len &&
-		typ == is_alpha(view.char()) {
+		if view.x <= 0 || view.x >= line.len {
+			break
+		}
+		if typ == is_alpha(view.char()) {
 			view.delete_char()
 		}
 		else {
 			break
 		}
 	}
+	// Delete whitespace after the deleted word
+	for is_whitespace(view.char()) {
+		line := view.line()
+		if view.x <= 0 || view.x >= line.len {
+			break
+		}
+		view.delete_char()
+	}
+
 	vid.prev_cmd = 'dw'
 }
 
@@ -676,6 +686,10 @@ fn (view mut View) gq() {
 fn is_alpha(r byte) bool {
 	return ((r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) ||
 	(r >= `0` && r <= `9`))
+}
+
+fn is_whitespace(r byte) bool {
+	return r == ` ` || r == `\t`
 }
 
 fn is_alpha_underscore(r int) bool {
