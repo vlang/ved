@@ -1375,7 +1375,7 @@ fn (vid mut Vid) move_to_line(n int) {
 
 fn (vid &Vid) save_session() {
 	println('saving session...')
-	f := os.create(session_path) or { panic('fail') }
+	mut f := os.create(session_path) or { panic('fail') }
 	for view in vid.views {
 		// if view.path == '' {
 		// continue
@@ -1394,7 +1394,7 @@ fn toi(s string) int {
 }
 
 fn (vid &Vid) save_timer() {
-	f := os.create(timer_path) or { return }
+	mut f := os.create(timer_path) or { return }
 	f.writeln('task=$vid.cur_task')
 	f.writeln('task_start=$vid.task_start_unix')
 	//f.writeln('timer_typ=$vid.timer.cur_type')
@@ -1558,7 +1558,7 @@ fn (vid mut Vid) build_app(extra string) {
 	out := os.exec('sh $dir/build$extra') or {
 		return
 	}
-	f2 := os.create('$dir/out') or {
+	mut f2 := os.create('$dir/out') or {
 		panic('fail')
 	}
 	f2.writeln(out.output)
@@ -1606,7 +1606,7 @@ fn (vid mut Vid) run_file() {
 	dir := view.path[..pos]
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
-	f := os.create('$dir/out') or { panic('foo') }
+	mut f := os.create('$dir/out') or { panic('foo') }
 	f.writeln(out.output)
 	f.close()
 	// TODO COPYPASTA
@@ -1773,7 +1773,7 @@ fn (vid &Vid) insert_task() {
 	if vid.cur_task == '' || vid.task_minutes() == 0 {
 		return
 	}
-	f := os.open_append(tasks_path) or { panic(err) }
+	mut f := os.open_append(tasks_path) or { panic(err) }
 	task := vid.cur_task.limit(max_task_len) + strings.repeat(` `,
 		max_task_len - vid.cur_task.len)
 	mins := vid.task_minutes().str() + 'm'
