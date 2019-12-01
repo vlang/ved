@@ -156,7 +156,7 @@ fn (view mut View) save_file() {
 	println('lines.len=$view.lines.len')
 	//line0 := view.lines[0]
 	//println('line[0].len=$line0.len')
-	file := os.create(path) or {
+	mut file := os.create(path) or {
 		panic('fail')
 	}
 	for line in view.lines {
