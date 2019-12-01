@@ -1647,6 +1647,7 @@ fn (vid mut Vid) go_to_error(line string) {
 			continue
 		}
 		view.error_y = line_nr.int() -1
+		println('error_y=$view.error_y')
 		view.move_to_line(view.error_y)
 		// view.vid.main_wnd.refresh()
 		glfw.post_empty_event()
