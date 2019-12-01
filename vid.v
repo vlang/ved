@@ -155,7 +155,7 @@ fn main() {
 	// TODO V keys only
 	keys := 'none match pub struct interface in sizeof assert enum import go ' +
 			'return module fn if for break continue asm unsafe mut ' +
-			'type const else true else for false use $' + 'if'
+			'type const else true else for false use $' + 'if $' + 'else'
 	vid.keys = keys.split(' ')
 	mut w := glfw.create_window(glfw.WinCfg {
 		width: size.width
@@ -1568,7 +1568,7 @@ fn (vid mut Vid) build_app(extra string) {
 	// error line
 	lines := out.output.split_into_lines()
 	for line in lines {
-		if line.contains('.v:') {
+		if line.contains('.v:') && !line.contains('warning:') {
 			vid.go_to_error(line)
 			break
 		}
