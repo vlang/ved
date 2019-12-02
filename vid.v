@@ -1639,7 +1639,7 @@ fn (vid mut Vid) go_to_error(line string) {
 	}
 	path := line[..pos]
 	filename := path.all_after('/') + '.v'
-	line_nr := line[pos+3..]
+	line_nr := line[pos+3..].all_before(':')
 	println('path=$path filename=$filename linenr=$line_nr')
 	for i := 0; i < vid.views.len; i++ {
 		mut view := &vid.views[i]
