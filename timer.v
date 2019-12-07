@@ -156,5 +156,6 @@ fn (timer mut Timer) key_down(key int, super bool) {
 			timer.date = timer.date.add_days(1)
 			timer.load_tasks()
 		}	
+		else {}
 	}
 }

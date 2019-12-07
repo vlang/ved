@@ -61,6 +61,7 @@ fn (vid &Vid) typ_to_str() string {
 		return 'new task/activity'
 	}
 	GREP { return 'git grep'	}
+	else {}
 	}
 	return ''
 }

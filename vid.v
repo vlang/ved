@@ -197,7 +197,7 @@ fn main() {
 	// Open a single text file
 	if os.args.len == 2 && !os.args[1].starts_with('-') {
 		path := os.args[1]
-		if !os.file_exists(path) {
+		if !os.exists(path) {
 			println('file "$path" does not exist')
 			exit(1)
 		}
@@ -599,6 +599,7 @@ fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 		INSERT { 		vid.key_insert(key, super) }
 		QUERY { 		vid.key_query(key, super) }
 		TIMER { 		vid.timer.key_down(key, super) }
+		else {}
 	}
 }
 
@@ -631,6 +632,7 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 			return
 		}
 	}
+	else {}
 	}
 }
 
@@ -720,6 +722,7 @@ fn (vid mut Vid) key_query(key int, super bool) {
 			vid.query = vid.query + clip
 		}
 	}
+	else {}
 	}
 }
 
@@ -764,6 +767,7 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 		vid.view.j()
 		//vid.refresh = false
 	}
+	else {}
 	}
 	if (key == C.GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
 		vid.view.save_file()
@@ -1149,6 +1153,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		vid.view.j()
 		//vid.refresh = false
 	}
+	else {}
+
 	}
 	if key != C.GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
@@ -1245,6 +1251,7 @@ fn (vid mut Vid) key_visual(key int, super, shift bool) {
 			vid.view.shift_left()
 		}
 	}
+	else {}
 	}
 	if key != C.GLFW_KEY_R {
 		// otherwise R is triggered when we press C-R
@@ -1301,6 +1308,7 @@ fn (vid mut Vid) dot() {
 	 'r' {
 		vid.view.r(vid.prev_insert)
 		}
+	else {}
 	}
 }
 
@@ -1343,7 +1351,7 @@ fn (vid mut Vid) open_workspace(idx int) {
 
 fn (vid mut Vid) add_workspace(path string) {
 	println('add_workspace("$path")')
-	// if ! os.file_exists(path) {
+	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
 	mut workspace := if path == '.' {
@@ -1504,7 +1512,7 @@ fn (vid &Vid) get_git_diff_full() string {
 fn (vid &Vid) open_blog() {
 	now := time.now()
 	path := os.home_dir() + 'code/blog/$now.year/${now.month:02d}/${now.day:02d}'
-	if !os.file_exists(path) {
+	if !os.exists(path) {
 		os.system('touch $path')
 	}
 	mut last_view := vid.get_last_view()
