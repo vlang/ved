@@ -112,7 +112,7 @@ fn main() {
 		println(HelpText)
 		return
 	}
-	if !os.dir_exists(os.home_dir() + '.vid') {
+	if !os.is_dir(os.home_dir() + '.vid') {
 		os.mkdir(os.home_dir() + '.vid') or { panic(err) }
 	}
 	glfw.init_glfw()
@@ -1567,8 +1567,15 @@ fn (vid mut Vid) build_app(extra string) {
 	last_view.G()
 	// error line
 	lines := out.output.split_into_lines()
+	no_errors := !out.output.contains('error:')
 	for line in lines {
-		if line.contains('.v:') && !line.contains('warning:') {
+		if !line.contains('.v:') {
+			continue
+		}
+		is_warning := line.contains('warning:')
+		// Go to the next warning only if there are no errors.
+		// This makes Vid go to errors before warnings.
+		if !is_warning || (is_warning && no_errors) {
 			vid.go_to_error(line)
 			break
 		}

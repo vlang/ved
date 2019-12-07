@@ -45,6 +45,7 @@ fn (t mut Timer) load_tasks() {
 	today := t.date.ymmdd()
 	println('day=$today')
 	for line in lines {
+		println(line)
 		if !line.contains('|') {
 			continue
 		}	
@@ -78,6 +79,7 @@ fn (t mut Timer) load_tasks() {
 			duration: words[1].trim_space()
 			color: if !name.starts_with('@') { color_productive } else { color_distracting }
 		}	
+		println(task)
 		if task.end < task.start {
 			continue
 		}	
