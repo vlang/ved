@@ -1369,8 +1369,7 @@ fn (vid mut Vid) add_workspace(path string) {
 }
 
 fn short_space(workspace string) string {
-	pos := workspace.last_index('/')
-	if pos == -1 {
+	pos := workspace.last_index('/') or {
 		return workspace
 	}
 	return workspace[pos+1..]
@@ -1617,8 +1616,7 @@ fn (vid mut Vid) run_file() {
 	// dir is "/a/b/"
 	// cd to /a/b/
 	// dir := ospath.dir(view.path)
-	pos := view.path.last_index('/')
-	dir := view.path[..pos]
+	dir := os.dir(view.path)
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
 	mut f := os.create('$dir/out') or { panic('foo') }
