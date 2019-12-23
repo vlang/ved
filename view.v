@@ -199,7 +199,6 @@ fn (view &View) char() int {
 }
 
 fn (view mut View) set_line(newline string) {
-	// # view->lines.data[view->y] = newline;
 	if view.y + 1 > view.lines.len {
 		view.lines << newline
 	}
@@ -354,10 +353,15 @@ fn (view mut View) shift_left() {
 
 fn (v mut View) delete_char() {
 	u := v.uline()
-	if v.x < u.len - 1 {
-		left := u.left(v.x)
-		right := u.right(v.x + 1)
-		v.set_line('${left}${right}')
+	if v.x >= u.len {
+		return
+	}
+	left := u.left(v.x)
+	right := u.right(v.x + 1)
+	new_line := left + right
+	v.set_line(new_line)
+	if v.x >= new_line.len {
+		v.x = new_line.len - 1
 	}
 }
 
@@ -557,10 +561,11 @@ fn (view mut View) dw() {
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
-		if view.x <= 0 || view.x >= line.len {
+		if view.x <= 0 || view.x >= line.len - 1 {
 			break
 		}
 		if typ == is_alpha(view.char()) {
+			println('del x=$view.x len=$line.len')
 			view.delete_char()
 		}
 		else {
