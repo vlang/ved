@@ -10,6 +10,7 @@ import (
 	freetype
 	glfw
 	os
+	filepath
 	time
 	ui
 	strings
@@ -181,7 +182,7 @@ fn main() {
 	vid.timer = new_timer(vid.vg, vid.ft)
 	vid.load_all_tasks()
 	w.set_user_ptr(vid)
-	$if mac {
+	$if macos {
 		// TODO linux and windows
 		//C.AXUIElementCreateApplication(234)
 		ui.reg_key_vid()
@@ -203,7 +204,7 @@ fn main() {
 		}
 		println('PATH="$path" cur_dir="$cur_dir"')
 		if !os.is_dir(path) && !path.starts_with('-') {
-			mut workspace := os.dir(path)
+			mut workspace := filepath.dir(path)
 			vid.add_workspace(workspace)
 			vid.open_workspace(0)
 			vid.view.open_file(path)
@@ -1616,7 +1617,7 @@ fn (vid mut Vid) run_file() {
 	// dir is "/a/b/"
 	// cd to /a/b/
 	// dir := ospath.dir(view.path)
-	dir := os.dir(view.path)
+	dir := filepath.dir(view.path)
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
 	mut f := os.create('$dir/out') or { panic('foo') }

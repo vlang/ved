@@ -168,9 +168,12 @@ fn (view mut View) save_file() {
 		println('running goimports')
 		os.system('goimports -w "$path"')
 	}
-	if path.ends_with('.scss') {
+	else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "$path" > "$css"')
+	}
+	else if path.ends_with('.v') {
+		os.system('v fmt -w $path')
 	}
 	view.reopen()
 	// update git diff

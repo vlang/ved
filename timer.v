@@ -135,7 +135,7 @@ fn (t mut Timer) draw() {
 			t.ft.draw_text(hour_x - 25, hour_y + 10,
 				'${hour:02d}', time_cfg)
 		}
-		t.gg.draw_line(hour_x, hour_y, hour_x + int(hour_width), hour_y)
+		t.gg.draw_line(hour_x, hour_y, hour_x + hour_width, hour_y)
 	}
 	// Large left vertical line
 	t.gg.draw_line(window_x + 30, window_y + 10, window_x+30, window_y+10+24*
