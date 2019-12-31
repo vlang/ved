@@ -172,7 +172,7 @@ fn (view mut View) save_file() {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "$path" > "$css"')
 	}
-	else if path.ends_with('.v') {
+	else if path.ends_with('.v') && path.contains('vlib/v/') {
 		os.system('v fmt -w $path')
 	}
 	view.reopen()

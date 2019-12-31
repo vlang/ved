@@ -149,7 +149,7 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 		pos := line.index(':') or {
 			continue
 		}
-		path := line[..pos].limit(20)
+		path := line[..pos].limit(30)
 		pos2 := line.index_after(':', pos + 1)
 		if pos2 == -1 || pos2 >= line.len - 1 {
 			continue
@@ -160,7 +160,7 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 			vid.vg.draw_rect(x, yy, QueryWidth * 2, 30, vid.cfg.vcolor)
 		}
 		vid.ft.draw_text(x + 10, yy, path, txt_cfg)
-		vid.ft.draw_text(x + 210, yy, text, txt_cfg)
+		vid.ft.draw_text(x + 250, yy, text, txt_cfg)
 	}
 }
 

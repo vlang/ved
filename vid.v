@@ -154,7 +154,7 @@ fn main() {
 	vid.cfg.init_colors()
 	vid.page_height = size.height / vid.line_height - 1
 	// TODO V keys only
-	keys := 'case none match pub struct interface in sizeof assert enum import go ' +
+	keys := 'case defer none match pub struct interface in sizeof assert enum import go ' +
 			'return module fn if for break continue asm unsafe mut ' +
 			'type const else true else for false use $' + 'if $' + 'else'
 	vid.keys = keys.split(' ')
