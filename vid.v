@@ -38,7 +38,7 @@ const (
 	SEARCH = 1
 	CAM    = 2
 	OPEN   = 3
-	OPEN_WORKSPACE   = 7
+	OPEN_WORKSPACE = 7
 	CTRLJ  = 4
 	TASK   = 5
 	GREP   = 6
@@ -668,7 +668,7 @@ fn (vid mut Vid) key_query(key int, super bool) {
 		else if vid.query_type == TASK {
 			vid.insert_task()
 			vid.cur_task = vid.query
-			vid.task_start_unix = time.now().uni
+			vid.task_start_unix = time.now().unix
 			vid.save_timer()
 		}
 		else if vid.query_type == GREP {
@@ -1773,7 +1773,7 @@ fn (vid & Vid) handle_segfault() {
 
 fn (vid &Vid) task_minutes() int {
 	now := time.now()
-	mut seconds := now.uni - vid.task_start_unix
+	mut seconds := now.unix - vid.task_start_unix
 	if vid.task_start_unix == 0 {
 		seconds = 0
 	}
@@ -1786,15 +1786,15 @@ const (
 
 fn (vid &Vid) insert_task() {
 	if vid.cur_task == '' || vid.task_minutes() == 0 {
-		return
+		//return
 	}
 	mut f := os.open_append(tasks_path) or { panic(err) }
-	task := vid.cur_task.limit(max_task_len) + strings.repeat(` `,
+	task_name := vid.cur_task.limit(max_task_len) + strings.repeat(` `,
 		max_task_len - vid.cur_task.len)
 	mins := vid.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `,		4 - mins.len)
-	f.writeln('| $task | $mins $mins_pad | ' +
-		time.unix(vid.task_start_unix + 3600 * 3).format() + ' | ' +
+	f.writeln('| $task_name | $mins $mins_pad | ' +
+		time.unix(vid.task_start_unix /*+ 3600 * 1*/).format() + ' | ' +
 		time.now().hhmm() + ' |')
 	f.writeln('|-----------------------------------------------------------------------------|')
 	f.close()
