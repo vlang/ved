@@ -728,7 +728,7 @@ fn (vid mut Vid) key_query(key int, super bool) {
 }
 
 fn (vid &Vid) is_in_blog() bool {
-	return vid.view.path.contains('/blog/') && vid.view.path.contains('2019')
+	return vid.view.path.contains('/blog/') && vid.view.path.contains('2020')
 }
 
 fn (vid &Vid) git_commit() {
