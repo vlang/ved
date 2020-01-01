@@ -39,30 +39,36 @@ struct Task {
 
 
 fn (t mut Timer) load_tasks() {
-	println('timer.load_tasks()')
+	//println('timer.load_tasks()')
 	lines := os.read_lines(tasks_path) or { return }
 	println(lines)
 	mut tasks := []Task
 	today := t.date.ymmdd()
-	println('day=$today')
+	//println('day=$today')
 	for line in lines {
-		println(line)
+		//println(line)
 		if !line.contains('|') {
 			continue
 		}
 		if !line.contains(today) {
 			continue
 		}
-		words := line.split('|')
+		words_ := line.split('|')
+		words := words_.filter(it != '')
+		//println('wordss:')
+		//println(words)
 		if words.len != 4 {
 			continue
 		}
-		time := words[2]
+		time := words[2].trim_space()
+		//println('time=$time')
 		a := time.split(' ')
+		//println('a=') println(a)
 		if a.len < 2 {
 			continue
 		}
 		b := a[1].split(':')
+		//println('b=') println(b)
 		if b.len < 2 {
 			continue
 		}
@@ -80,12 +86,14 @@ fn (t mut Timer) load_tasks() {
 			duration: words[1].trim_space()
 			color: if !name.starts_with('@') { color_productive } else { color_distracting }
 		}
-		println(task)
+		//println('task:')
+		//println(task)
 		if task.end < task.start {
 			continue
 		}
 		tasks << task
 	}
+	//println('tasks.len=$tasks.len')
 	t.tasks = tasks
 }
 
@@ -117,6 +125,7 @@ fn (t mut Timer) draw() {
 	hour_width := 32 //window_width / 25// 60 / scale  // 60 min
 	scale := 60.0 / f64(hour_width)
 	for task in t.tasks {
+		println('TASK $task')
 		if task.duration.len < 3 {
 			continue
 		}

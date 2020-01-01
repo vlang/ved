@@ -1786,7 +1786,7 @@ const (
 
 fn (vid &Vid) insert_task() {
 	if vid.cur_task == '' || vid.task_minutes() == 0 {
-		//return
+		return
 	}
 	mut f := os.open_append(tasks_path) or { panic(err) }
 	task_name := vid.cur_task.limit(max_task_len) + strings.repeat(` `,
@@ -1794,7 +1794,7 @@ fn (vid &Vid) insert_task() {
 	mins := vid.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `,		4 - mins.len)
 	f.writeln('| $task_name | $mins $mins_pad | ' +
-		time.unix(vid.task_start_unix /*+ 3600 * 1*/).format() + ' | ' +
+		time.unix(vid.task_start_unix).format() + ' | ' +
 		time.now().hhmm() + ' |')
 	f.writeln('|-----------------------------------------------------------------------------|')
 	f.close()
