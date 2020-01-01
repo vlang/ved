@@ -122,7 +122,7 @@ fn (t mut Timer) draw() {
 	window_x := (t.gg.width - window_width) / 2
 	window_y := (t.gg.height - window_height) / 2
 	t.gg.draw_rect(window_x, window_y, window_width, window_height, gx.white)
-	hour_width := 32 //window_width / 25// 60 / scale  // 60 min
+	hour_width := window_height / 24 - 5 //window_width / 25// 60 / scale  // 60 min
 	scale := 60.0 / f64(hour_width)
 	for task in t.tasks {
 		//println('TASK $task')
@@ -134,7 +134,7 @@ fn (t mut Timer) draw() {
 		height := f64(task.end - task.start) / scale
 		t.gg.draw_rect(x, y, hour_width,	height		, task.color)
 		//if width > 50 {
-		t.ft.draw_text(int(x)+40, int(y)+5, task.name + ' ' + task.duration, gx.TextCfg{ color: task.color })
+		t.ft.draw_text(int(x)+hour_width + 10, int(y)+5, task.name + ' ' + task.duration, gx.TextCfg{ color: task.color })
 		//}
 	}
 	for hour in 0 .. 24 + 1 {

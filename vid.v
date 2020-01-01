@@ -1437,8 +1437,8 @@ fn (vid mut Vid) load_timer() {
 		}
 	}
 	// mut task := lines[0]
-	println('vals=')
-	println(vals)
+	//println('vals=')
+	//println(vals)
 	vid.cur_task = vals[0]
 	vid.task_start_unix = toi(vals[1])
 	//vid.timer.cur_type = toi(vals[2])
@@ -1528,7 +1528,6 @@ fn (vid &Vid) get_last_view() &View {
 fn (vid mut Vid) build_app1() {
 	vid.build_app('')
 	//vid.next_split()
-	//println('SDFSDF')
 
 	//glfw.post_empty_event()
 
