@@ -12,7 +12,7 @@ import (
 	os
 	filepath
 	time
-	ui
+	uiold
 	strings
 	//darwin
 )
@@ -185,7 +185,7 @@ fn main() {
 	$if macos {
 		// TODO linux and windows
 		//C.AXUIElementCreateApplication(234)
-		ui.reg_key_vid()
+		uiold.reg_key_vid()
 	}
 	w.onkeydown(key_down)
 	w.onchar(on_char)

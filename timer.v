@@ -125,7 +125,7 @@ fn (t mut Timer) draw() {
 	hour_width := 32 //window_width / 25// 60 / scale  // 60 min
 	scale := 60.0 / f64(hour_width)
 	for task in t.tasks {
-		println('TASK $task')
+		//println('TASK $task')
 		if task.duration.len < 3 {
 			continue
 		}
