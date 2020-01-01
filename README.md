@@ -38,6 +38,8 @@ brew install glfw freetype
 Windows:
 ```
 git clone --depth=1 https://github.com/ubawurinna/freetype-windows-binaries [path to v repo]/thirdparty/freetype/
+
+download *glfw3.dll* to directory of vid.exe or your system32 directory. 
 ```
 
 ### Communities:
