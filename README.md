@@ -30,6 +30,12 @@ Ubuntu:
 sudo apt install libglfw3 libglfw3-dev libfreetype6-dev
 ```
 
+Fedora:
+```
+sudo dnf install glfw glfw-devel freetype-devel
+
+```
+
 macOS:
 ```
 brew install glfw freetype
