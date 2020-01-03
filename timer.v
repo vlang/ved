@@ -35,6 +35,8 @@ struct Task {
 	name  string
 	color gx.Color
 	duration string
+	duration_min int
+	productive bool
 }
 
 
@@ -79,12 +81,16 @@ fn (t mut Timer) load_tasks() {
 		hour_end := hhmm[0].trim_space().int()
 		min_end := hhmm[1].trim_space().int()
 		name := words[0].trim_space()
+		duration:=words[1].trim_space()
+		productive := !name.starts_with('@')
 		task := Task {
 			start: hour * 60 + min
 			end: hour_end * 60 + min_end
-			name: if name.starts_with('@') { name[1..] } else { name }
-			duration: words[1].trim_space()
-			color: if !name.starts_with('@') { color_productive } else { color_distracting }
+			name: if productive { name } else { name[1..] }
+			duration: duration
+			duration_min: duration[..duration.len-1].int()
+			color: if productive { color_productive } else { color_distracting }
+			productive: productive
 		}
 		//println('task:')
 		//println(task)
@@ -124,6 +130,7 @@ fn (t mut Timer) draw() {
 	t.gg.draw_rect(window_x, window_y, window_width, window_height, gx.white)
 	hour_width := window_height / 24 - 5 //window_width / 25// 60 / scale  // 60 min
 	scale := 60.0 / f64(hour_width)
+	mut total := 0
 	for task in t.tasks {
 		//println('TASK $task')
 		if task.duration.len < 3 {
@@ -133,9 +140,10 @@ fn (t mut Timer) draw() {
 		y := f64(window_y) + f64(task.start) / scale + 10
 		height := f64(task.end - task.start) / scale
 		t.gg.draw_rect(x, y, hour_width,	height		, task.color)
-		//if width > 50 {
 		t.ft.draw_text(int(x)+hour_width + 10, int(y)+5, task.name + ' ' + task.duration, gx.TextCfg{ color: task.color })
-		//}
+		if task.productive {
+			total += task.duration_min
+		}
 	}
 	for hour in 0 .. 24 + 1 {
 		hour_y := window_y + hour * hour_width + 10
@@ -152,7 +160,13 @@ fn (t mut Timer) draw() {
 	// Large right vertical line
 	t.gg.draw_line(window_x + 30 + hour_width, window_y + 10, window_x+30+hour_width, window_y+10+24*
 		hour_width)
+	// Draw the in the top right corner
 	t.ft.draw_text_def(window_x + window_width - 100, 20, t.date.ymmdd())
+	// Draw total time
+	h := total/ 60
+	m := total % 60
+	t.ft.draw_text(window_x + window_width - 100, 100, '$h:${m:02d}', gx.TextCfg{ color: color_productive })
+	
 
 }
 
