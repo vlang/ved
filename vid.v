@@ -1573,12 +1573,16 @@ fn (vid mut Vid) build_app(extra string) {
 	last_view.open_file('$dir/out')
 	last_view.G()
 	// error line
-	lines := out.output.split_into_lines()
-	no_errors := !out.output.contains('error:')
+	alines := out.output.split_into_lines()
+	lines := alines.filter(it.contains('.v:'))
+	mut no_errors :=  true //!out.output.contains('error:')
 	for line in lines {
-		if !line.contains('.v:') {
-			continue
+		// no "warning:" in a line means it's an error
+		if !line.contains('warning:') {
+			no_errors = false
 		}
+	}
+	for line in lines {
 		is_warning := line.contains('warning:')
 		// Go to the next warning only if there are no errors.
 		// This makes Vid go to errors before warnings.
