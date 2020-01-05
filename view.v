@@ -140,6 +140,7 @@ fn (view mut View) open_file(path string) {
 	}
 	view.hash_comment = !view.path.ends_with('.v')
 	view.hl_on = !view.path.ends_with('.md')
+	view.changed = false
 }
 
 fn (view mut View) reopen() {
