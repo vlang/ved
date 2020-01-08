@@ -149,6 +149,7 @@ fn (view mut View) reopen() {
 }
 
 fn (view mut View) save_file() {
+	view.x = view.x // TODO remove once the mut bug is fixed
 	if view.path == '' {
 		return
 	}
@@ -164,6 +165,11 @@ fn (view mut View) save_file() {
 		file.writeln(line.trim_right(' \t'))
 	}
 	file.close()
+	go view.format_file()
+}
+
+fn (view mut View) format_file() {
+	path := view.path
 	// Run formatters
 	if path.ends_with('.go') {
 		println('running goimports')
@@ -180,7 +186,7 @@ fn (view mut View) save_file() {
 	// update git diff
 	view.vid.get_git_diff()
 	view.changed = false
-	println('end of save file()')
+	//println('end of save file()')
 	//println('_lines.len=$view.lines.len')
 	//line0_ := view.lines[0]
 	//println('_line[0].len=$line0_.len')
