@@ -378,7 +378,7 @@ fn (vid mut Vid) draw_split(i, split_from int) {
 	split_width := vid.split_width()
 	split_x := split_width * (i - split_from)
 	// Vertical split line
-	vid.vg.draw_line_c(split_x, vid.line_height + 1, split_x, vid.win_height, vid.cfg.split_color)
+	vid.vg.draw_line(split_x, vid.line_height + 1, split_x, vid.win_height, vid.cfg.split_color)
 	// Lines
 	mut line_nr := 1// relative y
 	for j := view.from; j < view.from + vid.page_height && j < view.lines.len; j++ {
