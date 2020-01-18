@@ -30,6 +30,12 @@ Ubuntu:
 sudo apt install libglfw3 libglfw3-dev libfreetype6-dev
 ```
 
+Fedora:
+```
+sudo dnf install glfw glfw-devel freetype-devel
+
+```
+
 macOS:
 ```
 brew install glfw freetype
@@ -38,6 +44,8 @@ brew install glfw freetype
 Windows:
 ```
 git clone --depth=1 https://github.com/ubawurinna/freetype-windows-binaries [path to v repo]/thirdparty/freetype/
+
+download *glfw3.dll* to directory of vid.exe or your system32 directory. 
 ```
 
 ### Communities:
