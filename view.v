@@ -205,7 +205,10 @@ fn (view &View) uline() ustring {
 
 fn (view &View) char() int {
 	line := view.line()
-	return if (line.len > 0) { int(line[view.x]) } else { 0 }
+	if line.len > 0 {
+		return int(line[view.x])
+	}
+	return 0
 }
 
 fn (view mut View) set_line(newline string) {
@@ -262,7 +265,7 @@ fn (view mut View) k() {
 	}
 }
 
-fn (view mut View) H() {
+fn (view mut View) shift_h() {
 	view.y = view.from
 }
 
@@ -277,7 +280,7 @@ fn (view mut View) l() {
 	}
 }
 
-fn (view mut View) G() {
+fn (view mut View) shift_g() {
 	view.y = view.lines.len - 1
 	view.from = view.y - view.page_height + 1
 	if view.from < 0 {
@@ -285,13 +288,13 @@ fn (view mut View) G() {
 	}
 }
 
-fn (view mut View) A() {
+fn (view mut View) shift_a() {
 	line := view.line()
 	view.set_line('$line ')
 	view.x = view.uline().len - 1
 }
 
-fn (view mut View) I() {
+fn (view mut View) shift_i() {
 	view.x = 0
 	for view.char() == view.vid.cfg.tab {
 		view.x++
@@ -303,7 +306,7 @@ fn (view mut View) gg() {
 	view.y = 0
 }
 
-fn (view mut View) F() {
+fn (view mut View) shift_f() {
 	view.from += view.page_height
 	if view.from >= view.lines.len {
 		view.from = view.lines.len - 1
@@ -311,7 +314,7 @@ fn (view mut View) F() {
 	view.y = view.from
 }
 
-fn (view mut View) B() {
+fn (view mut View) shift_b() {
 	view.from -= view.page_height
 	if view.from < 0 {
 		view.from = 0
@@ -320,7 +323,7 @@ fn (view mut View) B() {
 }
 
 fn (view mut View) dd() {
-	if (view.lines.len != 0) {
+	if view.lines.len != 0 {
 		mut vid := view.vid
 		vid.prev_key = -1
 		vid.prev_cmd = 'dd'
@@ -375,7 +378,7 @@ fn (v mut View) delete_char() {
 	}
 }
 
-fn (view mut View) C() string {
+fn (view mut View) shift_c() string {
 	line := view.line()
 	s := line[..view.x]
 	deleted := line[view.x..]

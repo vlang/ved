@@ -1,5 +1,6 @@
 module main
 
+import freetype
 import gg
 import gx
 import os
