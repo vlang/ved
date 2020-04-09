@@ -308,7 +308,7 @@ fn (vid mut Vid) draw() {
 		v := vid.views[i]
 		mut name := v.short_path
 		if v.changed && !v.path.ends_with('/out') {
-			name = '$name [+]' !
+			name = '$name [+]'
 		}
 		vid.ft.draw_text(vid.split_x(i - from) + v.padding_left + 10, 1, name, vid.cfg.file_name_cfg)
 	}
@@ -323,8 +323,8 @@ fn (vid mut Vid) draw() {
 	nr_spaces := vid.workspaces.len
 	cur_space := vid.workspace_idx + 1
 	space_name := short_space(vid.workspace)
-	vid.ft.draw_text(vid.win_width - 220, 1, '[$space_name]' !, vid.cfg.file_name_cfg)
-	vid.ft.draw_text(vid.win_width - 150, 1, '$cur_space/$nr_spaces' !, vid.cfg.file_name_cfg)
+	vid.ft.draw_text(vid.win_width - 220, 1, '[$space_name]', vid.cfg.file_name_cfg)
+	vid.ft.draw_text(vid.win_width - 150, 1, '$cur_space/$nr_spaces', vid.cfg.file_name_cfg)
 	// Time
 	vid.ft.draw_text(vid.win_width - 50, 1, now.hhmm(), vid.cfg.file_name_cfg)
 	// vid.vg.draw_text(vid.win_width - 550, 1, now.hhmmss(), file_name_cfg)
@@ -393,7 +393,7 @@ fn (vid mut Vid) draw_split(i, split_from int) {
 		}
 		// Line number
 		line_number := j + 1
-		vid.ft.draw_text(x+3, y, '$line_number'!, vid.cfg.line_nr_cfg)
+		vid.ft.draw_text(x+3, y, '$line_number', vid.cfg.line_nr_cfg)
 		// Tab offset
 		mut line_x := x + 10
 		mut nr_tabs := 0
@@ -897,7 +897,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_A {
 		if shift {
-			vid.view.A()
+			vid.view.shift_a()
 			vid.prev_cmd = 'A'
 			vid.set_insert()
 		}
@@ -909,7 +909,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.query_type = CAM
 		}
 		if shift {
-			vid.prev_insert = vid.view.C()
+			vid.prev_insert = vid.view.shift_c()
 			vid.set_insert()
 		}
 	}
@@ -940,7 +940,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_I {
 		if shift {
-			vid.view.I()
+			vid.view.shift_i()
 			vid.set_insert()
 			vid.prev_cmd = 'I'
 		}
@@ -1032,7 +1032,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_H {
 		if shift {
-			vid.view.H()
+			vid.view.shift_h()
 		}
 		else if vid.view.x > 0 {
 			vid.view.x--
@@ -1056,7 +1056,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	C.GLFW_KEY_G {
 		// go to end
 		if shift && !super {
-			vid.view.G()
+			vid.view.shift_g()
 		}
 		// copy file path to clipboard
 		else if super {
@@ -1071,14 +1071,14 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_F {
 		if super {
-			vid.view.F()
+			vid.view.shift_f()
 		}
 	}
 	C.GLFW_KEY_B {
 		if super {
 			// force crash
 			// # void*a = 0; int b = *(int*)a;
-			vid.view.B()
+			vid.view.shift_b()
 		}
 		else {
 			vid.view.b()
@@ -1298,11 +1298,11 @@ fn (vid mut Vid) dot() {
 		vid.view.join()
 		}
 	'I' {
-		vid.view.I()
+		vid.view.shift_i()
 		vid.view.insert_text(vid.prev_insert)
 		}
 	'A' {
-		vid.view.A()
+		vid.view.shift_a()
 		vid.view.insert_text(vid.prev_insert)
 		}
 	 'r' {
@@ -1516,7 +1516,7 @@ fn (vid &Vid) open_blog() {
 	}
 	mut last_view := vid.get_last_view()
 	last_view.open_file(path)
-	last_view.G()
+	last_view.shift_g()
 }
 
 fn (vid &Vid) get_last_view() &View {
@@ -1570,7 +1570,7 @@ fn (vid mut Vid) build_app(extra string) {
 	f2.writeln(out.output)
 	f2.close()
 	last_view.open_file('$dir/out')
-	last_view.G()
+	last_view.shift_g()
 	// error line
 	alines := out.output.split_into_lines()
 	lines := alines.filter(it.contains('.v:'))
@@ -1628,7 +1628,7 @@ fn (vid mut Vid) run_file() {
 	// TODO COPYPASTA
 	mut last_view := vid.get_last_view()
 	last_view.open_file('$dir/out')
-	last_view.G()
+	last_view.shift_g()
 	vid.is_building = false
 	// error line
 	lines := out.output.split_into_lines()
