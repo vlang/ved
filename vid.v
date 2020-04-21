@@ -580,14 +580,14 @@ fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 	//  printf("glfw vi.v key down key=%d key_char=%c code=%d action=%d mods=%d\n",
 	//  key,key, code, action, mods);
 	// single super
-	if key == glfw.KEY_LEFT_SUPER {
+	if key == glfw.key_left_super {
 		return
 	}
 	mut vid := &Vid(glfw.get_window_user_pointer(wnd))
 	mode := vid.mode
 	super := mods == 8 || mods == 2
 	shift := mods == 1
-	if key == glfw.KEY_ESCAPE {
+	if key == glfw.key_escape {
 		vid.mode = NORMAL
 	}
 	// Reset error line
