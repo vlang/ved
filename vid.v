@@ -1208,7 +1208,7 @@ fn (vid mut Vid) char_query(s string) {
 fn (vid mut Vid) key_visual(key int, super, shift bool) {
 	mut view := vid.view
 	match key {
-	glfw.KEY_ESCAPE {
+	C.GLFW_KEY_ESCAPE {
 		vid.exit_visual()
 	}
 	C.GLFW_KEY_J {
