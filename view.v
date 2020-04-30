@@ -4,10 +4,8 @@
 
 module main
 
-import (
-	os
-	strings
-)
+import os
+import strings
 
 struct View {
 mut:
@@ -52,7 +50,7 @@ fn (vid &Vid) new_view() View {
 // `mut res := word.clone()` ==>
 // ['mut' 'res' 'word' 'clone']
 fn get_clean_words(line string) []string {
-	mut res := []string
+	mut res := []string{}
 	mut i := 0
 	for i < line.len {
 		// Skip bad first
@@ -86,7 +84,7 @@ fn (view mut View) open_file(path string) {
 		view.prev_path = view.path
 	}
 
-	mut lines := []string
+	mut lines := []string{}
 	if rlines := os.read_lines(path) { lines = rlines }
 
 	view.lines = lines
@@ -432,7 +430,7 @@ fn (view mut View) backspace(go_up bool) {
 }
 
 fn (view mut View) yy() {
-	mut ylines := []string
+	mut ylines := []string{}
 	ylines << (view.line())
 	view.vid.ylines = ylines
 }
@@ -542,7 +540,7 @@ fn (view mut View) join() {
 }
 
 fn (v mut View) y_visual() {
-	mut ylines := []string
+	mut ylines := []string{}
 	for i := v.vstart; i <= v.vend; i++ {
 		ylines << v.lines[i]
 	}
@@ -715,7 +713,7 @@ fn is_alpha_underscore(r int) bool {
 }
 
 fn break_text(s string, max int) []string {
-	mut lines := []string
+	mut lines := []string{}
 	mut start := 0
 	for i := 0; i < s.len; i++ {
 		if i == s.len - 1 {

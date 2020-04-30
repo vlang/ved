@@ -4,10 +4,8 @@
 
 module main
 
-import (
-  os
-  gx
-)
+import os
+import gx
 
 // Config structure
 // TODO: Load user config from file

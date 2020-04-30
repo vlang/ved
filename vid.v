@@ -4,17 +4,15 @@
 
 module main
 
-import (
-	gl
-	gg
-	freetype
-	glfw
-	os
-	time
-	uiold
-	strings
-	//darwin
-)
+import gl
+import gg
+import freetype
+import glfw
+import os
+import time
+import uiold
+import strings
+//import darwin
 
 const (
 	session_path = os.home_dir() + '.vid/session'
@@ -1210,7 +1208,7 @@ fn (vid mut Vid) char_query(s string) {
 fn (vid mut Vid) key_visual(key int, super, shift bool) {
 	mut view := vid.view
 	match key {
-	glfw.KEY_ESCAPE {
+	C.GLFW_KEY_ESCAPE {
 		vid.exit_visual()
 	}
 	C.GLFW_KEY_J {
@@ -1424,7 +1422,7 @@ fn (vid mut Vid) load_timer() {
 	lines := os.read_lines(timer_path) or { return }
 	if lines.len == 0 { return }
 	println(lines)
-	mut vals := []string
+	mut vals := []string{}
 	for line in lines {
 		words := line.split('=')
 		if words.len != 2 {
