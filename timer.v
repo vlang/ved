@@ -41,7 +41,7 @@ struct Task {
 }
 
 
-fn (t mut Timer) load_tasks() {
+fn (mut t Timer) load_tasks() {
 	//println('timer.load_tasks()')
 	lines := os.read_lines(tasks_path) or { return }
 	//println(lines)
@@ -120,10 +120,10 @@ const (
 	//scale = 3
 )
 
-//fn (t mut Timer) load_tasks() {
+//fn (mut t Timer) load_tasks() {
 //}
 
-fn (t mut Timer) draw() {
+fn (mut t Timer) draw() {
 	window_width := t.gg.width/2
 	window_height := t.gg.height-20
 	window_x := (t.gg.width - window_width) / 2
@@ -171,7 +171,7 @@ fn (t mut Timer) draw() {
 
 }
 
-fn (timer mut Timer) key_down(key int, super bool) {
+fn (mut timer Timer) key_down(key int, super bool) {
 	match key {
 		C.GLFW_KEY_UP {
 			timer.date = timer.date.add_days(-1)

@@ -13,7 +13,7 @@ const (
 	txt_cfg = gx.TextCfg { size: 25 }
 )
 
-fn (vid mut Vid) load_git_tree() {
+fn (mut vid Vid) load_git_tree() {
 	vid.query = ''
 	// Cache all git files
 	mut dir := vid.workspace
@@ -25,7 +25,7 @@ fn (vid mut Vid) load_git_tree() {
 	vid.all_git_files.sort_by_len()
 }
 
-fn (vid & Vid) load_all_tasks() {
+fn (vid &Vid) load_all_tasks() {
 /*
 	mut rows := vid.timer.db.q_strings('select distinct name from tasks')
 	for row in rows {
@@ -39,48 +39,47 @@ fn (vid & Vid) load_all_tasks() {
 fn (vid &Vid) typ_to_str() string {
 	typ := vid.query_type
 	match typ {
-	SEARCH {
+	.search {
 		return 'find'
 	}
-	CTRLP {
+	.ctrlp {
 		return 'ctrl p (git files)'
 	}
-	OPEN {
+	.open {
 		return 'open'
 	}
-	OPEN_WORKSPACE {
+	.open_workspace {
 		return 'open workspace'
 	}
-	CAM {
+	.cam {
 		return 'git commit -am'
 	}
-	CTRLJ {
+	.ctrlj {
 		return 'ctrl j'
 	}
-	TASK {
+	.task {
 		return 'new task/activity'
 	}
-	GREP { return 'git grep'	}
-	else {}
+	.grep { return 'git grep'	}
 	}
 	return ''
 }
 
 const (
-	small_queries = [SEARCH, CAM, OPEN]// , GREP]
-	MaxGrepLines  = 20
-	QueryWidth    = 400
+	small_queries = [int(QueryType.search), QueryType.cam, QueryType.open]// , GREP]
+	max_grep_lines  = 20
+	query_width    = 400
 )
 
 // Search, commit, open, ctrl p
-fn (vid mut Vid) draw_query() {
+fn (mut vid Vid) draw_query() {
 	// println('DRAW Q type=$vid.query_type')
-	mut width := QueryWidth
+	mut width := query_width
 	mut height := 360
-	if vid.query_type in small_queries {
+	if int(vid.query_type) in small_queries {
 		height = 70
 	}
-	if vid.query_type == GREP {
+	if vid.query_type == .grep {
 		width *= 2
 		height *= 2
 	}
@@ -93,22 +92,22 @@ fn (vid mut Vid) draw_query() {
 	// query background
 	vid.vg.draw_rect(0, 0, vid.win_width, vid.line_height, vid.cfg.title_color)
 	mut q := vid.query
-	if vid.query_type == SEARCH || vid.query_type == GREP {
+	if vid.query_type == QueryType.search || vid.query_type == QueryType.grep {
 		q = vid.search_query
 	}
 	vid.ft.draw_text(x + 10, y + 30, q, txt_cfg)
-	if vid.query_type == CTRLP {
+	if vid.query_type == .ctrlp {
 		vid.draw_ctrlp_files(x, y)
 	}
-	else if vid.query_type == TASK {
+	else if vid.query_type == QueryType.task {
 		vid.draw_top_tasks(x, y)
 	}
-	else if vid.query_type == GREP {
+	else if vid.query_type == QueryType.grep {
 		vid.draw_git_grep(x, y)
 	}
 }
 
-fn (vid mut Vid) draw_ctrlp_files(x, y int) {
+fn (mut vid Vid) draw_ctrlp_files(x, y int) {
 	mut j := 0
 	for _file in vid.all_git_files {
 		if j == 10 {
@@ -124,7 +123,7 @@ fn (vid mut Vid) draw_ctrlp_files(x, y int) {
 	}
 }
 
-fn (vid mut Vid) draw_top_tasks(x, y int) {
+fn (mut vid Vid) draw_top_tasks(x, y int) {
 	mut j := 0
 	q := vid.query.to_lower()
 	for _task in vid.top_tasks {
@@ -141,9 +140,9 @@ fn (vid mut Vid) draw_top_tasks(x, y int) {
 	}
 }
 
-fn (vid mut Vid) draw_git_grep(x, y int) {
+fn (mut vid Vid) draw_git_grep(x, y int) {
 	for i, line in vid.gg_lines {
-		if i == MaxGrepLines {
+		if i == max_grep_lines {
 			break
 		}
 		pos := line.index(':') or {
@@ -157,7 +156,7 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 		text := line[pos2+1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == vid.gg_pos {
-			vid.vg.draw_rect(x, yy, QueryWidth * 2, 30, vid.cfg.vcolor)
+			vid.vg.draw_rect(x, yy, query_width * 2, 30, vid.cfg.vcolor)
 		}
 		vid.ft.draw_text(x + 10, yy, path, txt_cfg)
 		vid.ft.draw_text(x + 250, yy, text, txt_cfg)
@@ -167,7 +166,7 @@ fn (vid mut Vid) draw_git_grep(x, y int) {
 // Open file on enter
 // fn input_enter(s string, vid * Vid) {
 // if s != '' {
-fn (vid mut Vid) ctrlp_open() {
+fn (mut vid Vid) ctrlp_open() {
 	// Open the first file in the list
 	for _file in vid.all_git_files {
 		mut file := _file.to_lower()
@@ -185,7 +184,7 @@ fn (vid mut Vid) ctrlp_open() {
 	}
 }
 
-fn (vid mut Vid) git_grep() {
+fn (mut vid Vid) git_grep() {
 	vid.gg_pos = -1
 	s := os.exec('git -C "$vid.workspace" grep -n "$vid.search_query"') or { return }
 	lines := s.output.split_into_lines()
@@ -198,7 +197,7 @@ fn (vid mut Vid) git_grep() {
 	}
 }
 
-fn (vid mut Vid) search(goback bool) {
+fn (mut vid Vid) search(goback bool) {
 	if vid.search_query == '' {
 		return
 	}

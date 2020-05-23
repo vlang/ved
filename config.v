@@ -44,12 +44,12 @@ mut:
   red_cfg         gx.TextCfg
 }
 
-fn (config mut Config) init_colors() {
+fn (mut config Config) init_colors() {
   config.dark_mode = '-dark' in os.args
   config.reload_config()
 }
 
-fn (config mut Config) reload_config() {
+fn (mut config Config) reload_config() {
   config.set_textsize()
   config.set_tab()
   config.set_vcolor()
@@ -70,16 +70,16 @@ fn (config mut Config) reload_config() {
   config.set_red()
 }
 
-fn (config mut Config) set_textsize() {
+fn (mut config Config) set_textsize() {
   config.text_size = 18
 }
 
-fn (config mut Config) set_tab() {
+fn (mut config Config) set_tab() {
   config.tab_size = 4
   config.tab = int(`\t`)
 }
 
-fn (config mut Config) set_vcolor() {
+fn (mut config Config) set_vcolor() {
   if !config.dark_mode {
     config.vcolor = gx.Color{226, 233, 241}
   } else {
@@ -87,7 +87,7 @@ fn (config mut Config) set_vcolor() {
   }
 }
 
-fn (config mut Config) set_split() {
+fn (mut config Config) set_split() {
   if !config.dark_mode {
     config.split_color = gx.Color{223, 223, 223}
   } else {
@@ -95,7 +95,7 @@ fn (config mut Config) set_split() {
   }
 }
 
-fn (config mut Config) set_bgcolor() {
+fn (mut config Config) set_bgcolor() {
   if !config.dark_mode {
     config.bgcolor = gx.Color{245, 245, 245}
   } else {
@@ -103,7 +103,7 @@ fn (config mut Config) set_bgcolor() {
   }
 }
 
-fn (config mut Config) set_errorbgcolor() {
+fn (mut config Config) set_errorbgcolor() {
   if !config.dark_mode {
     config.errorbgcolor = gx.Color{240, 0, 0}
   } else {
@@ -112,7 +112,7 @@ fn (config mut Config) set_errorbgcolor() {
 }
 
 
-fn (config mut Config) set_string() {
+fn (mut config Config) set_string() {
   if !config.dark_mode {
     config.string_color = gx.Color{179, 58, 44}
   } else {
@@ -124,7 +124,7 @@ fn (config mut Config) set_string() {
   }
 }
 
-fn (config mut Config) set_key() {
+fn (mut config Config) set_key() {
   if !config.dark_mode {
     config.key_color = gx.Color{74, 103, 154}
   } else {
@@ -136,7 +136,7 @@ fn (config mut Config) set_key() {
   }
 }
 
-fn (config mut Config) set_title() {
+fn (mut config Config) set_title() {
   if !config.dark_mode {
     config.title_color = gx.Color{40, 40, 40}
   } else {
@@ -144,7 +144,7 @@ fn (config mut Config) set_title() {
   }
 }
 
-fn (config mut Config) set_cursor() {
+fn (mut config Config) set_cursor() {
   if !config.dark_mode {
     config.cursor_color = gx.black
   } else {
@@ -152,7 +152,7 @@ fn (config mut Config) set_cursor() {
   }
 }
 
-fn (config mut Config) set_txt() {
+fn (mut config Config) set_txt() {
   if !config.dark_mode {
     config.text_color = gx.black
   } else {
@@ -164,7 +164,7 @@ fn (config mut Config) set_txt() {
   }
 }
 
-fn (config mut Config) set_comment() {
+fn (mut config Config) set_comment() {
   config.comment_color = gx.dark_gray
   config.comment_cfg = gx.TextCfg {
     size: config.text_size,
@@ -172,7 +172,7 @@ fn (config mut Config) set_comment() {
   }
 }
 
-fn (config mut Config) set_filename() {
+fn (mut config Config) set_filename() {
   config.file_name_color = gx.white
   config.file_name_cfg = gx.TextCfg {
     size: config.text_size,
@@ -180,7 +180,7 @@ fn (config mut Config) set_filename() {
   }
 }
 
-fn (config mut Config) set_plus() {
+fn (mut config Config) set_plus() {
   config.plus_color = gx.green
   config.plus_cfg = gx.TextCfg {
     size: config.text_size,
@@ -188,7 +188,7 @@ fn (config mut Config) set_plus() {
   }
 }
 
-fn (config mut Config) set_minus() {
+fn (mut config Config) set_minus() {
   config.minus_color = gx.green
   config.minus_cfg = gx.TextCfg {
     size: config.text_size,
@@ -196,16 +196,16 @@ fn (config mut Config) set_minus() {
   }
 }
 
-fn (config mut Config) set_line_nr() {
+fn (mut config Config) set_line_nr() {
   config.line_nr_color = gx.dark_gray
   config.line_nr_cfg = gx.TextCfg {
-    size: config.text_size
-    color: config.line_nr_color
-    align: gx.align_right
+    size: config.text_size,
+    color: config.line_nr_color,
+    align: gx.align_right,
   }
 }
 
-fn (config mut Config) set_green() {
+fn (mut config Config) set_green() {
   config.green_color = gx.green
   config.green_cfg = gx.TextCfg {
     size: config.text_size,
@@ -213,7 +213,7 @@ fn (config mut Config) set_green() {
   }
 }
 
-fn (config mut Config) set_red() {
+fn (mut config Config) set_red() {
   config.red_color = gx.red
   config.red_cfg = gx.TextCfg {
     size: config.text_size,

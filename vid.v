@@ -21,36 +21,36 @@ const (
 )
 
 // TODO enum
-const (
-	NORMAL = 0
-	INSERT = 1
-	QUERY  = 2
-	VISUAL = 3
-	TIMER  = 4
-)
+enum EditorMode {
+	normal = 0
+	insert = 1
+	query  = 2
+	visual = 3
+	timer  = 4
+}
 
 // Query type
-const (
-	CTRLP  = 0
-	SEARCH = 1
-	CAM    = 2
-	OPEN   = 3
-	OPEN_WORKSPACE = 7
-	CTRLJ  = 4
-	TASK   = 5
-	GREP   = 6
-)
+enum QueryType {
+	ctrlp  = 0
+	search = 1
+	cam    = 2
+	open   = 3
+	ctrlj  = 4
+	task   = 5
+	grep   = 6
+	open_workspace = 7
+}
 
 // For syntax highlighting
-const (
-	STRING  = 1
-	COMMENT = 2
-	KEY     = 3
-)
+enum ChunkKind {
+	a_string  = 1
+	a_comment = 2
+	a_key     = 3
+}
 struct Chunk {
 	start int
 	end   int
-	typ   int
+	typ   ChunkKind
 }
 
 struct Vid {
@@ -63,7 +63,7 @@ mut:
 	views            []View
 	cur_split        int
 	view             &View
-	mode             int
+	mode             EditorMode
 	just_switched    bool // for keydown/char events to avoid dup keys
 	prev_key         int
 	prev_cmd         string
@@ -74,7 +74,7 @@ mut:
 	ft               &freetype.FreeType
 	query            string
 	search_query     string
-	query_type       int
+	query_type       QueryType
 	main_wnd         &glfw.Window
 	workspace        string
 	workspace_idx    int
@@ -105,9 +105,21 @@ struct ViSize {
 	height int
 }
 
+const (
+	help_text = '
+Usage: vid [options] [files]
+
+Options:
+  -h, --help              Display this information.
+  -window <window-name>   Launch in a window.
+  -dark                   Launch in dark mode.
+  -two_splits
+'
+)
+
 fn main() {
 	if '-h' in os.args || '--help' in os.args {
-		println(HelpText)
+		println(help_text)
 		return
 	}
 	if !os.is_dir(os.home_dir() + '.vid') {
@@ -179,11 +191,11 @@ fn main() {
 	vid.timer = new_timer(vid.vg, vid.ft)
 	vid.load_all_tasks()
 	w.set_user_ptr(vid)
-	$if macos {
-		// TODO linux and windows
-		//C.AXUIElementCreateApplication(234)
-		uiold.reg_key_vid()
-	}
+    //
+	// TODO linux and windows
+	//C.AXUIElementCreateApplication(234)
+	uiold.reg_key_vid()
+    //
 	w.onkeydown(key_down)
 	w.onchar(on_char)
 	// Open workspaces or a file
@@ -237,12 +249,12 @@ fn main() {
 	gl.clear_color(vid.cfg.bgcolor.r, vid.cfg.bgcolor.g, vid.cfg.bgcolor.b, 255)
 	vid.refresh = true
 	for !vid.main_wnd.should_close() {
-		if vid.refresh || vid.mode == TIMER {
+		if vid.refresh || vid.mode == .timer {
 			gl.clear()
 			gl.clear_color(vid.cfg.bgcolor.r, vid.cfg.bgcolor.g, vid.cfg.bgcolor.b, 255)
 		}
 		vid.draw()
-		if vid.mode == TIMER {
+		if vid.mode == .timer {
 			vid.timer.draw()
 		}
 		w.swap_buffers()
@@ -258,7 +270,7 @@ fn (vid &Vid) split_width() int {
 	return split_width
 }
 
-fn (vid mut Vid) draw() {
+fn (mut vid Vid) draw() {
 	view := vid.view
 	split_width := vid.split_width()
 	// Splits from and to
@@ -360,7 +372,7 @@ fn (vid mut Vid) draw() {
 	cursor_x := line_x + (vid.view.x + cursor_tab_off * vid.cfg.tab_size) * vid.char_width
 	vid.vg.draw_empty_rect(cursor_x, y - 1, vid.char_width, vid.line_height, vid.cfg.cursor_color)
 	// query window
-	if vid.mode == QUERY {
+	if vid.mode == .query {
 		vid.draw_query()
 	}
 }
@@ -369,7 +381,7 @@ fn (vid &Vid) split_x(i int) int {
 	return vid.split_width() * (i)
 }
 
-fn (vid mut Vid) draw_split(i, split_from int) {
+fn (mut vid Vid) draw_split(i, split_from int) {
 	view := vid.views[i]
 	vid.is_ml_comment = false
 	split_width := vid.split_width()
@@ -433,7 +445,7 @@ fn (vid &Vid) max_chars(nr_tabs int) int {
 	return width / vid.char_width - 1
 }
 
-fn (vid mut Vid) add_chunk(typ, start, end int) {
+fn (mut vid Vid) add_chunk(typ ChunkKind, start, end int) {
 	chunk := Chunk {
 		typ: typ
 		start: start
@@ -442,7 +454,7 @@ fn (vid mut Vid) add_chunk(typ, start, end int) {
 	vid.chunks << chunk
 }
 
-fn (vid mut Vid) draw_line(x, y int, line string) {
+fn (mut vid Vid) draw_line(x, y int, line string) {
 	// Red/green test hack
 	if line.contains('[32m') &&
 	line.contains('PASS') {
@@ -461,24 +473,24 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		start := i
 		// Comment // #
 		if i > 0 && line[i - 1] == `/` && line[i] == `/` {
-			vid.add_chunk(COMMENT, start - 1, line.len)
+			vid.add_chunk(.a_comment, start - 1, line.len)
 			break
 		}
 		if line[i] == `#` {
-			vid.add_chunk(COMMENT, start, line.len)
+			vid.add_chunk(.a_comment, start, line.len)
 			break
 		}
 		// Comment   /*
 		if i > 0 && line[i - 1] == `/` && line[i] == `*` {
 			// All after /* is  a comment
-			vid.add_chunk(COMMENT, start, line.len)
+			vid.add_chunk(.a_comment, start, line.len)
 			vid.is_ml_comment = true
 			break
 		}
 		// End of /**/
 		if i > 0 && line[i - 1] == `*` && line[i] == `/` {
 			// All before */ is still a comment
-			vid.add_chunk(COMMENT, 0, start + 1)
+			vid.add_chunk(.a_comment, 0, start + 1)
 			vid.is_ml_comment = false
 			break
 		}
@@ -491,7 +503,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 			if i >= line.len {
 				i = line.len - 1
 			}
-			vid.add_chunk(STRING, start, i + 1)
+			vid.add_chunk(.a_string, start, i + 1)
 		}
 		if line[i] == `"` {
 			i++
@@ -501,7 +513,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 			if i >= line.len {
 				i = line.len - 1
 			}
-			vid.add_chunk(STRING, start, i + 1)
+			vid.add_chunk(.a_string, start, i + 1)
 		}
 		// Key
 		for i < line.len && is_alpha_underscore(int(line[i])) {
@@ -511,7 +523,7 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		// println('word="$word"')
 		if word in vid.keys {
 			// println('$word is key')
-			vid.add_chunk(KEY, start, i)
+			vid.add_chunk(.a_key, start, i)
 			// println('adding key. len=$vid.chunks.len')
 		}
 	}
@@ -540,10 +552,9 @@ fn (vid mut Vid) draw_line(x, y int, line string) {
 		// Keyword string etc
 		typ := chunk.typ
 		cfg := match typ {
-			KEY { vid.cfg.key_cfg }
-			STRING { vid.cfg.string_cfg }
-			COMMENT { vid.cfg.comment_cfg }
-			else { vid.cfg.txt_cfg }
+			.a_key { vid.cfg.key_cfg }
+			.a_string { vid.cfg.string_cfg }
+			.a_comment { vid.cfg.comment_cfg }
 		}
 		s := line[chunk.start..chunk.end]
 		vid.ft.draw_text(x + chunk.start * vid.char_width, y, s, cfg)
@@ -586,18 +597,17 @@ fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 	super := mods == 8 || mods == 2
 	shift := mods == 1
 	if key == glfw.key_escape {
-		vid.mode = NORMAL
+		vid.mode = .normal
 	}
 	// Reset error line
 	mut view := vid.view
 	view.error_y = -1
 	match mode {
-		NORMAL { 		vid.key_normal(key, super, shift) }
-		VISUAL { 		vid.key_visual(key, super, shift) }
-		INSERT { 		vid.key_insert(key, super) }
-		QUERY { 		vid.key_query(key, super) }
-		TIMER { 		vid.timer.key_down(key, super) }
-		else {}
+		.normal { 		vid.key_normal(key, super, shift) }
+		.visual { 		vid.key_visual(key, super, shift) }
+		.insert { 		vid.key_insert(key, super) }
+		.query { 		vid.key_query(key, super) }
+		.timer { 		vid.timer.key_down(key, super) }
 	}
 }
 
@@ -613,12 +623,12 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 	//s := utf32_to_str(code)
 	//println('s="$s" s0="$s0"')
 	match mode {
-	INSERT { vid.char_insert(s) }
-	QUERY {
+	.insert { vid.char_insert(s) }
+	.query {
 		vid.gg_pos = -1
 		vid.char_query(s)
 	}
-	NORMAL {
+	.normal {
 		// on char on normal only for replace with r
 		if !vid.just_switched && vid.prev_key == C.GLFW_KEY_R {
 			if s != 'r' {
@@ -634,11 +644,11 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 	}
 }
 
-fn (vid mut Vid) key_query(key int, super bool) {
+fn (mut vid Vid) key_query(key int, super bool) {
 	match key {
 	C.GLFW_KEY_BACKSPACE {
 		vid.gg_pos = -1
-		if vid.query_type != SEARCH && vid.query_type != GREP {
+		if vid.query_type != .search && vid.query_type != .grep {
 			if vid.query.len == 0 {
 				return
 			}
@@ -653,22 +663,22 @@ fn (vid mut Vid) key_query(key int, super bool) {
 		return
 	}
 	C.GLFW_KEY_ENTER {
-		if vid.query_type == CTRLP {
+		if vid.query_type == .ctrlp {
 			vid.ctrlp_open()
 		}
-		else if vid.query_type == CAM {
+		else if vid.query_type == .cam {
 			vid.git_commit()
 		}
-		else if vid.query_type == OPEN {
+		else if vid.query_type == .open {
 			vid.view.open_file(vid.query)
 		}
-		else if vid.query_type == TASK {
+		else if vid.query_type == .task {
 			vid.insert_task()
 			vid.cur_task = vid.query
 			vid.task_start_unix = time.now().unix
 			vid.save_timer()
 		}
-		else if vid.query_type == GREP {
+		else if vid.query_type == .grep {
 			// Key down was pressed after typing, now pressing enter opens the file
 			if vid.gg_pos > -1 && vid.gg_lines.len > 0 {
 				line := vid.gg_lines[vid.gg_pos]
@@ -677,7 +687,7 @@ fn (vid mut Vid) key_query(key int, super bool) {
 				vid.view.open_file(vid.workspace + '/' + path)
 				vid.view.move_to_line(line_nr)
 				vid.view.zz()
-				vid.mode = NORMAL
+				vid.mode = .normal
 			}
 			else {
 				// Otherwise just do a git grep on a submitted query
@@ -688,26 +698,26 @@ fn (vid mut Vid) key_query(key int, super bool) {
 		else {
 			vid.search(false)
 		}
-		vid.mode = NORMAL
+		vid.mode = .normal
 		return
 	}
 	C.GLFW_KEY_ESCAPE {
-		vid.mode = NORMAL
+		vid.mode = .normal
 		return
 	}
 	C.GLFW_KEY_DOWN {
-		if vid.mode == QUERY && vid.query_type == GREP {
+		if vid.mode == .query && vid.query_type == .grep {
 			vid.gg_pos++
 		}
 	}
 	C.GLFW_KEY_TAB {// TODO COPY PASTA
-		if vid.mode == QUERY && vid.query_type == GREP {
+		if vid.mode == .query && vid.query_type == .grep {
 			vid.gg_pos++
 		}
 	}
 	C.GLFW_KEY_UP {
-		println('KEY UP')
-		if vid.mode == QUERY && vid.query_type == GREP {
+		println('.a_key UP')
+		if vid.mode == .query && vid.query_type == .grep {
 			vid.gg_pos--
 			if vid.gg_pos < 0 {
 				vid.gg_pos = 0
@@ -735,7 +745,7 @@ fn (vid &Vid) git_commit() {
 	//os.system('gitter $dir')
 }
 
-fn (vid mut Vid) key_insert(key int, super bool) {
+fn (mut vid Vid) key_insert(key int, super bool) {
 	match key {
 	C.GLFW_KEY_BACKSPACE {
 		vid.view.backspace(vid.cfg.backspace_go_up)
@@ -744,7 +754,7 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 		vid.view.enter()
 	}
 	C.GLFW_KEY_ESCAPE {
-		vid.mode = NORMAL
+		vid.mode = .normal
 	}
 	C.GLFW_KEY_TAB {
 		vid.view.insert_text('\t')
@@ -769,11 +779,11 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 	}
 	if (key == C.GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
 		vid.view.save_file()
-		vid.mode = NORMAL
+		vid.mode = .normal
 		return
 	}
 	if super && key == C.GLFW_KEY_U {
-		vid.mode = NORMAL
+		vid.mode = .normal
 		vid.key_u()
 		return
 	}
@@ -795,7 +805,7 @@ fn (vid mut Vid) key_insert(key int, super bool) {
 	}
 }
 
-fn (vid mut Vid) ctrl_n() {
+fn (mut vid Vid) ctrl_n() {
 	line := vid.view.line()
 	mut i := vid.view.x - 1
 	end := i
@@ -820,7 +830,7 @@ fn (vid mut Vid) ctrl_n() {
 	}
 }
 
-fn (vid mut Vid) key_normal(key int, super, shift bool) {
+fn (mut vid Vid) key_normal(key int, super, shift bool) {
 	mut view := vid.view
 	vid.refresh = true
 	if vid.prev_key == C.GLFW_KEY_R {
@@ -854,15 +864,15 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	C.GLFW_KEY_SLASH {
 		if shift {
 			vid.search_query = ''
-			vid.mode = QUERY
+			vid.mode = .query
 			vid.just_switched = true
-			vid.query_type = GREP
+			vid.query_type = .grep
 		}
 		else {
 			vid.search_query = ''
-			vid.mode = QUERY
+			vid.mode = .query
 			vid.just_switched = true
-			vid.query_type = SEARCH
+			vid.query_type = .search
 		}
 	}
 	C.GLFW_KEY_F5 {
@@ -889,8 +899,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	C.GLFW_KEY_0 {
 		if super {
 			vid.query = ''
-			vid.mode = QUERY
-			vid.query_type = TASK
+			vid.mode = .query
+			vid.query_type = .task
 		}
 	}
 	C.GLFW_KEY_A {
@@ -903,8 +913,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	C.GLFW_KEY_C {
 		if super {
 			vid.query = ''
-			vid.mode = QUERY
-			vid.query_type = CAM
+			vid.mode = .query
+			vid.query_type = .cam
 		}
 		if shift {
 			vid.prev_insert = vid.view.shift_c()
@@ -951,7 +961,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 			vid.view.join()
 		}
 		else if super {
-			// vid.mode = QUERY
+			// vid.mode = .query
 			// vid.query_type = CTRLJ
 		}
 		else {
@@ -979,13 +989,13 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_O {
 		if shift && super {
-			vid.mode = QUERY
-			vid.query_type = OPEN_WORKSPACE
+			vid.mode = .query
+			vid.query_type = .open_workspace
 			vid.query = ''
 		}
 		else if super {
-			vid.mode = QUERY
-			vid.query_type = OPEN
+			vid.mode = .query
+			vid.query_type = .open
 			vid.query = ''
 			return
 		}
@@ -1000,8 +1010,8 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_P {
 		if super {
-			vid.mode = QUERY
-			vid.query_type = CTRLP
+			vid.mode = .query
+			vid.query_type = .ctrlp
 			vid.load_git_tree()
 			return
 		}
@@ -1021,7 +1031,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		if super {
 			//vid.timer.get_data(false)
 			vid.timer.load_tasks()
-			vid.mode = TIMER
+			vid.mode = .timer
 		}
 		else {
 			// if vid.prev_key == C.GLFW_KEY_T {
@@ -1088,7 +1098,7 @@ fn (vid mut Vid) key_normal(key int, super, shift bool) {
 		}
 	}
 	C.GLFW_KEY_V {
-		vid.mode = VISUAL
+		vid.mode = .visual
 		view.vstart = view.y
 		view.vend = view.y
 	}
@@ -1178,12 +1188,12 @@ fn (vid &Vid) word_under_cursor() string {
 	return word
 }
 
-fn (vid mut Vid) star() {
+fn (mut vid Vid) star() {
 	vid.search_query = vid.word_under_cursor()
 	vid.search(false)
 }
 
-fn (vid mut Vid) char_insert(s string) {
+fn (mut vid Vid) char_insert(s string) {
 	if int(s[0]) < 32 {
 		return
 	}
@@ -1191,12 +1201,12 @@ fn (vid mut Vid) char_insert(s string) {
 	vid.prev_insert = vid.prev_insert + s
 }
 
-fn (vid mut Vid) char_query(s string) {
+fn (mut vid Vid) char_query(s string) {
 	if int(s[0]) < 32 {
 		return
 	}
 	mut q := vid.query
-	if vid.query_type == SEARCH || vid.query_type == GREP {
+	if vid.query_type == .search || vid.query_type == .grep {
 		q = vid.search_query
 		vid.search_query = '${q}${s}'
 	}
@@ -1205,7 +1215,7 @@ fn (vid mut Vid) char_query(s string) {
 	}
 }
 
-fn (vid mut Vid) key_visual(key int, super, shift bool) {
+fn (mut vid Vid) key_visual(key int, super, shift bool) {
 	mut view := vid.view
 	match key {
 	C.GLFW_KEY_ESCAPE {
@@ -1226,11 +1236,11 @@ fn (vid mut Vid) key_visual(key int, super, shift bool) {
 	}
 	C.GLFW_KEY_Y {
 		view.y_visual()
-		vid.mode = NORMAL
+		vid.mode = .normal
 	}
 	C.GLFW_KEY_D {
 		view.d_visual()
-		vid.mode = NORMAL
+		vid.mode = .normal
 	}
 	C.GLFW_KEY_Q {
 		if vid.prev_key == C.GLFW_KEY_G {
@@ -1257,24 +1267,24 @@ fn (vid mut Vid) key_visual(key int, super, shift bool) {
 	}
 }
 
-fn (vid mut Vid) update_view() {
+fn (mut vid Vid) update_view() {
 	vid.view = &vid.views[vid.cur_split]
 }
 
-fn (vid mut Vid) set_insert() {
-	vid.mode = INSERT
+fn (mut vid Vid) set_insert() {
+	vid.mode = .insert
 	vid.prev_insert = ''
 	vid.just_switched = true
 }
 
-fn (vid mut Vid) exit_visual() {
-	vid.mode = NORMAL
+fn (mut vid Vid) exit_visual() {
+	vid.mode = .normal
 	mut view := vid.view
 	view.vstart = -1
 	view.vend = -1
 }
 
-fn (vid mut Vid) dot() {
+fn (mut vid Vid) dot() {
 	prev_cmd := vid.prev_cmd
 	match prev_cmd {
 	'dd' {
@@ -1310,7 +1320,7 @@ fn (vid mut Vid) dot() {
 	}
 }
 
-fn (vid mut Vid) next_split() {
+fn (mut vid Vid) next_split() {
 	vid.cur_split++
 	if vid.cur_split % vid.splits_per_workspace == 0 {
 		vid.cur_split -= vid.splits_per_workspace
@@ -1318,7 +1328,7 @@ fn (vid mut Vid) next_split() {
 	vid.update_view()
 }
 
-fn (vid mut Vid) prev_split() {
+fn (mut vid Vid) prev_split() {
 	if vid.cur_split % vid.splits_per_workspace == 0 {
 		vid.cur_split += vid.splits_per_workspace - 1
 	}
@@ -1328,7 +1338,7 @@ fn (vid mut Vid) prev_split() {
 	vid.update_view()
 }
 
-fn (vid mut Vid) open_workspace(idx int) {
+fn (mut vid Vid) open_workspace(idx int) {
 	if idx >= vid.workspaces.len {
 		vid.open_workspace(0)
 		return
@@ -1347,7 +1357,7 @@ fn (vid mut Vid) open_workspace(idx int) {
 	// vid.get_git_diff()
 }
 
-fn (vid mut Vid) add_workspace(path string) {
+fn (mut vid Vid) add_workspace(path string) {
 	println('add_workspace("$path")')
 	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
@@ -1373,7 +1383,7 @@ fn short_space(workspace string) string {
 	return workspace[pos+1..]
 }
 
-fn (vid mut Vid) move_to_line(n int) {
+fn (mut vid Vid) move_to_line(n int) {
 	vid.view.from = n
 	vid.view.y = n
 }
@@ -1414,7 +1424,7 @@ fn (vid &Vid) save_timer() {
 	f.close()
 }
 
-fn (vid mut Vid) load_timer() {
+fn (mut vid Vid) load_timer() {
 	// task=do work
 	// task_start=1223212221
 	// timer_typ=7
@@ -1443,14 +1453,14 @@ fn (vid mut Vid) load_timer() {
 	//vid.timer.started = vid.timer.start_unix != 0
 }
 
-fn (vid mut Vid) load_session() {
+fn (mut vid Vid) load_session() {
 	println('load session "$session_path"')
 	paths := os.read_lines(session_path) or { return }
 	println(paths)
 	vid.load_views(paths)
 }
 
-fn (vid mut Vid) load_views(paths[]string) {
+fn (mut vid Vid) load_views(paths[]string) {
 	for i := 0; i < paths.len && i < vid.views.len; i++ {
 		// println('loading path')
 		// println(paths[i])
@@ -1464,7 +1474,7 @@ fn (vid mut Vid) load_views(paths[]string) {
 	}
 }
 
-fn (vid & Vid) get_git_diff() {
+fn (vid &Vid) get_git_diff() {
 	return
 	/*
 	dir := vid.workspace
@@ -1522,7 +1532,7 @@ fn (vid &Vid) get_last_view() &View {
 	return &vid.views[pos]
 }
 
-fn (vid mut Vid) build_app1() {
+fn (mut vid Vid) build_app1() {
 	vid.build_app('')
 	//vid.next_split()
 
@@ -1533,11 +1543,11 @@ fn (vid mut Vid) build_app1() {
 	//vid.refresh = false
 }
 
-fn (vid mut Vid) build_app2() {
+fn (mut vid Vid) build_app2() {
 	vid.build_app('2')
 }
 
-fn (vid mut Vid) save_changed_files() {
+fn (mut vid Vid) save_changed_files() {
 	for i, view in vid.views {
 		if view.changed {
 			vid.views[i].save_file()
@@ -1545,7 +1555,7 @@ fn (vid mut Vid) save_changed_files() {
 	}
 }
 
-fn (vid mut Vid) build_app(extra string) {
+fn (mut vid Vid) build_app(extra string) {
 	vid.is_building = true
 	println('building...')
 	// Save each open file before building
@@ -1605,7 +1615,7 @@ fn (vid mut Vid) build_app(extra string) {
 
 // Run file in current view (go run [file], v run [file], python [file] etc)
 // Saves time for user since they don't have to define 'build' for every file
-fn (vid mut Vid) run_file() {
+fn (mut vid Vid) run_file() {
 	mut view := vid.view
 	vid.is_building = true
 	println('start file run')
@@ -1640,7 +1650,7 @@ fn (vid mut Vid) run_file() {
 	glfw.post_empty_event()
 }
 
-fn (vid mut Vid) go_to_error(line string) {
+fn (mut vid Vid) go_to_error(line string) {
 	// panic: volt/twitch.v:88
 	println('go to ERROR $line')
 	//if !line.contains('panic:') {
@@ -1682,7 +1692,7 @@ fn (vid mut Vid) go_to_error(line string) {
 	}
 }
 
-fn (vid mut Vid) loop() {
+fn (mut vid Vid) loop() {
 	for {
 		vid.refresh = true
 		glfw.post_empty_event()
@@ -1691,7 +1701,7 @@ fn (vid mut Vid) loop() {
 	}
 }
 
-fn (vid mut Vid) key_u() {
+fn (mut vid Vid) key_u() {
 	// Run a single test file
 	if vid.view.path.ends_with('_test.v') {
 		vid.run_file()
@@ -1703,7 +1713,7 @@ fn (vid mut Vid) key_u() {
 	}
 }
 
-fn (vid mut Vid) go_to_def() {
+fn (mut vid Vid) go_to_def() {
 	word := vid.word_under_cursor()
 	query := ') $word'
 	mut view := vid.view
@@ -1755,7 +1765,7 @@ fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	exit(1)
 }
 
-fn (vid & Vid) handle_segfault() {
+fn (vid &Vid) handle_segfault() {
 	$if windows {
 		return
 	}
@@ -1799,16 +1809,3 @@ fn (vid &Vid) insert_task() {
 	f.writeln('|-----------------------------------------------------------------------------|')
 	f.close()
 }
-
-
-const (
-	HelpText = '
-Usage: vid [options] [files]
-
-Options:
-  -h, --help              Display this information.
-  -window <window-name>   Launch in a window.
-  -dark                   Launch in dark mode.
-  -two_splits
-'
-)
