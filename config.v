@@ -146,15 +146,15 @@ fn (config mut Config) set_title() {
 
 fn (config mut Config) set_cursor() {
   if !config.dark_mode {
-    config.cursor_color = gx.Black
+    config.cursor_color = gx.black
   } else {
-    config.cursor_color = gx.White
+    config.cursor_color = gx.white
   }
 }
 
 fn (config mut Config) set_txt() {
   if !config.dark_mode {
-    config.text_color = gx.Black
+    config.text_color = gx.black
   } else {
     config.text_color = gx.Color{212, 212, 212}
   }
@@ -165,7 +165,7 @@ fn (config mut Config) set_txt() {
 }
 
 fn (config mut Config) set_comment() {
-  config.comment_color = gx.DarkGray
+  config.comment_color = gx.dark_gray
   config.comment_cfg = gx.TextCfg {
     size: config.text_size,
     color: config.comment_color,
@@ -173,7 +173,7 @@ fn (config mut Config) set_comment() {
 }
 
 fn (config mut Config) set_filename() {
-  config.file_name_color = gx.White
+  config.file_name_color = gx.white
   config.file_name_cfg = gx.TextCfg {
     size: config.text_size,
     color: config.file_name_color,
@@ -181,7 +181,7 @@ fn (config mut Config) set_filename() {
 }
 
 fn (config mut Config) set_plus() {
-  config.plus_color = gx.Green
+  config.plus_color = gx.green
   config.plus_cfg = gx.TextCfg {
     size: config.text_size,
     color: config.plus_color,
@@ -189,7 +189,7 @@ fn (config mut Config) set_plus() {
 }
 
 fn (config mut Config) set_minus() {
-  config.minus_color = gx.Green
+  config.minus_color = gx.green
   config.minus_cfg = gx.TextCfg {
     size: config.text_size,
     color: config.minus_color,
@@ -197,16 +197,16 @@ fn (config mut Config) set_minus() {
 }
 
 fn (config mut Config) set_line_nr() {
-  config.line_nr_color = gx.DarkGray
+  config.line_nr_color = gx.dark_gray
   config.line_nr_cfg = gx.TextCfg {
-    size: config.text_size,
-    color: config.line_nr_color,
-    align: gx.ALIGN_RIGHT,
+    size: config.text_size
+    color: config.line_nr_color
+    align: gx.align_right
   }
 }
 
 fn (config mut Config) set_green() {
-  config.green_color = gx.Green
+  config.green_color = gx.green
   config.green_cfg = gx.TextCfg {
     size: config.text_size,
     color: config.green_color,
@@ -214,7 +214,7 @@ fn (config mut Config) set_green() {
 }
 
 fn (config mut Config) set_red() {
-  config.red_color = gx.Red
+  config.red_color = gx.red
   config.red_cfg = gx.TextCfg {
     size: config.text_size,
     color: config.red_color,

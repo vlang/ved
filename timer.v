@@ -8,7 +8,7 @@ import time
 
 const (
 	time_cfg = gx.TextCfg {
-		color: gx.Gray
+		color: gx.gray
 		size: 5
 	}
 )

@@ -86,7 +86,7 @@ fn (vid mut Vid) draw_query() {
 	}
 	x := (vid.win_width - width) / 2
 	y := (vid.win_height - height) / 2
-	vid.vg.draw_rect(x, y, width, height, gx.White)
+	vid.vg.draw_rect(x, y, width, height, gx.white)
 	// query window title
 	vid.vg.draw_rect(x, y, width, vid.line_height, vid.cfg.title_color)
 	vid.ft.draw_text(x + 10, y, vid.typ_to_str(), vid.cfg.file_name_cfg)
