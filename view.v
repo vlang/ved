@@ -70,7 +70,7 @@ fn get_clean_words(line string) []string {
 	return res
 }
 
-fn (view mut View) open_file(path string) {
+fn (mut view View) open_file(path string) {
 	println('open file "$path"')
 	if path == '' {
 		return
@@ -141,12 +141,12 @@ fn (view mut View) open_file(path string) {
 	view.changed = false
 }
 
-fn (view mut View) reopen() {
+fn (mut view View) reopen() {
 	view.open_file(view.path)
 	view.changed = false
 }
 
-fn (view mut View) save_file() {
+fn (mut view View) save_file() {
 	view.x = view.x // TODO remove once the mut bug is fixed
 	if view.path == '' {
 		return
@@ -166,7 +166,7 @@ fn (view mut View) save_file() {
 	go view.format_file()
 }
 
-fn (view mut View) format_file() {
+fn (mut view View) format_file() {
 	path := view.path
 	// Run formatters
 	if path.ends_with('.go') {
@@ -209,7 +209,7 @@ fn (view &View) char() int {
 	return 0
 }
 
-fn (view mut View) set_line(newline string) {
+fn (mut view View) set_line(newline string) {
 	if view.y + 1 > view.lines.len {
 		view.lines << newline
 	}
@@ -219,7 +219,7 @@ fn (view mut View) set_line(newline string) {
 	view.changed = true
 }
 
-fn (view mut View) j() {
+fn (mut view View) j() {
 	if view.lines.len == 0 {
 		return
 	}
@@ -244,7 +244,7 @@ fn (view mut View) j() {
 	}
 }
 
-fn (view mut View) k() {
+fn (mut view View) k() {
 	if view.y <= 0 {
 		return
 	}
@@ -263,22 +263,22 @@ fn (view mut View) k() {
 	}
 }
 
-fn (view mut View) shift_h() {
+fn (mut view View) shift_h() {
 	view.y = view.from
 }
 
-fn (view mut View) move_to_page_bot() {
+fn (mut view View) move_to_page_bot() {
 	view.y = view.from + view.page_height - 1
 }
 
-fn (view mut View) l() {
+fn (mut view View) l() {
 	line := view.line()
 	if view.x < line.len - 1 {
 		view.x++
 	}
 }
 
-fn (view mut View) shift_g() {
+fn (mut view View) shift_g() {
 	view.y = view.lines.len - 1
 	view.from = view.y - view.page_height + 1
 	if view.from < 0 {
@@ -286,25 +286,25 @@ fn (view mut View) shift_g() {
 	}
 }
 
-fn (view mut View) shift_a() {
+fn (mut view View) shift_a() {
 	line := view.line()
 	view.set_line('$line ')
 	view.x = view.uline().len - 1
 }
 
-fn (view mut View) shift_i() {
+fn (mut view View) shift_i() {
 	view.x = 0
 	for view.char() == view.vid.cfg.tab {
 		view.x++
 	}
 }
 
-fn (view mut View) gg() {
+fn (mut view View) gg() {
 	view.from = 0
 	view.y = 0
 }
 
-fn (view mut View) shift_f() {
+fn (mut view View) shift_f() {
 	view.from += view.page_height
 	if view.from >= view.lines.len {
 		view.from = view.lines.len - 1
@@ -312,7 +312,7 @@ fn (view mut View) shift_f() {
 	view.y = view.from
 }
 
-fn (view mut View) shift_b() {
+fn (mut view View) shift_b() {
 	view.from -= view.page_height
 	if view.from < 0 {
 		view.from = 0
@@ -320,7 +320,7 @@ fn (view mut View) shift_b() {
 	view.y = view.from
 }
 
-fn (view mut View) dd() {
+fn (mut view View) dd() {
 	if view.lines.len != 0 {
 		mut vid := view.vid
 		vid.prev_key = -1
@@ -332,7 +332,7 @@ fn (view mut View) dd() {
 	}
 }
 
-fn (view mut View) shift_right() {
+fn (mut view View) shift_right() {
 	// No selection, shift current line
 	if view.vstart == -1 {
 		view.set_line('\t${view.line()}')
@@ -344,7 +344,7 @@ fn (view mut View) shift_right() {
 	}
 }
 
-fn (view mut View) shift_left() {
+fn (mut view View) shift_left() {
 	if view.vstart == -1 {
 		line := view.line()
 		if !line.starts_with('\t') {
@@ -362,7 +362,7 @@ fn (view mut View) shift_left() {
 	}
 }
 
-fn (v mut View) delete_char() {
+fn (mut v View) delete_char() {
 	u := v.uline()
 	if v.x >= u.len {
 		return
@@ -376,7 +376,7 @@ fn (v mut View) delete_char() {
 	}
 }
 
-fn (view mut View) shift_c() string {
+fn (mut view View) shift_c() string {
 	line := view.line()
 	s := line[..view.x]
 	deleted := line[view.x..]
@@ -385,7 +385,7 @@ fn (view mut View) shift_c() string {
 	return deleted
 }
 
-fn (view mut View) insert_text(s string) {
+fn (mut view View) insert_text(s string) {
 	line := view.line()
 	if line.len == 0 {
 		view.set_line('$s ')
@@ -408,7 +408,7 @@ fn (view mut View) insert_text(s string) {
 	view.changed = true
 }
 
-fn (view mut View) backspace(go_up bool) {
+fn (mut view View) backspace(go_up bool) {
 	if view.x == 0 {
 		if go_up && view.y > 0 {
 			view.x = 0
@@ -429,28 +429,28 @@ fn (view mut View) backspace(go_up bool) {
 	view.x--
 }
 
-fn (view mut View) yy() {
+fn (mut view View) yy() {
 	mut ylines := []string{}
 	ylines << (view.line())
 	view.vid.ylines = ylines
 }
 
-fn (view mut View) p() {
+fn (mut view View) p() {
 	for line in view.vid.ylines {
 		view.o()
 		view.set_line(line)
 	}
 }
 
-fn (view mut View) shift_o() {
+fn (mut view View) shift_o() {
 	view.o_generic(0)
 }
 
-fn (view mut View) o() {
+fn (mut view View) o() {
 	view.o_generic(1)
 }
 
-fn (view mut View) o_generic(delta int) {
+fn (mut view View) o_generic(delta int) {
 	view.y += delta
 	// Insert the same amount of spaces/tabs as in prev line
 	prev_line := if view.lines.len == 0 || view.y == 0 {
@@ -488,7 +488,7 @@ fn (view mut View) o_generic(delta int) {
 	view.changed = true
 }
 
-fn (view mut View) enter() {
+fn (mut view View) enter() {
 	// Create new line
 	// And move everything to the right of the cursor to it
 	pos := view.x
@@ -524,7 +524,7 @@ fn (view mut View) enter() {
 	view.x = 0
 }
 
-fn (view mut View) join() {
+fn (mut view View) join() {
 	if view.y == view.lines.len - 1 {
 		return
 	}
@@ -539,7 +539,7 @@ fn (view mut View) join() {
 	// view.prev_cmd = "J"
 }
 
-fn (v mut View) y_visual() {
+fn (mut v View) y_visual() {
 	mut ylines := []string{}
 	for i := v.vstart; i <= v.vend; i++ {
 		ylines << v.lines[i]
@@ -552,21 +552,21 @@ fn (v mut View) y_visual() {
 	v.vend = -1
 }
 
-fn (view mut View) d_visual() {
+fn (mut view View) d_visual() {
 	view.y_visual()
 	for i := 0; i < view.vid.ylines.len; i++ {
 		view.lines.delete(view.y)
 	}
 }
 
-fn (view mut View) cw() {
+fn (mut view View) cw() {
 	mut vid := view.vid
 	view.dw()
 	vid.prev_cmd = 'cw'
 	view.vid.set_insert()
 }
 
-fn (view mut View) dw() {
+fn (mut view View) dw() {
 	mut vid := view.vid
 	typ := is_alpha(view.char())
 	// While cur char has the same type - delete it
@@ -597,14 +597,14 @@ fn (view mut View) dw() {
 
 // TODO COPY PASTA
 // same as cw but deletes underscores
-fn (view mut View) ce() {
+fn (mut view View) ce() {
 	mut vid := view.vid
 	view.de()
 	vid.prev_cmd = 'ce'
 	view.vid.set_insert()
 }
 
-fn (view mut View) w() {
+fn (mut view View) w() {
 	line := view.line()
 	typ := is_alpha_underscore(view.char())
 	// Go to end of current word
@@ -617,7 +617,7 @@ fn (view mut View) w() {
 	}
 }
 
-fn (view mut View) b() {
+fn (mut view View) b() {
 	// line := view.line()
 	// Go to start of prev word
 	for view.x > 0 && view.char() == 32 {
@@ -630,7 +630,7 @@ fn (view mut View) b() {
 	}
 }
 
-fn (view mut View) de() {
+fn (mut view View) de() {
 	mut vid := view.vid
 	typ := is_alpha_underscore(view.char())
 	// While cur char has the same type - delete it
@@ -646,20 +646,20 @@ fn (view mut View) de() {
 	vid.prev_cmd = 'de'
 }
 
-fn (view mut View) zz() {
+fn (mut view View) zz() {
 	view.from = view.y - view.vid.page_height / 2
 	if view.from < 0 {
 		view.from = 0
 	}
 }
 
-fn (view mut View) r(s string) {
+fn (mut view View) r(s string) {
 	view.delete_char()
 	view.insert_text(s)
 	view.x--
 }
 
-fn (view mut View) tt() {
+fn (mut view View) tt() {
 	if view.prev_path == '' {
 		return
 	}
@@ -668,16 +668,16 @@ fn (view mut View) tt() {
 	view.open_file(view.prev_path)
 }
 
-fn (view mut View) move_to_line(line int) {
+fn (mut view View) move_to_line(line int) {
 	view.from = line
 	view.y = line
 	view.zz()
 }
 
 // Fit lines  into 80 chars
-fn (view mut View) gq() {
+fn (mut view View) gq() {
 	mut vid := view.vid
-	if vid.mode != VISUAL {
+	if vid.mode != .visual {
 		return
 	}
 	view.y_visual()
@@ -696,7 +696,7 @@ fn (view mut View) gq() {
 		view.insert_text(line)
 		view.o()
 	}
-	vid.mode = NORMAL
+	vid.mode = .normal
 }
 
 fn is_alpha(r byte) bool {
