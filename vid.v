@@ -86,7 +86,7 @@ mut:
 	chunks           []Chunk
 	is_building      bool
 	timer            Timer
-	task_start_unix  int
+	task_start_unix  u64
 	cur_task         string
 	words            []string
 	file_y_pos       map[string]int
@@ -1404,8 +1404,8 @@ fn (vid &Vid) save_session() {
 }
 
 // TODO fix vals[0].int()
-fn toi(s string) int {
-	return s.int()
+fn toi(s string) u64 {
+	return s.u64()
 }
 
 fn (vid &Vid) save_timer() {
