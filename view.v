@@ -568,14 +568,14 @@ fn (mut view View) cw() {
 
 fn (mut view View) dw() {
 	mut vid := view.vid
-	typ := is_alpha(view.char())
+	typ := is_alpha(byte(view.char()))
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
 		if view.x <= 0 || view.x >= line.len - 1 {
 			break
 		}
-		if typ == is_alpha(view.char()) {
+		if typ == is_alpha(byte(view.char())) {
 			println('del x=$view.x len=$line.len')
 			view.delete_char()
 		}
@@ -584,7 +584,7 @@ fn (mut view View) dw() {
 		}
 	}
 	// Delete whitespace after the deleted word
-	for is_whitespace(view.char()) {
+	for is_whitespace(byte(view.char())) {
 		line := view.line()
 		if view.x <= 0 || view.x >= line.len {
 			break
@@ -709,7 +709,7 @@ fn is_whitespace(r byte) bool {
 }
 
 fn is_alpha_underscore(r int) bool {
-	return (is_alpha(r) || byte(r) == `_` || byte(r) == `#` || byte(r) == `$`)
+	return (is_alpha(byte(r)) || byte(r) == `_` || byte(r) == `#` || byte(r) == `$`)
 }
 
 fn break_text(s string, max int) []string {

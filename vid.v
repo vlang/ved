@@ -279,14 +279,14 @@ fn (mut vid Vid) draw() {
 	// Not a full refresh? Means we need to refresh only current split.
 	if !vid.refresh {
 		split_x := split_width * (vid.cur_split - from)
-		vid.vg.draw_rect(split_x, 0, split_width - 1, vid.win_height, vid.cfg.bgcolor)
+		vid.vg.draw_rect(f32(split_x), 0, f32(split_width - 1), f32(vid.win_height), vid.cfg.bgcolor)
 	}
 	now := time.now()
 	// Coords
 	y := (vid.view.y - vid.view.from) * vid.line_height + vid.line_height
 	// Cur line
 	line_x := split_width * (vid.cur_split - from) + vid.view.padding_left + 10
-	vid.vg.draw_rect(line_x, y - 1, split_width - vid.view.padding_left - 10, vid.line_height, vid.cfg.vcolor)
+	vid.vg.draw_rect(f32(line_x), f32(y - 1), f32(split_width - vid.view.padding_left - 10), f32(vid.line_height), vid.cfg.vcolor)
 	// V selection
 	mut v_from := vid.view.vstart + 1
 	mut v_to := vid.view.vend + 1
@@ -296,8 +296,8 @@ fn (mut vid Vid) draw() {
 		v_to = vid.view.vstart + 1
 	}
 	for yy := v_from; yy <= v_to; yy++ {
-		vid.vg.draw_rect(line_x, (yy - vid.view.from) * vid.line_height,
-		split_width - vid.view.padding_left, vid.line_height, vid.cfg.vcolor)
+		vid.vg.draw_rect(f32(line_x), f32((yy - vid.view.from) * vid.line_height),
+			f32(split_width - vid.view.padding_left), f32(vid.line_height), vid.cfg.vcolor)
 	}
 	// Tab offset for cursor
 	line := vid.view.line()
@@ -310,7 +310,7 @@ fn (mut vid Vid) draw() {
 		cursor_tab_off++
 	}
 	// Black title background
-	vid.vg.draw_rect(0, 0, vid.win_width, vid.line_height, vid.cfg.title_color)
+	vid.vg.draw_rect(0, 0, f32(vid.win_width), f32(vid.line_height), vid.cfg.title_color)
 	// Current split has dark blue title
 	// vid.vg.draw_rect(split_x, 0, split_width, vid.line_height, gx.rgb(47, 11, 105))
 	// Title (file paths)
@@ -370,7 +370,7 @@ fn (mut vid Vid) draw() {
 	}
 	// Cursor
 	cursor_x := line_x + (vid.view.x + cursor_tab_off * vid.cfg.tab_size) * vid.char_width
-	vid.vg.draw_empty_rect(cursor_x, y - 1, vid.char_width, vid.line_height, vid.cfg.cursor_color)
+	vid.vg.draw_empty_rect(f32(cursor_x), f32(y - 1), f32(vid.char_width), f32(vid.line_height), vid.cfg.cursor_color)
 	// query window
 	if vid.mode == .query {
 		vid.draw_query()
@@ -387,7 +387,7 @@ fn (mut vid Vid) draw_split(i, split_from int) {
 	split_width := vid.split_width()
 	split_x := split_width * (i - split_from)
 	// Vertical split line
-	vid.vg.draw_line(split_x, vid.line_height + 1, split_x, vid.win_height, vid.cfg.split_color)
+	vid.vg.draw_line(f32(split_x), f32(vid.line_height + 1), f32(split_x), f32(vid.win_height), vid.cfg.split_color)
 	// Lines
 	mut line_nr := 1// relative y
 	for j := view.from; j < view.from + vid.page_height && j < view.lines.len; j++ {
@@ -399,7 +399,7 @@ fn (mut vid Vid) draw_split(i, split_from int) {
 		y := line_nr * vid.line_height
 		// Error bg
 		if view.error_y == j {
-			vid.vg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, vid.line_height, vid.cfg.errorbgcolor)
+			vid.vg.draw_rect(f32(x + 10), f32(y - 1), f32(split_width - view.padding_left - 10), f32(vid.line_height), vid.cfg.errorbgcolor)
 		}
 		// Line number
 		line_number := j + 1
@@ -1787,7 +1787,7 @@ fn (vid &Vid) task_minutes() int {
 	if vid.task_start_unix == 0 {
 		seconds = 0
 	}
-	return seconds / 60
+	return int(seconds / 60)
 }
 
 const (
@@ -1804,7 +1804,7 @@ fn (vid &Vid) insert_task() {
 	mins := vid.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `,		4 - mins.len)
 	f.writeln('| $task_name | $mins $mins_pad | ' +
-		time.unix(vid.task_start_unix).format() + ' | ' +
+		time.unix(int(vid.task_start_unix)).format() + ' | ' +
 		time.now().hhmm() + ' |')
 	f.writeln('|-----------------------------------------------------------------------------|')
 	f.close()
