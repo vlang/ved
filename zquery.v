@@ -85,12 +85,12 @@ fn (mut vid Vid) draw_query() {
 	}
 	x := (vid.win_width - width) / 2
 	y := (vid.win_height - height) / 2
-	vid.vg.draw_rect(f32(x), f32(y), f32(width), f32(height), gx.white)
+	vid.vg.draw_rect(x, y, width, height, gx.white)
 	// query window title
-	vid.vg.draw_rect(f32(x), f32(y), f32(width), f32(vid.line_height), vid.cfg.title_color)
+	vid.vg.draw_rect(x, y, width, vid.line_height, vid.cfg.title_color)
 	vid.ft.draw_text(x + 10, y, vid.typ_to_str(), vid.cfg.file_name_cfg)
 	// query background
-	vid.vg.draw_rect(0, 0, f32(vid.win_width), f32(vid.line_height), vid.cfg.title_color)
+	vid.vg.draw_rect(0, 0, vid.win_width, vid.line_height, vid.cfg.title_color)
 	mut q := vid.query
 	if vid.query_type == QueryType.search || vid.query_type == QueryType.grep {
 		q = vid.search_query
@@ -156,7 +156,7 @@ fn (mut vid Vid) draw_git_grep(x, y int) {
 		text := line[pos2+1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == vid.gg_pos {
-			vid.vg.draw_rect(f32(x), f32(yy), f32(query_width * 2), 30, vid.cfg.vcolor)
+			vid.vg.draw_rect(x, yy, query_width * 2, 30, vid.cfg.vcolor)
 		}
 		vid.ft.draw_text(x + 10, yy, path, txt_cfg)
 		vid.ft.draw_text(x + 250, yy, text, txt_cfg)
