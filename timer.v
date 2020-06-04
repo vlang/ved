@@ -1,10 +1,11 @@
 module main
 
-import freetype
 import gg
+import gg.ft
 import gx
 import os
 import time
+import sokol.sapp
 
 const (
 	time_cfg = gx.TextCfg {
@@ -24,7 +25,7 @@ const (
 struct Timer {
 mut:
 	gg &gg.GG
-	ft &freetype.FreeType
+	ft &ft.FT
 	tasks []Task
 	date time.Time
 
@@ -105,7 +106,7 @@ fn (mut t Timer) load_tasks() {
 }
 
 
-fn new_timer(gg &gg.GG, ft &freetype.FreeType) Timer {
+fn new_timer(gg &gg.GG, ft &ft.FT) Timer {
 	mut timer := Timer {
 		gg: gg
 		ft: ft
@@ -167,17 +168,17 @@ fn (mut t Timer) draw() {
 	h := total/ 60
 	m := total % 60
 	t.ft.draw_text(window_x + window_width - 100, 100, '$h:${m:02d}', gx.TextCfg{ color: color_productive })
-	
+
 
 }
 
-fn (mut timer Timer) key_down(key int, super bool) {
+fn (mut timer Timer) key_down(key sapp.KeyCode, super bool) {
 	match key {
-		C.GLFW_KEY_UP {
+		.up {
 			timer.date = timer.date.add_days(-1)
 			timer.load_tasks()
 		}
-		C.GLFW_KEY_DOWN {
+		.down {
 			timer.date = timer.date.add_days(1)
 			timer.load_tasks()
 		}

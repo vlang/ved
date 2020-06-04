@@ -4,14 +4,15 @@
 
 module main
 
-import gl
 import gg
-import freetype
-import glfw
+import gg.ft
+//import freetype
+//import glfw
 import os
 import time
 import uiold
 import strings
+import sokol.sapp
 //import darwin
 
 const (
@@ -20,7 +21,6 @@ const (
 	tasks_path   = os.home_dir() + '.vid/tasks'
 )
 
-// TODO enum
 enum EditorMode {
 	normal = 0
 	insert = 1
@@ -29,7 +29,6 @@ enum EditorMode {
 	timer  = 4
 }
 
-// Query type
 enum QueryType {
 	ctrlp  = 0
 	search = 1
@@ -47,6 +46,7 @@ enum ChunkKind {
 	a_comment = 2
 	a_key     = 3
 }
+
 struct Chunk {
 	start int
 	end   int
@@ -65,17 +65,17 @@ mut:
 	view             &View
 	mode             EditorMode
 	just_switched    bool // for keydown/char events to avoid dup keys
-	prev_key         int
+	prev_key         sapp.KeyCode
 	prev_cmd         string
 	prev_insert      string
 	all_git_files    []string
 	top_tasks        []string
 	vg               &gg.GG
-	ft               &freetype.FreeType
+	ft               &ft.FT
 	query            string
 	search_query     string
 	query_type       QueryType
-	main_wnd         &glfw.Window
+	//main_wnd         &glfw.Window
 	workspace        string
 	workspace_idx    int
 	workspaces       []string
@@ -125,7 +125,6 @@ fn main() {
 	if !os.is_dir(os.home_dir() + '.vid') {
 		os.mkdir(os.home_dir() + '.vid') or { panic(err) }
 	}
-	glfw.init_glfw()
 	mut nr_splits := 3
 	is_window := '-window' in os.args
 	if '-two_splits' in os.args {
@@ -135,10 +134,12 @@ fn main() {
 		nr_splits = 1
 	}
 	size := if is_window {
-		glfw.Size{900, 800}
+		gg.Size{900, 800}
 	}
 	else {
-		glfw.get_monitor_size()
+		gg.Size{900, 800}
+
+		//glfw.get_monitor_size()
 	}
 	if size.width < 1500 {
 		nr_splits = 2
@@ -156,7 +157,6 @@ fn main() {
 		font_size: 13
 		view: 0
 		vg: 0
-		main_wnd: 0
 		ft: 0
 	}
 	vid.handle_segfault()
@@ -167,37 +167,24 @@ fn main() {
 			'return module fn if for break continue asm unsafe mut ' +
 			'type const else true else for false use $' + 'if $' + 'else'
 	vid.keys = keys.split(' ')
-	mut w := glfw.create_window(glfw.WinCfg {
+	gg.new_context({
 		width: size.width
 		height: size.height
-		borderless: !is_window
-		title: 'Vid'
-		ptr: vid
-	})
-	vid.main_wnd = w
-	w.make_context_current()
-	gl.init_glad()
-	cfg := gg.Cfg {
-		width: size.width
-		height: size.height
-		font_size: vid.font_size
+		borderless_window: !is_window
+		window_title: 'Vid'
+		create_window: true
+		user_data: vid
 		use_ortho: true
-		retina: true
 		scale: 2
-		window_user_ptr: 0
-	}
-	vid.vg = gg.new_context(cfg)
-	vid.ft = freetype.new_context(cfg)
+		bg_color: vid.cfg.bgcolor
+	})
 	vid.timer = new_timer(vid.vg, vid.ft)
 	vid.load_all_tasks()
-	w.set_user_ptr(vid)
     //
 	// TODO linux and windows
 	//C.AXUIElementCreateApplication(234)
 	uiold.reg_key_vid()
     //
-	w.onkeydown(key_down)
-	w.onchar(on_char)
 	// Open workspaces or a file
 	println(os.args)
 	mut cur_dir := os.getwd()
@@ -245,9 +232,9 @@ fn main() {
 	vid.load_timer()
 	//println(int(glfw.get_time() -t))
 	go vid.loop()
-	gl.clear()
-	gl.clear_color(vid.cfg.bgcolor.r, vid.cfg.bgcolor.g, vid.cfg.bgcolor.b, 255)
 	vid.refresh = true
+	vid.vg.run()
+	/*
 	for !vid.main_wnd.should_close() {
 		if vid.refresh || vid.mode == .timer {
 			gl.clear()
@@ -260,6 +247,7 @@ fn main() {
 		w.swap_buffers()
 		glfw.wait_events()
 	}
+	*/
 }
 
 fn (vid &Vid) split_width() int {
@@ -582,27 +570,21 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 //}
 
 // fn key_down(wnd * ui.Window, c char, mods int, code int) {
-fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
-	if action != 2 && action != 1 {
-		return
-	}
-	//  printf("glfw vi.v key down key=%d key_char=%c code=%d action=%d mods=%d\n",
-	//  key,key, code, action, mods);
+fn (mut vid Vid) key_down(key sapp.KeyCode) {
 	// single super
+	/*
 	if key == glfw.key_left_super {
 		return
 	}
-	mut vid := &Vid(glfw.get_window_user_pointer(wnd))
-	mode := vid.mode
-	super := mods == 8 || mods == 2
-	shift := mods == 1
-	if key == glfw.key_escape {
+	*/
+	super := false // mods == 8 || mods == 2
+	shift := false // mods == 1
+	if key == .escape {
 		vid.mode = .normal
 	}
 	// Reset error line
-	mut view := vid.view
-	view.error_y = -1
-	match mode {
+	vid.view.error_y = -1
+	match vid.mode {
 		.normal { 		vid.key_normal(key, super, shift) }
 		.visual { 		vid.key_visual(key, super, shift) }
 		.insert { 		vid.key_insert(key, super) }
@@ -611,9 +593,7 @@ fn key_down(wnd &glfw.Window, key int, code int, action, mods int) {
 	}
 }
 
-fn on_char(wnd &glfw.Window, code u32, mods int) {
-	mut vid := &Vid(glfw.get_window_user_pointer(wnd))
-	mode := vid.mode
+fn (mut vid Vid) on_char(code u32) {
 	if vid.just_switched {
 		vid.just_switched = false
 		return
@@ -622,7 +602,7 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 	s := utf32_to_str_no_malloc(code,  buf.data)
 	//s := utf32_to_str(code)
 	//println('s="$s" s0="$s0"')
-	match mode {
+	match vid.mode {
 	.insert { vid.char_insert(s) }
 	.query {
 		vid.gg_pos = -1
@@ -630,7 +610,7 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 	}
 	.normal {
 		// on char on normal only for replace with r
-		if !vid.just_switched && vid.prev_key == C.GLFW_KEY_R {
+		if !vid.just_switched && vid.prev_key == .r {
 			if s != 'r' {
 				vid.view.r(s)
 				vid.prev_key = 0
@@ -644,9 +624,9 @@ fn on_char(wnd &glfw.Window, code u32, mods int) {
 	}
 }
 
-fn (mut vid Vid) key_query(key int, super bool) {
+fn (mut vid Vid) key_query(key sapp.KeyCode, super bool) {
 	match key {
-	C.GLFW_KEY_BACKSPACE {
+	.backspace {
 		vid.gg_pos = -1
 		if vid.query_type != .search && vid.query_type != .grep {
 			if vid.query.len == 0 {
@@ -662,7 +642,7 @@ fn (mut vid Vid) key_query(key int, super bool) {
 		}
 		return
 	}
-	C.GLFW_KEY_ENTER {
+	.enter {
 		if vid.query_type == .ctrlp {
 			vid.ctrlp_open()
 		}
@@ -701,21 +681,22 @@ fn (mut vid Vid) key_query(key int, super bool) {
 		vid.mode = .normal
 		return
 	}
-	C.GLFW_KEY_ESCAPE {
+	.escape {
 		vid.mode = .normal
 		return
 	}
-	C.GLFW_KEY_DOWN {
+	.down {
 		if vid.mode == .query && vid.query_type == .grep {
 			vid.gg_pos++
 		}
 	}
-	C.GLFW_KEY_TAB {// TODO COPY PASTA
+	.tab {
+	// TODO COPY PASTA
 		if vid.mode == .query && vid.query_type == .grep {
 			vid.gg_pos++
 		}
 	}
-	C.GLFW_KEY_UP {
+	.up {
 		println('.a_key UP')
 		if vid.mode == .query && vid.query_type == .grep {
 			vid.gg_pos--
@@ -724,10 +705,11 @@ fn (mut vid Vid) key_query(key int, super bool) {
 			}
 		}
 	}
-	C.GLFW_KEY_V {
+	.v {
 		if super {
-			clip := vid.main_wnd.get_clipboard_text()
-			vid.query = vid.query + clip
+			// QTODO
+			//clip := vid.main_wnd.get_clipboard_text()
+			//vid.query = vid.query + clip
 		}
 	}
 	else {}
@@ -745,63 +727,65 @@ fn (vid &Vid) git_commit() {
 	//os.system('gitter $dir')
 }
 
-fn (mut vid Vid) key_insert(key int, super bool) {
+fn (mut vid Vid) key_insert(key sapp.KeyCode, super bool) {
 	match key {
-	C.GLFW_KEY_BACKSPACE {
+	.backspace {
 		vid.view.backspace(vid.cfg.backspace_go_up)
 	}
-	C.GLFW_KEY_ENTER {
+	.enter {
 		vid.view.enter()
 	}
-	C.GLFW_KEY_ESCAPE {
+	.escape {
 		vid.mode = .normal
 	}
-	C.GLFW_KEY_TAB {
+	.tab {
 		vid.view.insert_text('\t')
 	}
-	C.GLFW_KEY_LEFT {
+	.left {
 		if vid.view.x > 0 {
 			vid.view.x--
 		}
 	}
-	C.GLFW_KEY_RIGHT {
+	.right {
 		vid.view.l()
 	}
-	C.GLFW_KEY_UP {
+	.up {
 		vid.view.k()
 		//vid.refresh = false
 	}
-	C.GLFW_KEY_DOWN {
+	.down {
 		vid.view.j()
 		//vid.refresh = false
 	}
 	else {}
 	}
-	if (key == C.GLFW_KEY_L || key == C.GLFW_KEY_S) && super {
+	if (key == .k || key == .s) && super {
 		vid.view.save_file()
 		vid.mode = .normal
 		return
 	}
-	if super && key == C.GLFW_KEY_U {
+	if super && key == .u {
 		vid.mode = .normal
 		vid.key_u()
 		return
 	}
 	// Insert macro   TODO  customize
-	if super && key == C.GLFW_KEY_G {
+	if super && key == .g {
 		vid.view.insert_text('<code></code>')
 		vid.view.x -= 7
 	}
 	// Autocomplete
-	if key == C.GLFW_KEY_N && super {
+	if key == .n && super {
 		vid.ctrl_n()
 		return
 	}
-	if key == C.GLFW_KEY_V && super {
+	if key == .v && super {
 		// vid.view.insert_text(ui.get_clipboard_text())
+		// QTODO
+		/*
 		clip := vid.main_wnd.get_clipboard_text()
 		vid.view.insert_text(clip)
-		return
+		*/
 	}
 }
 
@@ -830,23 +814,23 @@ fn (mut vid Vid) ctrl_n() {
 	}
 }
 
-fn (mut vid Vid) key_normal(key int, super, shift bool) {
+fn (mut vid Vid) key_normal(key sapp.KeyCode, super, shift bool) {
 	mut view := vid.view
 	vid.refresh = true
-	if vid.prev_key == C.GLFW_KEY_R {
+	if vid.prev_key == .r {
 		return
 	}
 	match key {
+	.enter {
 		// Full screen => window
-	C.GLFW_KEY_ENTER {
 		if false && super {
 			vid.nr_splits = 1
 			vid.win_width = 600
 			vid.win_height = 500
-			glfw.post_empty_event()
+			//glfw.post_empty_event()
 		}
 	}
-	C.GLFW_KEY_PERIOD {
+	.period {
 		if shift {
 			// >
 			vid.view.shift_right()
@@ -855,13 +839,13 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.dot()
 		}
 	}
-	C.GLFW_KEY_COMMA {
+	.comma {
 		if shift {
 			// <
 			vid.view.shift_left()
 		}
 	}
-	C.GLFW_KEY_SLASH {
+	.slash {
 		if shift {
 			vid.search_query = ''
 			vid.mode = .query
@@ -875,7 +859,7 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.query_type = .search
 		}
 	}
-	C.GLFW_KEY_F5 {
+	.f5 {
 		vid.run_file()
 		// vid.char_width -= 1
 		// vid.line_height -= 1
@@ -888,29 +872,29 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 		// vid.page_height = WIN_HEIGHT / vid.line_height - 1
 		// vid.vg = gg.new_context(WIN_WIDTH, WIN_HEIGHT, vid.font_size)
 	}
-	C.GLFW_KEY_MINUS {
+	.minus {
 		if super {
 			vid.get_git_diff_full()
 		}
 	}
-	C.GLFW_KEY_EQUAL {
+	.equal {
 		vid.open_blog()
 	}
-	C.GLFW_KEY_0 {
+	._0 {
 		if super {
 			vid.query = ''
 			vid.mode = .query
 			vid.query_type = .task
 		}
 	}
-	C.GLFW_KEY_A {
+	.a {
 		if shift {
 			vid.view.shift_a()
 			vid.prev_cmd = 'A'
 			vid.set_insert()
 		}
 	}
-	C.GLFW_KEY_C {
+	.c {
 		if super {
 			vid.query = ''
 			vid.mode = .query
@@ -921,32 +905,32 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.set_insert()
 		}
 	}
-	C.GLFW_KEY_D {
+	.d {
 		if super {
 			vid.prev_split()
 			return
 		}
-		if vid.prev_key == C.GLFW_KEY_D {
+		if vid.prev_key == .d {
 			vid.view.dd()
 			return
 		}
-		else if vid.prev_key == C.GLFW_KEY_G {
+		else if vid.prev_key == .g {
 			vid.go_to_def()
 		}
 	}
-	C.GLFW_KEY_E {
+	.e {
 		if super {
 			vid.next_split()
 			return
 		}
-		if vid.prev_key == C.GLFW_KEY_C {
+		if vid.prev_key == .c {
 			view.ce()
 		}
-		else if vid.prev_key == C.GLFW_KEY_D {
+		else if vid.prev_key == .d {
 			view.de()
 		}
 	}
-	C.GLFW_KEY_I {
+	.i {
 		if shift {
 			vid.view.shift_i()
 			vid.set_insert()
@@ -956,7 +940,7 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.set_insert()
 		}
 	}
-	C.GLFW_KEY_J {
+	.j {
 		if shift {
 			vid.view.join()
 		}
@@ -972,13 +956,13 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			// }
 		}
 	}
-	C.GLFW_KEY_K {
+	.k {
 		vid.view.k()
 		// if !vid.is_building {
 		//vid.refresh = false
 		// }
 	}
-	C.GLFW_KEY_N {
+	.n {
 		if shift {
 			// backwards search
 			vid.search(true)
@@ -987,7 +971,7 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.search(false)
 		}
 	}
-	C.GLFW_KEY_O {
+	.o {
 		if shift && super {
 			vid.mode = .query
 			vid.query_type = .open_workspace
@@ -1008,7 +992,7 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.set_insert()
 		}
 	}
-	C.GLFW_KEY_P {
+	.p {
 		if super {
 			vid.mode = .query
 			vid.query_type = .ctrlp
@@ -1019,15 +1003,15 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			view.p()
 		}
 	}
-	C.GLFW_KEY_R {
+	.r {
 		if super {
 			view.reopen()
 		}
 		else {
-			vid.prev_key = C.GLFW_KEY_R
+			vid.prev_key = .r
 		}
 	}
-	C.GLFW_KEY_T {
+	.t {
 		if super {
 			//vid.timer.get_data(false)
 			vid.timer.load_tasks()
@@ -1038,7 +1022,7 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			view.tt()
 		}
 	}
-	C.GLFW_KEY_H {
+	.h {
 		if shift {
 			vid.view.shift_h()
 		}
@@ -1046,7 +1030,7 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.view.x--
 		}
 	}
-	C.GLFW_KEY_L {
+	.l {
 		if super {
 			vid.view.save_file()
 		}
@@ -1057,32 +1041,33 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.view.l()
 		}
 	}
-	C.GLFW_KEY_F6 {
+	.f6 {
 		if super {
 		}
 	}
-	C.GLFW_KEY_G {
+	.g {
 		// go to end
 		if shift && !super {
 			vid.view.shift_g()
 		}
 		// copy file path to clipboard
 		else if super {
-			vid.main_wnd.set_clipboard_text(vid.view.path)
+			// QTODO
+			//vid.main_wnd.set_clipboard_text(vid.view.path)
 		}
 		// go to beginning
 		else {
-			if vid.prev_key == C.GLFW_KEY_G {
+			if vid.prev_key == .g {
 				vid.view.gg()
 			}
 		}
 	}
-	C.GLFW_KEY_F {
+	.f {
 		if super {
 			vid.view.shift_f()
 		}
 	}
-	C.GLFW_KEY_B {
+	.b {
 		if super {
 			// force crash
 			// # void*a = 0; int b = *(int*)a;
@@ -1092,79 +1077,79 @@ fn (mut vid Vid) key_normal(key int, super, shift bool) {
 			vid.view.b()
 		}
 	}
-	C.GLFW_KEY_U {
+	.u {
 		if super {
 			vid.key_u()
 		}
 	}
-	C.GLFW_KEY_V {
+	.v {
 		vid.mode = .visual
 		view.vstart = view.y
 		view.vend = view.y
 	}
-	C.GLFW_KEY_W {
-		if vid.prev_key == C.GLFW_KEY_C {
+	.w {
+		if vid.prev_key == .c {
 			view.cw()
 		}
-		else if vid.prev_key == C.GLFW_KEY_D {
+		else if vid.prev_key == .d {
 			view.dw()
 		}
 		else {
 			view.w()
 		}
 	}
-	C.GLFW_KEY_X {
+	.x {
 		vid.view.delete_char()
 	}
-	C.GLFW_KEY_Y {
-		if vid.prev_key == C.GLFW_KEY_Y {
+	.y {
+		if vid.prev_key == .y {
 			vid.view.yy()
 		}
 		if super {
 			go vid.build_app2()
 		}
 	}
-	C.GLFW_KEY_Z {
-		if vid.prev_key == C.GLFW_KEY_Z {
+	.z {
+		if vid.prev_key == .z {
 			vid.view.zz()
 		}
 		// Next workspace
 	}
-	C.GLFW_KEY_RIGHT_BRACKET {
+	.right_bracket {
 		if super {
 			vid.open_workspace(vid.workspace_idx + 1)
 		}
 	}
-	C.GLFW_KEY_LEFT_BRACKET {
+	.left_bracket {
 		if super {
 			vid.open_workspace(vid.workspace_idx - 1)
 		}
 	}
-	C.GLFW_KEY_8 {
+	._8 {
 		if shift {
 			vid.star()
 		}
 	}
-	C.GLFW_KEY_LEFT {
+	.left {
 		if vid.view.x > 0 {
 			vid.view.x--
 		}
 	}
-	C.GLFW_KEY_RIGHT {
+	.right {
 		vid.view.l()
 	}
-	C.GLFW_KEY_UP {
+	.up {
 		vid.view.k()
 		//vid.refresh = false
 	}
-	C.GLFW_KEY_DOWN {
+	.down {
 		vid.view.j()
 		//vid.refresh = false
 	}
 	else {}
 
 	}
-	if key != C.GLFW_KEY_R {
+	if key != .r {
 		// otherwise R is triggered when we press C-R
 		vid.prev_key = key
 	}
@@ -1215,13 +1200,13 @@ fn (mut vid Vid) char_query(s string) {
 	}
 }
 
-fn (mut vid Vid) key_visual(key int, super, shift bool) {
+fn (mut vid Vid) key_visual(key sapp.KeyCode, super, shift bool) {
 	mut view := vid.view
 	match key {
-	C.GLFW_KEY_ESCAPE {
+	.escape {
 		vid.exit_visual()
 	}
-	C.GLFW_KEY_J {
+	.j {
 		view.vend++
 		if view.vend >= view.lines.len {
 			view.vend = view.lines.len - 1
@@ -1231,29 +1216,29 @@ fn (mut vid Vid) key_visual(key int, super, shift bool) {
 			view.from++
 		}
 	}
-	C.GLFW_KEY_K {
+	.k {
 		view.vend--
 	}
-	C.GLFW_KEY_Y {
+	.y {
 		view.y_visual()
 		vid.mode = .normal
 	}
-	C.GLFW_KEY_D {
+	.d {
 		view.d_visual()
 		vid.mode = .normal
 	}
-	C.GLFW_KEY_Q {
-		if vid.prev_key == C.GLFW_KEY_G {
+	.q {
+		if vid.prev_key == .g {
 			vid.view.gq()
 		}
 	}
-	C.GLFW_KEY_PERIOD {
+	.period {
 		if shift {
 			// >
 			vid.view.shift_right()
 		}
 	}
-	C.GLFW_KEY_COMMA {
+	.comma {
 		if shift {
 			// >
 			vid.view.shift_left()
@@ -1261,7 +1246,7 @@ fn (mut vid Vid) key_visual(key int, super, shift bool) {
 	}
 	else {}
 	}
-	if key != C.GLFW_KEY_R {
+	if key != .r {
 		// otherwise R is triggered when we press C-R
 		vid.prev_key = key
 	}
@@ -1599,7 +1584,7 @@ fn (mut vid Vid) build_app(extra string) {
 		}
 	}
 	// vid.refresh = true
-	glfw.post_empty_event()
+	//glfw.post_empty_event()
 	time.sleep(4)// delay is_building to prevent flickering in the right split
 	vid.is_building = false
 	/*
@@ -1647,7 +1632,7 @@ fn (mut vid Vid) run_file() {
 		}
 	}
 	vid.refresh = true
-	glfw.post_empty_event()
+	//glfw.post_empty_event()
 }
 
 fn (mut vid Vid) go_to_error(line string) {
@@ -1674,7 +1659,7 @@ fn (mut vid Vid) go_to_error(line string) {
 		println('error_y=$view.error_y')
 		view.move_to_line(view.error_y)
 		// view.vid.main_wnd.refresh()
-		glfw.post_empty_event()
+		//glfw.post_empty_event()
 		return // Done after the first view with the error
 	}
 	// File with the error is not open right now, do it
@@ -1686,7 +1671,7 @@ fn (mut vid Vid) go_to_error(line string) {
 			vid.view.open_file(git_file) //vid.workspace + '/' + line)
 			vid.view.error_y = line_nr.int() -1
 			vid.view.move_to_line(vid.view.error_y)
-			glfw.post_empty_event()
+			//glfw.post_empty_event()
 			return
 		}
 	}
@@ -1695,7 +1680,7 @@ fn (mut vid Vid) go_to_error(line string) {
 fn (mut vid Vid) loop() {
 	for {
 		vid.refresh = true
-		glfw.post_empty_event()
+		//glfw.post_empty_event()
 		//vid.timer.tick(vid)
 		time.sleep(5)
 	}
@@ -1709,7 +1694,7 @@ fn (mut vid Vid) key_u() {
 	else {
 		vid.refresh = true
 		go vid.build_app1()
-		glfw.post_empty_event()
+		//glfw.post_empty_event()
 	}
 }
 
