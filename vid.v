@@ -117,6 +117,12 @@ Options:
 '
 )
 
+const ( fpath = os.resource_abs_path('RobotoMono-Regular.ttf') )
+fn init_gui(mut vid Vid){
+	x := ft.new({ font_path: fpath, scale: 2 }) or {panic(err)}
+	vid.ft = x
+}
+
 fn main() {
 	if '-h' in os.args || '--help' in os.args {
 		println(help_text)
@@ -167,7 +173,7 @@ fn main() {
 			'return module fn if for break continue asm unsafe mut ' +
 			'type const else true else for false use $' + 'if $' + 'else'
 	vid.keys = keys.split(' ')
-	gg.new_context({
+	vid.vg = gg.new_context({
 		width: size.width
 		height: size.height
 		borderless_window: !is_window
@@ -177,6 +183,8 @@ fn main() {
 		use_ortho: true
 		scale: 2
 		bg_color: vid.cfg.bgcolor
+		frame_fn: frame
+		init_fn: init_gui
 	})
 	vid.timer = new_timer(vid.vg, vid.ft)
 	vid.load_all_tasks()
@@ -256,6 +264,14 @@ fn (vid &Vid) split_width() int {
 		split_width = vid.win_width
 	}
 	return split_width
+}
+
+
+fn frame(mut vid Vid) {
+	vid.ft.flush()
+	vid.vg.begin()
+	vid.draw()
+	vid.vg.end()
 }
 
 fn (mut vid Vid) draw() {
