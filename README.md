@@ -22,17 +22,17 @@ v .
 
 Vid should build in under a second.
 
-There are two dependencies: `freetype` and `glfw`. (`glfw` dependency will be removed soon.)
+There is one dependency: `freetype`.
 
 Ubuntu:
 
 ```
-sudo apt install libglfw3 libglfw3-dev libfreetype6-dev
+sudo apt install libfreetype6-dev
 ```
 
 Fedora:
 ```
-sudo dnf install glfw glfw-devel freetype-devel
+sudo dnf install freetype-devel
 
 ```
 
@@ -43,9 +43,8 @@ brew install glfw freetype
 
 Windows:
 ```
-git clone --depth=1 https://github.com/ubawurinna/freetype-windows-binaries [path to v repo]/thirdparty/freetype/
+v setup-freetype
 
-download *glfw3.dll* to directory of vid.exe or your system32 directory. 
 ```
 
 ### Communities:
