@@ -1787,7 +1787,7 @@ fn (vid &Vid) task_minutes() int {
 	if vid.task_start_unix == 0 {
 		seconds = 0
 	}
-	return seconds / 60
+	return int(seconds / 60)
 }
 
 const (
@@ -1804,7 +1804,7 @@ fn (vid &Vid) insert_task() {
 	mins := vid.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `,		4 - mins.len)
 	f.writeln('| $task_name | $mins $mins_pad | ' +
-		time.unix(vid.task_start_unix).format() + ' | ' +
+		time.unix(int(vid.task_start_unix)).format() + ' | ' +
 		time.now().hhmm() + ' |')
 	f.writeln('|-----------------------------------------------------------------------------|')
 	f.close()
