@@ -70,7 +70,7 @@ mut:
 	prev_insert      string
 	all_git_files    []string
 	top_tasks        []string
-	vg               &gg.GG
+	vg               &gg.Context
 	ft               &ft.FT
 	query            string
 	search_query     string

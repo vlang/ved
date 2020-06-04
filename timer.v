@@ -24,7 +24,7 @@ const (
 
 struct Timer {
 mut:
-	gg &gg.GG
+	gg &gg.Context
 	ft &ft.FT
 	tasks []Task
 	date time.Time
@@ -106,7 +106,7 @@ fn (mut t Timer) load_tasks() {
 }
 
 
-fn new_timer(gg &gg.GG, ft &ft.FT) Timer {
+fn new_timer(gg &gg.Context, ft &ft.FT) Timer {
 	mut timer := Timer {
 		gg: gg
 		ft: ft
