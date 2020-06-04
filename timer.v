@@ -22,9 +22,9 @@ const (
 
 
 struct Timer {
+mut:
 	gg &gg.GG
 	ft &freetype.FreeType
-mut:
 	tasks []Task
 	date time.Time
 
@@ -140,7 +140,7 @@ fn (mut t Timer) draw() {
 		x := f64(window_x) + 30.0
 		y := f64(window_y) + f64(task.start) / scale + 10
 		height := f64(task.end - task.start) / scale
-		t.gg.draw_rect(x, y, hour_width,	height		, task.color)
+		t.gg.draw_rect(f32(x), f32(y), f32(hour_width),	f32(height), task.color)
 		t.ft.draw_text(int(x)+hour_width + 10, int(y)+5, task.name + ' ' + task.duration, gx.TextCfg{ color: task.color })
 		if task.productive {
 			total += task.duration_min
