@@ -265,12 +265,10 @@ fn main() {
 fn on_event(e &sapp.Event, mut vid Vid) {
 	match e.typ {
 		.key_down {
-			if e.char_code > 0 {
-				vid.on_char(e.char_code)
-			}
-			else {
-				vid.key_down(e.key_code)
-			}
+			vid.key_down(e.key_code, e.modifiers)
+		}
+		.char {
+			vid.on_char(e.char_code)
 		}
 		else{}
 	}
@@ -604,15 +602,15 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 //}
 
 // fn key_down(wnd * ui.Window, c char, mods int, code int) {
-fn (mut vid Vid) key_down(key sapp.KeyCode) {
+fn (mut vid Vid) key_down(key sapp.KeyCode, mod sapp.Modifier) {
 	// single super
 	/*
 	if key == glfw.key_left_super {
 		return
 	}
 	*/
-	super := false // mods == 8 || mods == 2
-	shift := false // mods == 1
+	super := mod == .super
+	shift := mod == .shift
 	if key == .escape {
 		vid.mode = .normal
 	}
@@ -635,7 +633,7 @@ fn (mut vid Vid) on_char(code u32) {
 	buf := [0, 0, 0, 0, 0] !
 	s := utf32_to_str_no_malloc(code,  buf.data)
 	//s := utf32_to_str(code)
-	//println('s="$s" s0="$s0"')
+	//println('s="$s" code="$code"')
 	match vid.mode {
 	.insert { vid.char_insert(s) }
 	.query {
