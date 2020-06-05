@@ -188,6 +188,8 @@ fn main() {
 		bg_color: vid.cfg.bgcolor
 		frame_fn: frame
 		event_fn: on_event
+		keydown_fn: key_down
+		char_fn: on_char
 		init_fn: init_gui
 	})
 	vid.timer = new_timer(vid.vg, vid.ft)
@@ -263,15 +265,7 @@ fn main() {
 }
 
 fn on_event(e &sapp.Event, mut vid Vid) {
-	match e.typ {
-		.key_down {
-			vid.key_down(e.key_code, e.modifiers)
-		}
-		.char {
-			vid.on_char(e.char_code)
-		}
-		else{}
-	}
+	vid.refresh = true
 }
 
 fn (vid &Vid) split_width() int {
@@ -605,8 +599,7 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 	// vid.view.x = (pos.x - vid.view.padding_left) / char_width - 1
 //}
 
-// fn key_down(wnd * ui.Window, c char, mods int, code int) {
-fn (mut vid Vid) key_down(key sapp.KeyCode, mod sapp.Modifier) {
+fn key_down(key sapp.KeyCode, mod sapp.Modifier, mut vid Vid) {
 	// single super
 	/*
 	if key == glfw.key_left_super {
@@ -629,7 +622,7 @@ fn (mut vid Vid) key_down(key sapp.KeyCode, mod sapp.Modifier) {
 	}
 }
 
-fn (mut vid Vid) on_char(code u32) {
+fn on_char(code u32, mut vid Vid) {
 	if vid.just_switched {
 		vid.just_switched = false
 		return
