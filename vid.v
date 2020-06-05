@@ -88,7 +88,7 @@ mut:
 	cur_task         string
 	words            []string
 	file_y_pos       map[string]int
-	refresh          bool
+	refresh          bool = true
 	line_height      int
 	char_width       int
 	//font_size        int
@@ -284,10 +284,14 @@ fn (vid &Vid) split_width() int {
 
 
 fn frame(mut vid Vid) {
+	if !vid.refresh {
+		return
+	}
 	vid.ft.flush()
 	vid.vg.begin()
 	vid.draw()
 	vid.vg.end()
+	vid.refresh = false
 }
 
 fn (mut vid Vid) draw() {
