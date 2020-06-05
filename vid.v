@@ -6,8 +6,6 @@ module main
 
 import gg
 import gg.ft
-//import freetype
-//import glfw
 import os
 import time
 import uiold
@@ -93,7 +91,7 @@ mut:
 	refresh          bool
 	line_height      int
 	char_width       int
-	font_size        int
+	//font_size        int
 	is_ml_comment    bool
 	gg_lines         []string
 	gg_pos           int
@@ -139,6 +137,10 @@ fn main() {
 	if is_window {
 		nr_splits = 1
 	}
+	//size := gg.Size{5120, 2880}
+		size:=gg.Size{2560, 1400}
+	// TODO
+	/*
 	size := if is_window {
 		gg.Size{900, 800}
 	}
@@ -147,6 +149,7 @@ fn main() {
 
 		//glfw.get_monitor_size()
 	}
+	*/
 	if size.width < 1500 {
 		nr_splits = 2
 	}
@@ -160,7 +163,7 @@ fn main() {
 		file_y_pos: map[string]int
 		line_height: 20
 		char_width: 8
-		font_size: 13
+		//font_size: 13
 		view: 0
 		vg: 0
 		ft: 0
@@ -184,6 +187,7 @@ fn main() {
 		scale: 2
 		bg_color: vid.cfg.bgcolor
 		frame_fn: frame
+		event_fn: on_event
 		init_fn: init_gui
 	})
 	vid.timer = new_timer(vid.vg, vid.ft)
@@ -256,6 +260,20 @@ fn main() {
 		glfw.wait_events()
 	}
 	*/
+}
+
+fn on_event(e &sapp.Event, mut vid Vid) {
+	match e.typ {
+		.key_down {
+			if e.char_code > 0 {
+				vid.on_char(e.char_code)
+			}
+			else {
+				vid.key_down(e.key_code)
+			}
+		}
+		else{}
+	}
 }
 
 fn (vid &Vid) split_width() int {

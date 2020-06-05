@@ -71,7 +71,7 @@ fn (mut config Config) reload_config() {
 }
 
 fn (mut config Config) set_textsize() {
-  config.text_size = 18
+  config.text_size = 9
 }
 
 fn (mut config Config) set_tab() {
