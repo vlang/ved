@@ -1,0 +1,3 @@
+- list of all open files (similar to ctrl p)
+- use ui.textbox
+- print error message on the actual line
