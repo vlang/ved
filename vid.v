@@ -138,7 +138,7 @@ fn main() {
 		nr_splits = 1
 	}
 	//size := gg.Size{5120, 2880}
-		size:=gg.Size{2560, 1400}
+		size:=gg.Size{2560, 1480}
 	// TODO
 	/*
 	size := if is_window {
@@ -180,6 +180,7 @@ fn main() {
 		width: size.width
 		height: size.height
 		borderless_window: !is_window
+		fullscreen: !is_window
 		window_title: 'Vid'
 		create_window: true
 		user_data: vid
