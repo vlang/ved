@@ -13,6 +13,8 @@ import strings
 import sokol.sapp
 //import darwin
 
+// noicell
+
 const (
 	session_path = os.home_dir() + '.vid/session'
 	timer_path   = os.home_dir() + '.vid/timer'
@@ -131,6 +133,7 @@ fn main() {
 	}
 	mut nr_splits := 3
 	is_window := '-window' in os.args
+
 	if '-two_splits' in os.args {
 		nr_splits = 2
 	}
@@ -138,7 +141,12 @@ fn main() {
 		nr_splits = 1
 	}
 	//size := gg.Size{5120, 2880}
-		size:=gg.Size{2560, 1480}
+	mut size:=gg.Size{2560, 1480}
+	if '-laptop' in os.args {
+		size = gg.Size{1280 * 1, 800*1}
+		nr_splits = 2
+	}
+
 	// TODO
 	/*
 	size := if is_window {
@@ -177,9 +185,9 @@ fn main() {
 			'type const else true else for false use $' + 'if $' + 'else'
 	vid.keys = keys.split(' ')
 	vid.vg = gg.new_context({
-		width: size.width
-		height: size.height
-		borderless_window: !is_window
+		width: size.width*2
+		height: size.height*2
+	//borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Vid'
 		create_window: true
@@ -193,6 +201,7 @@ fn main() {
 		char_fn: on_char
 		init_fn: init_gui
 	})
+		println('FULL SCREEN=${!is_window}')
 	vid.timer = new_timer(vid.vg, vid.ft)
 	vid.load_all_tasks()
     //
@@ -279,9 +288,9 @@ fn (vid &Vid) split_width() int {
 
 
 fn frame(mut vid Vid) {
-	if !vid.refresh {
-		return
-	}
+	//if !vid.refresh {
+		//return
+	//}
 	vid.ft.flush()
 	vid.vg.begin()
 	vid.draw()
@@ -297,8 +306,8 @@ fn (mut vid Vid) draw() {
 	to := from + vid.splits_per_workspace
 	// Not a full refresh? Means we need to refresh only current split.
 	if !vid.refresh {
-		split_x := split_width * (vid.cur_split - from)
-		vid.vg.draw_rect(split_x, 0, split_width - 1, vid.win_height, vid.cfg.bgcolor)
+		//split_x := split_width * (vid.cur_split - from)
+		//vid.vg.draw_rect(split_x, 0, split_width - 1, vid.win_height, vid.cfg.bgcolor)
 	}
 	now := time.now()
 	// Coords
@@ -381,7 +390,7 @@ fn (mut vid Vid) draw() {
 	for i := to - 1; i >= from; i-- {
 		// J or K is pressed (full refresh disabled for performance), only redraw current split
 		if !vid.refresh && i != vid.cur_split {
-			continue
+			//continue
 		}
 		// t := glfw.get_time()
 		vid.draw_split(i, from)
@@ -615,10 +624,10 @@ fn key_down(key sapp.KeyCode, mod sapp.Modifier, mut vid Vid) {
 	// Reset error line
 	vid.view.error_y = -1
 	match vid.mode {
-		.normal { 		vid.key_normal(key, super, shift) }
+		.normal { 		vid.key_normal(key, mod) }
 		.visual { 		vid.key_visual(key, super, shift) }
-		.insert { 		vid.key_insert(key, super) }
-		.query { 		vid.key_query(key, super) }
+		.insert { 		vid.key_insert(key, mod) }
+		.query { 		vid.key_query(key,  super) }
 		.timer { 		vid.timer.key_down(key, super) }
 	}
 }
@@ -757,7 +766,9 @@ fn (vid &Vid) git_commit() {
 	//os.system('gitter $dir')
 }
 
-fn (mut vid Vid) key_insert(key sapp.KeyCode, super bool) {
+fn (mut vid Vid) key_insert(key sapp.KeyCode, mod sapp.Modifier) {
+	super := mod == .super || mod == .ctrl
+	//shift := mod == .shift
 	match key {
 	.backspace {
 		vid.view.backspace(vid.cfg.backspace_go_up)
@@ -844,7 +855,9 @@ fn (mut vid Vid) ctrl_n() {
 	}
 }
 
-fn (mut vid Vid) key_normal(key sapp.KeyCode, super, shift bool) {
+fn (mut vid Vid) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
+	super := mod == .super || mod == .ctrl
+	shift := mod == .shift
 	mut view := vid.view
 	vid.refresh = true
 	if vid.prev_key == .r {
@@ -929,6 +942,7 @@ fn (mut vid Vid) key_normal(key sapp.KeyCode, super, shift bool) {
 			vid.query = ''
 			vid.mode = .query
 			vid.query_type = .cam
+			vid.just_switched = true
 		}
 		if shift {
 			vid.prev_insert = vid.view.shift_c()
@@ -1027,6 +1041,8 @@ fn (mut vid Vid) key_normal(key sapp.KeyCode, super, shift bool) {
 			vid.mode = .query
 			vid.query_type = .ctrlp
 			vid.load_git_tree()
+			vid.query = ''
+			vid.just_switched = true
 			return
 		}
 		else {

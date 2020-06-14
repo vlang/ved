@@ -10,7 +10,7 @@ import os
 import gx
 
 const (
-	txt_cfg = gx.TextCfg { size: 25 }
+	txt_cfg = gx.TextCfg { size: 9 }
 )
 
 fn (mut vid Vid) load_git_tree() {
