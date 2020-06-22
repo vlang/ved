@@ -38,7 +38,7 @@ sudo dnf install freetype-devel
 
 macOS:
 ```
-brew install glfw freetype
+brew install freetype
 ```
 
 Windows:
