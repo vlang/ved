@@ -1755,8 +1755,8 @@ fn (mut vid Vid) go_to_def() {
 		}
 	}
 	// Not found in current file, try all files in the git tree
-	for _file in vid.all_git_files {
-		mut file := _file.to_lower()
+	for file_ in vid.all_git_files {
+		mut file := file_.to_lower()
 		file = file.trim_space()
 		if !file.ends_with('.v') {
 			continue

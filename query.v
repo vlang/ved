@@ -109,11 +109,11 @@ fn (mut vid Vid) draw_query() {
 
 fn (mut vid Vid) draw_ctrlp_files(x, y int) {
 	mut j := 0
-	for _file in vid.all_git_files {
+	for file_ in vid.all_git_files {
 		if j == 10 {
 			break
 		}
-		mut file := _file.to_lower()
+		mut file := file_.to_lower()
 		file = file.trim_space()
 		if !file.contains(vid.query.to_lower()) {
 			continue
@@ -126,11 +126,11 @@ fn (mut vid Vid) draw_ctrlp_files(x, y int) {
 fn (mut vid Vid) draw_top_tasks(x, y int) {
 	mut j := 0
 	q := vid.query.to_lower()
-	for _task in vid.top_tasks {
+	for task_ in vid.top_tasks {
 		if j == 10 {
 			break
 		}
-		task := _task.to_lower()
+		task := task_.to_lower()
 		if !task.contains(q) {
 			continue
 		}
@@ -168,11 +168,11 @@ fn (mut vid Vid) draw_git_grep(x, y int) {
 // if s != '' {
 fn (mut vid Vid) ctrlp_open() {
 	// Open the first file in the list
-	for _file in vid.all_git_files {
-		mut file := _file.to_lower()
+	for file_ in vid.all_git_files {
+		mut file := file_.to_lower()
 		file = file.trim_space()
 		if file.contains(vid.query.to_lower()) {
-			mut path := _file.trim_space()
+			mut path := file_.trim_space()
 			mut space := vid.workspace
 			if space == '' {
 				space = '.'
