@@ -1,7 +1,6 @@
 module main
 
 import gg
-import gg.ft
 import gx
 import os
 import time
@@ -25,7 +24,6 @@ const (
 struct Timer {
 mut:
 	gg &gg.Context
-	ft &ft.FT
 	tasks []Task
 	date time.Time
 
@@ -106,10 +104,9 @@ fn (mut t Timer) load_tasks() {
 }
 
 
-fn new_timer(gg &gg.Context, ft &ft.FT) Timer {
+fn new_timer(gg &gg.Context) Timer {
 	mut timer := Timer {
 		gg: gg
-		ft: ft
 		date: time.now()
 	}
 	timer.load_tasks()
@@ -142,7 +139,7 @@ fn (mut t Timer) draw() {
 		y := f64(window_y) + f64(task.start) / scale + 10
 		height := f64(task.end - task.start) / scale
 		t.gg.draw_rect(f32(x), f32(y), f32(hour_width),	f32(height), task.color)
-		t.ft.draw_text(int(x)+hour_width + 10, int(y)+5, task.name + ' ' + task.duration, gx.TextCfg{ color: task.color })
+		t.gg.draw_text(int(x)+hour_width + 10, int(y)+5, task.name + ' ' + task.duration, gx.TextCfg{ color: task.color })
 		if task.productive {
 			total += task.duration_min
 		}
@@ -151,7 +148,7 @@ fn (mut t Timer) draw() {
 		hour_y := window_y + hour * hour_width + 10
 		hour_x := window_x + 30
 		if hour < 24 {
-			t.ft.draw_text(hour_x - 25, hour_y + 10,
+			t.gg.draw_text(hour_x - 25, hour_y + 10,
 				'${hour:02d}', time_cfg)
 		}
 		t.gg.draw_line(hour_x, hour_y, hour_x + hour_width, hour_y, gx.gray)
@@ -163,11 +160,11 @@ fn (mut t Timer) draw() {
 	t.gg.draw_line(window_x + 30 + hour_width, window_y + 10, window_x+30+hour_width, window_y+10+24*
 		hour_width, gx.gray)
 	// Draw the in the top right corner
-	t.ft.draw_text_def(window_x + window_width - 100, 20, t.date.ymmdd())
+	t.gg.draw_text_def(window_x + window_width - 100, 20, t.date.ymmdd())
 	// Draw total time
 	h := total/ 60
 	m := total % 60
-	t.ft.draw_text(window_x + window_width - 100, 100, '$h:${m:02d}', gx.TextCfg{ color: color_productive })
+	t.gg.draw_text(window_x + window_width - 100, 100, '$h:${m:02d}', gx.TextCfg{ color: color_productive })
 
 
 }

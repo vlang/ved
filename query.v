@@ -88,14 +88,14 @@ fn (mut vid Vid) draw_query() {
 	vid.vg.draw_rect(x, y, width, height, gx.white)
 	// query window title
 	vid.vg.draw_rect(x, y, width, vid.line_height, vid.cfg.title_color)
-	vid.ft.draw_text(x + 10, y, vid.typ_to_str(), vid.cfg.file_name_cfg)
+	vid.vg.draw_text(x + 10, y, vid.typ_to_str(), vid.cfg.file_name_cfg)
 	// query background
 	vid.vg.draw_rect(0, 0, vid.win_width, vid.line_height, vid.cfg.title_color)
 	mut q := vid.query
 	if vid.query_type == QueryType.search || vid.query_type == QueryType.grep {
 		q = vid.search_query
 	}
-	vid.ft.draw_text(x + 10, y + 30, q, txt_cfg)
+	vid.vg.draw_text(x + 10, y + 30, q, txt_cfg)
 	if vid.query_type == .ctrlp {
 		vid.draw_ctrlp_files(x, y)
 	}
@@ -118,7 +118,7 @@ fn (mut vid Vid) draw_ctrlp_files(x, y int) {
 		if !file.contains(vid.query.to_lower()) {
 			continue
 		}
-		vid.ft.draw_text(x + 10, y + 60 + 30 * j, file, txt_cfg)
+		vid.vg.draw_text(x + 10, y + 60 + 30 * j, file, txt_cfg)
 		j++
 	}
 }
@@ -135,7 +135,7 @@ fn (mut vid Vid) draw_top_tasks(x, y int) {
 			continue
 		}
 		// println('DOES CONTAIN "$file" $j')
-		vid.ft.draw_text(x + 10, y + 60 + 30 * j, task, txt_cfg)
+		vid.vg.draw_text(x + 10, y + 60 + 30 * j, task, txt_cfg)
 		j++
 	}
 }
@@ -158,8 +158,8 @@ fn (mut vid Vid) draw_git_grep(x, y int) {
 		if i == vid.gg_pos {
 			vid.vg.draw_rect(x, yy, query_width * 2, 30, vid.cfg.vcolor)
 		}
-		vid.ft.draw_text(x + 10, yy, path, txt_cfg)
-		vid.ft.draw_text(x + 250, yy, text, txt_cfg)
+		vid.vg.draw_text(x + 10, yy, path, txt_cfg)
+		vid.vg.draw_text(x + 250, yy, text, txt_cfg)
 	}
 }
 

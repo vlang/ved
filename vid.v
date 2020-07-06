@@ -5,7 +5,6 @@
 module main
 
 import gg
-import gg.ft
 import os
 import time
 import uiold
@@ -71,7 +70,6 @@ mut:
 	all_git_files    []string
 	top_tasks        []string
 	vg               &gg.Context
-	ft               &ft.FT
 	query            string
 	search_query     string
 	query_type       QueryType
@@ -118,10 +116,6 @@ Options:
 )
 
 const ( fpath = os.resource_abs_path('RobotoMono-Regular.ttf') )
-fn init_gui(mut vid Vid){
-	x := ft.new({ font_path: fpath, scale: 2 }) or {panic(err)}
-	vid.ft = x
-}
 
 fn main() {
 	if '-h' in os.args || '--help' in os.args {
@@ -174,7 +168,6 @@ fn main() {
 		//font_size: 13
 		view: 0
 		vg: 0
-		ft: 0
 	}
 	vid.handle_segfault()
 	vid.cfg.init_colors()
@@ -199,16 +192,16 @@ fn main() {
 		event_fn: on_event
 		keydown_fn: key_down
 		char_fn: on_char
-		init_fn: init_gui
+		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
 	})
 		println('FULL SCREEN=${!is_window}')
-	vid.timer = new_timer(vid.vg, vid.ft)
+	vid.timer = new_timer(vid.vg)
 	vid.load_all_tasks()
-    //
+
 	// TODO linux and windows
 	//C.AXUIElementCreateApplication(234)
 	uiold.reg_key_vid()
-    //
+
 	// Open workspaces or a file
 	println(os.args)
 	mut cur_dir := os.getwd()
@@ -291,7 +284,6 @@ fn frame(mut vid Vid) {
 	//if !vid.refresh {
 		//return
 	//}
-	vid.ft.flush()
 	vid.vg.begin()
 	vid.draw()
 	vid.vg.end()
@@ -348,29 +340,29 @@ fn (mut vid Vid) draw() {
 		if v.changed && !v.path.ends_with('/out') {
 			name = '$name [+]'
 		}
-		vid.ft.draw_text(vid.split_x(i - from) + v.padding_left + 10, 1, name, vid.cfg.file_name_cfg)
+		vid.vg.draw_text(vid.split_x(i - from) + v.padding_left + 10, 1, name, vid.cfg.file_name_cfg)
 	}
 	// Git diff stats
 	if vid.git_diff_plus != '+' {
-		vid.ft.draw_text(vid.win_width - 400, 1, vid.git_diff_plus, vid.cfg.plus_cfg)
+		vid.vg.draw_text(vid.win_width - 400, 1, vid.git_diff_plus, vid.cfg.plus_cfg)
 	}
 	if vid.git_diff_minus != '-' {
-		vid.ft.draw_text(vid.win_width - 350, 1, vid.git_diff_minus, vid.cfg.minus_cfg)
+		vid.vg.draw_text(vid.win_width - 350, 1, vid.git_diff_minus, vid.cfg.minus_cfg)
 	}
 	// Workspaces
 	nr_spaces := vid.workspaces.len
 	cur_space := vid.workspace_idx + 1
 	space_name := short_space(vid.workspace)
-	vid.ft.draw_text(vid.win_width - 220, 1, '[$space_name]', vid.cfg.file_name_cfg)
-	vid.ft.draw_text(vid.win_width - 150, 1, '$cur_space/$nr_spaces', vid.cfg.file_name_cfg)
+	vid.vg.draw_text(vid.win_width - 220, 1, '[$space_name]', vid.cfg.file_name_cfg)
+	vid.vg.draw_text(vid.win_width - 150, 1, '$cur_space/$nr_spaces', vid.cfg.file_name_cfg)
 	// Time
-	vid.ft.draw_text(vid.win_width - 50, 1, now.hhmm(), vid.cfg.file_name_cfg)
+	vid.vg.draw_text(vid.win_width - 50, 1, now.hhmm(), vid.cfg.file_name_cfg)
 	// vid.vg.draw_text(vid.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
 	/*
 	if vid.start_unix > 0 {
 		minutes := '1m' //vid.timer.minutes()
-		vid.ft.draw_text(vid.win_width - 300, 1, '${minutes}m' !,
+		vid.vg.draw_text(vid.win_width - 300, 1, '${minutes}m' !,
 			vid.cfg.file_name_cfg)
 	}
 	*/
@@ -379,10 +371,10 @@ fn (mut vid Vid) draw() {
 		task_text_width := vid.cur_task.len * vid.char_width
 		task_x := vid.win_width - split_width - task_text_width - 10
 		// vid.timer.vg.draw_text(task_x, 1, vid.timer.cur_task.to_upper(), file_name_cfg)
-		vid.ft.draw_text(task_x, 1, vid.cur_task, vid.cfg.file_name_cfg)
+		vid.vg.draw_text(task_x, 1, vid.cur_task, vid.cfg.file_name_cfg)
 		// Draw current task time
 		task_time_x := (vid.nr_splits - 1) * split_width - 50
-		vid.ft.draw_text(task_time_x, 1, '${vid.task_minutes()}m',
+		vid.vg.draw_text(task_time_x, 1, '${vid.task_minutes()}m',
 			vid.cfg.file_name_cfg)
 	}
 	// Splits
@@ -431,7 +423,7 @@ fn (mut vid Vid) draw_split(i, split_from int) {
 		}
 		// Line number
 		line_number := j + 1
-		vid.ft.draw_text(x+3, y, '$line_number', vid.cfg.line_nr_cfg)
+		vid.vg.draw_text(x+3, y, '$line_number', vid.cfg.line_nr_cfg)
 		// Tab offset
 		mut line_x := x + 10
 		mut nr_tabs := 0
@@ -461,7 +453,7 @@ fn (mut vid Vid) draw_split(i, split_from int) {
 				vid.draw_line(line_x, y, s)// SYNTAX HL
 			}
 			else {
-				vid.ft.draw_text(line_x, y, line, vid.cfg.txt_cfg)// NO SYNTAX
+				vid.vg.draw_text(line_x, y, line, vid.cfg.txt_cfg)// NO SYNTAX
 			}
 		}
 		line_nr++
@@ -486,12 +478,12 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 	// Red/green test hack
 	if line.contains('[32m') &&
 	line.contains('PASS') {
-		vid.ft.draw_text(x, y, line[5..], vid.cfg.green_cfg)
+		vid.vg.draw_text(x, y, line[5..], vid.cfg.green_cfg)
 		return
 	}
 	else if line.contains('[31m') &&
 	line.contains('FAIL') {
-		vid.ft.draw_text(x, y, line[5..], vid.cfg.red_cfg)
+		vid.vg.draw_text(x, y, line[5..], vid.cfg.red_cfg)
 		return
 	//} else if line[0] == `-` {
 	}
@@ -556,12 +548,12 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 		}
 	}
 	if vid.is_ml_comment {
-		vid.ft.draw_text(x, y, line, vid.cfg.comment_cfg)
+		vid.vg.draw_text(x, y, line, vid.cfg.comment_cfg)
 		return
 	}
 	if vid.chunks.len == 0 {
 		// println('no chunks')
-		vid.ft.draw_text(x, y, line, vid.cfg.txt_cfg)
+		vid.vg.draw_text(x, y, line, vid.cfg.txt_cfg)
 		return
 	}
 	mut pos := 0
@@ -575,7 +567,7 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 		// since we don't have a seperate chunk for text)
 		if chunk.start > pos + 1 {
 			s := line[pos..chunk.start]
-			vid.ft.draw_text(x + pos * vid.char_width, y, s, vid.cfg.txt_cfg)
+			vid.vg.draw_text(x + pos * vid.char_width, y, s, vid.cfg.txt_cfg)
 		}
 		// Keyword string etc
 		typ := chunk.typ
@@ -585,12 +577,12 @@ fn (mut vid Vid) draw_line(x, y int, line string) {
 			.a_comment { vid.cfg.comment_cfg }
 		}
 		s := line[chunk.start..chunk.end]
-		vid.ft.draw_text(x + chunk.start * vid.char_width, y, s, cfg)
+		vid.vg.draw_text(x + chunk.start * vid.char_width, y, s, cfg)
 		pos = chunk.end
 		// Final text chunk
 		if i == vid.chunks.len - 1 && chunk.end < line.len {
 			final := line[chunk.end..line.len]
-			vid.ft.draw_text(x + pos * vid.char_width, y, final, vid.cfg.txt_cfg)
+			vid.vg.draw_text(x + pos * vid.char_width, y, final, vid.cfg.txt_cfg)
 		}
 	}
 }
