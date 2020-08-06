@@ -17,7 +17,13 @@ First you need to [install V](https://github.com/vlang/v#installing-v-from-sourc
 git clone https://github.com/vlang/vid
 cd vid
 v .
+```
+```
 ./vid
+```
+or on Windows:
+```
+vid
 ```
 
 Vid should build in under a second.
@@ -156,9 +162,3 @@ Many bindings are missing, and the design is not scalable. Most of them are hard
 You can support the development of Vid and V on Patreon:
 
 <a href='https://patreon.com/vlang'><img src='https://camo.githubusercontent.com/3baa6f57d721101b50f691de31b730b9fbcc3a8a/68747470733a2f2f766c616e672e696f2f696d672f70617472656f6e2e706e67' width=200></a>
-
-
-
-
-
-
