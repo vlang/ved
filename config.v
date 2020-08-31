@@ -81,42 +81,42 @@ fn (mut config Config) set_tab() {
 
 fn (mut config Config) set_vcolor() {
   if !config.dark_mode {
-    config.vcolor = gx.Color{226, 233, 241}
+    config.vcolor = gx.rgb(226, 233, 241)
   } else {
-    config.vcolor = gx.Color{60, 60, 60}
+    config.vcolor = gx.rgb(60, 60, 60)
   }
 }
 
 fn (mut config Config) set_split() {
   if !config.dark_mode {
-    config.split_color = gx.Color{223, 223, 223}
+    config.split_color = gx.rgb(223, 223, 223)
   } else {
-    config.split_color = gx.Color{50, 50, 50}
+    config.split_color = gx.rgb(50, 50, 50)
   }
 }
 
 fn (mut config Config) set_bgcolor() {
   if !config.dark_mode {
-    config.bgcolor = gx.Color{245, 245, 245}
+    config.bgcolor = gx.rgb(245, 245, 245)
   } else {
-    config.bgcolor = gx.Color{30, 30, 30}
+    config.bgcolor = gx.rgb(30, 30, 30)
   }
 }
 
 fn (mut config Config) set_errorbgcolor() {
   if !config.dark_mode {
-    config.errorbgcolor = gx.Color{240, 0, 0}
+    config.errorbgcolor = gx.rgb(240, 0, 0)
   } else {
-    config.errorbgcolor = gx.Color{240, 0, 0}
+    config.errorbgcolor = gx.rgb(240, 0, 0)
   }
 }
 
 
 fn (mut config Config) set_string() {
   if !config.dark_mode {
-    config.string_color = gx.Color{179, 58, 44}
+    config.string_color = gx.rgb(179, 58, 44)
   } else {
-    config.string_color = gx.Color{179, 58, 44}
+    config.string_color = gx.rgb(179, 58, 44)
   }
   config.string_cfg = gx.TextCfg {
     size: config.text_size,
@@ -126,9 +126,9 @@ fn (mut config Config) set_string() {
 
 fn (mut config Config) set_key() {
   if !config.dark_mode {
-    config.key_color = gx.Color{74, 103, 154}
+    config.key_color = gx.rgb(74, 103, 154)
   } else {
-    config.key_color = gx.Color{74, 103, 154}
+    config.key_color = gx.rgb(74, 103, 154)
   }
   config.key_cfg = gx.TextCfg {
     size: config.text_size,
@@ -138,9 +138,9 @@ fn (mut config Config) set_key() {
 
 fn (mut config Config) set_title() {
   if !config.dark_mode {
-    config.title_color = gx.Color{40, 40, 40}
+    config.title_color = gx.rgb(40, 40, 40)
   } else {
-    config.title_color = gx.Color{40, 40, 40}
+    config.title_color = gx.rgb(40, 40, 40)
   }
 }
 
@@ -156,7 +156,7 @@ fn (mut config Config) set_txt() {
   if !config.dark_mode {
     config.text_color = gx.black
   } else {
-    config.text_color = gx.Color{212, 212, 212}
+    config.text_color = gx.rgb(212, 212, 212)
   }
   config.txt_cfg = gx.TextCfg {
     size: config.text_size,
