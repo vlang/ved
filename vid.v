@@ -203,13 +203,16 @@ fn main() {
 	uiold.reg_key_vid()
 
 	// Open workspaces or a file
-	println(os.args)
+	$if debug {
+		println('args:')
+		println(os.args)
+	}
 	mut cur_dir := os.getwd()
 	if cur_dir.ends_with('/vid.app/Contents/Resources') {
 		cur_dir = cur_dir.replace('/vid.app/Contents/Resources', '')
 	}
 	// Open a single text file
-	if os.args.len == 2 && !os.args[1].starts_with('-') {
+	if os.args.len == 2 && !os.args[1].starts_with('-') && !os.is_dir(os.args[1]) {
 		path := os.args[1]
 		if !os.exists(path) {
 			println('file "$path" does not exist')
@@ -225,7 +228,9 @@ fn main() {
 	}
 	// Open multiple workspaces
 	else {
+		println('open multiple workspaces')
 		for i, arg in os.args {
+			println(arg)
 			if i == 0 {
 				continue
 			}
@@ -1291,6 +1296,9 @@ fn (mut vid Vid) key_visual(key sapp.KeyCode, super, shift bool) {
 }
 
 fn (mut vid Vid) update_view() {
+	$if debug {
+		println('update view len=$vid.views.len')
+	}
 	vid.view = &vid.views[vid.cur_split]
 }
 
@@ -1362,6 +1370,9 @@ fn (mut vid Vid) prev_split() {
 }
 
 fn (mut vid Vid) open_workspace(idx int) {
+	$if debug {
+		println('open workspace($idx)')
+	}
 	if idx >= vid.workspaces.len {
 		vid.open_workspace(0)
 		return
@@ -1381,7 +1392,9 @@ fn (mut vid Vid) open_workspace(idx int) {
 }
 
 fn (mut vid Vid) add_workspace(path string) {
-	println('add_workspace("$path")')
+	$if debug {
+		println('add_workspace("$path")')
+	}
 	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
