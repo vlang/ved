@@ -1,6 +1,6 @@
-# Vid - small and fast text editor written in V
+# Ved - small and fast text editor written in V
 
-[![Build Status](https://travis-ci.org/vlang/vid.svg?branch=master)](https://travis-ci.org/vlang/vid) 
+[![Build Status](https://travis-ci.org/vlang/vid.svg?branch=master)](https://travis-ci.org/vlang/ved) 
 <a href='https://patreon.com/vlang'><img src='https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Fvlang%2Fpledges&style=for-the-badge' height='20'></a>
 
 
@@ -14,13 +14,13 @@ First you need to [install V](https://github.com/vlang/v#installing-v-from-sourc
 
 
 ```
-git clone https://github.com/vlang/vid
-cd vid
+git clone https://github.com/vlang/ved
+cd ved
 v .
-./vid
+./ved
 ```
 
-Vid should build in under a second.
+Ved should build in under a second.
 
 There is one dependency: `freetype`.
 
@@ -49,11 +49,11 @@ v setup-freetype
 
 ### Communities:
 
-Discord (primary community): https://discord.gg/n7c74HM. Join the #vid channel.
+Discord (primary community): https://discord.gg/n7c74HM. Join the #ved channel.
 
 ### This is pre-alpha software.
 
-I've been using Vid as my main editor since June 2017 (it was re-written in V in June 2018). I've set it up to my liking, I know its limitations and how to bypass them. 
+I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018). I've set it up to my liking, I know its limitations and how to bypass them. 
 
 For everyone else it's going to be unstable and unconfigurable at this stage.
 
@@ -86,11 +86,11 @@ Most of these are relatively easy to fix.
 
 ### Instructions
 
-Vid works best with workspaces (directories with code). You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
+Ved works best with workspaces (directories with code). You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
 
 To open multiple workspaces, run
 
-`vid path/to/project1 path/to/project2 `
+`ved path/to/project1 path/to/project2 `
 
 Key bindings:
 
@@ -111,7 +111,7 @@ C -    git diff
 
 C u    build current project (build instructions must be located in "build")
 C y    alternative build of the current project (build instructions must be located in "build2")
-C 1    switch to Vid from any other application (only on macOS for now)
+C 1    switch to Ved from any other application (only on macOS for now)
 
 C d    go to the previous split
 C e    go to the next split
@@ -153,7 +153,7 @@ Many bindings are missing, and the design is not scalable. Most of them are hard
 
 ### Support the development
 
-You can support the development of Vid and V on Patreon:
+You can support the development of Ved and V on Patreon:
 
 <a href='https://patreon.com/vlang'><img src='https://camo.githubusercontent.com/3baa6f57d721101b50f691de31b730b9fbcc3a8a/68747470733a2f2f766c616e672e696f2f696d672f70617472656f6e2e706e67' width=200></a>
 

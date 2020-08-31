@@ -23,13 +23,13 @@ mut:
 	vend         int // visual borders
 	changed      bool
 	error_y      int
-	vid          &Vid
+	ved          &Ved
 	prev_y       int
 	hash_comment bool
 	hl_on        bool
 }
 
-fn (vid &Vid) new_view() View {
+fn (ved &Ved) new_view() View {
 	res := View {
 		padding_left: 0
 		path: ''
@@ -37,10 +37,10 @@ fn (vid &Vid) new_view() View {
 		y: 0
 		x: 0
 		prev_x: 0
-		page_height: vid.page_height
+		page_height: ved.page_height
 		vstart: -1
 		vend: -1
-		vid: vid
+		ved: ved
 		error_y: -1
 		prev_y: -1
 	}
@@ -75,12 +75,12 @@ fn (mut view View) open_file(path string) {
 	if path == '' {
 		return
 	}
-	mut vid := view.vid
+	mut ved := view.ved
 	mut is_new := false
 	if path != view.path {
 		is_new = true
 		// Save cursor pos (Y)
-		// view.vid.file_y_pos.set(view.path, view.y)
+		// view.ved.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
 
@@ -100,8 +100,8 @@ fn (mut view View) open_file(path string) {
 				// if clean_word == '' {
 				// continue
 				// }
-				if !(word in vid.words) {
-					vid.words << word
+				if !(word in ved.words) {
+					ved.words << word
 				}
 			}
 		}
@@ -112,15 +112,15 @@ fn (mut view View) open_file(path string) {
 		view.lines << ''
 	}
 	view.path = path
-	view.short_path = path.replace(view.vid.workspace, '')
+	view.short_path = path.replace(view.ved.workspace, '')
 	if view.short_path.starts_with('/') {
 		view.short_path = view.short_path[1..]
 	}
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'
-	view.padding_left = s.len * vid.char_width + 8
-	view.vid.save_session()
+	view.padding_left = s.len * ved.char_width + 8
+	view.ved.save_session()
 	// Go to old y
 	if is_new {
 		tmp := view.y
@@ -131,7 +131,7 @@ fn (mut view View) open_file(path string) {
 		view.prev_y = tmp
 	}
 	if false {
-		y := view.vid.file_y_pos[view.path]
+		y := view.ved.file_y_pos[view.path]
 		if y > 0 {
 			view.y = y
 		}
@@ -182,7 +182,7 @@ fn (mut view View) format_file() {
 	}
 	view.reopen()
 	// update git diff
-	view.vid.get_git_diff()
+	view.ved.get_git_diff()
 	view.changed = false
 	//println('end of save file()')
 	//println('_lines.len=$view.lines.len')
@@ -294,7 +294,7 @@ fn (mut view View) shift_a() {
 
 fn (mut view View) shift_i() {
 	view.x = 0
-	for view.char() == view.vid.cfg.tab {
+	for view.char() == view.ved.cfg.tab {
 		view.x++
 	}
 }
@@ -322,11 +322,11 @@ fn (mut view View) shift_b() {
 
 fn (mut view View) dd() {
 	if view.lines.len != 0 {
-		mut vid := view.vid
-		vid.prev_key = -1
-		vid.prev_cmd = 'dd'
-		vid.ylines = []
-		vid.ylines << view.line()
+		mut ved := view.ved
+		ved.prev_key = -1
+		ved.prev_cmd = 'dd'
+		ved.ylines = []
+		ved.ylines << view.line()
 		view.lines.delete(view.y)
 		view.changed = true
 	}
@@ -432,11 +432,11 @@ fn (mut view View) backspace(go_up bool) {
 fn (mut view View) yy() {
 	mut ylines := []string{}
 	ylines << (view.line())
-	view.vid.ylines = ylines
+	view.ved.ylines = ylines
 }
 
 fn (mut view View) p() {
-	for line in view.vid.ylines {
+	for line in view.ved.ylines {
 		view.o()
 		view.set_line(line)
 	}
@@ -544,8 +544,8 @@ fn (mut v View) y_visual() {
 	for i := v.vstart; i <= v.vend; i++ {
 		ylines << v.lines[i]
 	}
-	mut vid := v.vid
-	vid.ylines = ylines
+	mut ved := v.ved
+	ved.ylines = ylines
 	// Copy YY to clipboard TODO
 	// mainWindow.SetClipboardString(strings.Join(ylines, "\n"))
 	v.vstart = -1
@@ -554,20 +554,20 @@ fn (mut v View) y_visual() {
 
 fn (mut view View) d_visual() {
 	view.y_visual()
-	for i := 0; i < view.vid.ylines.len; i++ {
+	for i := 0; i < view.ved.ylines.len; i++ {
 		view.lines.delete(view.y)
 	}
 }
 
 fn (mut view View) cw() {
-	mut vid := view.vid
+	mut ved := view.ved
 	view.dw()
-	vid.prev_cmd = 'cw'
-	view.vid.set_insert()
+	ved.prev_cmd = 'cw'
+	view.ved.set_insert()
 }
 
 fn (mut view View) dw() {
-	mut vid := view.vid
+	mut ved := view.ved
 	typ := is_alpha(byte(view.char()))
 	// While cur char has the same type - delete it
 	for {
@@ -592,16 +592,16 @@ fn (mut view View) dw() {
 		view.delete_char()
 	}
 
-	vid.prev_cmd = 'dw'
+	ved.prev_cmd = 'dw'
 }
 
 // TODO COPY PASTA
 // same as cw but deletes underscores
 fn (mut view View) ce() {
-	mut vid := view.vid
+	mut ved := view.ved
 	view.de()
-	vid.prev_cmd = 'ce'
-	view.vid.set_insert()
+	ved.prev_cmd = 'ce'
+	view.ved.set_insert()
 }
 
 fn (mut view View) w() {
@@ -631,7 +631,7 @@ fn (mut view View) b() {
 }
 
 fn (mut view View) de() {
-	mut vid := view.vid
+	mut ved := view.ved
 	typ := is_alpha_underscore(view.char())
 	// While cur char has the same type - delete it
 	for {
@@ -643,11 +643,11 @@ fn (mut view View) de() {
 			break
 		}
 	}
-	vid.prev_cmd = 'de'
+	ved.prev_cmd = 'de'
 }
 
 fn (mut view View) zz() {
-	view.from = view.y - view.vid.page_height / 2
+	view.from = view.y - view.ved.page_height / 2
 	if view.from < 0 {
 		view.from = 0
 	}
@@ -663,8 +663,8 @@ fn (mut view View) tt() {
 	if view.prev_path == '' {
 		return
 	}
-	mut vid := view.vid
-	vid.prev_key = -1
+	mut ved := view.ved
+	ved.prev_key = -1
 	view.open_file(view.prev_path)
 }
 
@@ -676,16 +676,16 @@ fn (mut view View) move_to_line(line int) {
 
 // Fit lines  into 80 chars
 fn (mut view View) gq() {
-	mut vid := view.vid
-	if vid.mode != .visual {
+	mut ved := view.ved
+	if ved.mode != .visual {
 		return
 	}
 	view.y_visual()
-	max := vid.max_chars(0)
+	max := ved.max_chars(0)
 	// Join all selected lines into a single string
-	joined := vid.ylines.join('\n')
+	joined := ved.ylines.join('\n')
 	// Delete what we selected
-	for yline in vid.ylines {
+	for yline in ved.ylines {
 		if yline == '' {
 			continue
 		}
@@ -696,7 +696,7 @@ fn (mut view View) gq() {
 		view.insert_text(line)
 		view.o()
 	}
-	vid.mode = .normal
+	ved.mode = .normal
 }
 
 fn is_alpha(r byte) bool {
