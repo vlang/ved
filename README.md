@@ -19,11 +19,11 @@ cd vid
 v .
 ```
 ```
-./vid
+./ved
 ```
 or on Windows:
 ```
-vid
+ved
 ```
 
 Vid should build in under a second.
