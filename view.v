@@ -364,7 +364,7 @@ fn (mut view View) shift_left() {
 
 fn (mut v View) delete_char() {
 	u := v.uline()
-	if v.x >= u.len {
+	if u.len < 1 || v.x >= u.len {
 		return
 	}
 	left := u.left(v.x)
