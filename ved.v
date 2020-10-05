@@ -15,9 +15,11 @@ import sokol.sapp
 // noicell
 
 const (
-	session_path = os.home_dir() + '.ved/session'
-	timer_path   = os.home_dir() + '.ved/timer'
-	tasks_path   = os.home_dir() + '.ved/tasks'
+	settings_path = os.join_path(os.home_dir(), '.ved')
+	codeblog_path = os.join_path(os.home_dir(), 'code', 'blog')    
+	session_path = os.join_path(settings_path, 'session')
+	timer_path   = os.join_path(settings_path, 'timer')
+	tasks_path   = os.join_path(settings_path, 'tasks')
 )
 
 enum EditorMode {
@@ -122,8 +124,8 @@ fn main() {
 		println(help_text)
 		return
 	}
-	if !os.is_dir(os.home_dir() + '.ved') {
-		os.mkdir(os.home_dir() + '.ved') or { panic(err) }
+	if !os.is_dir(settings_path) {
+		os.mkdir(settings_path) or { panic(err) }
 	}
 	mut nr_splits := 3
 	is_window := '-window' in os.args
@@ -194,7 +196,7 @@ fn main() {
 		char_fn: on_char
 		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
 	})
-		println('FULL SCREEN=${!is_window}')
+	println('FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.vg)
 	ved.load_all_tasks()
 
@@ -1554,7 +1556,7 @@ fn (ved &Ved) get_git_diff_full() string {
 
 fn (ved &Ved) open_blog() {
 	now := time.now()
-	path := os.home_dir() + 'code/blog/$now.year/${now.month:02d}/${now.day:02d}'
+	path := os.join_path(codeblog_path, '$now.year', '${now.month:02d}', '${now.day:02d}')
 	if !os.exists(path) {
 		os.system('touch $path')
 	}
