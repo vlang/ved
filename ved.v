@@ -1301,7 +1301,9 @@ fn (mut ved Ved) update_view() {
 	$if debug {
 		println('update view len=$ved.views.len')
 	}
+	unsafe {
 	ved.view = &ved.views[ved.cur_split]
+	}
 }
 
 fn (mut ved Ved) set_insert() {
@@ -1567,7 +1569,9 @@ fn (ved &Ved) open_blog() {
 
 fn (ved &Ved) get_last_view() &View {
 	pos := (ved.workspace_idx + 1) * ved.splits_per_workspace - 1
+	unsafe {
 	return &ved.views[pos]
+	}
 }
 
 fn (mut ved Ved) build_app1() {
@@ -1704,7 +1708,7 @@ fn (mut ved Ved) go_to_error(line string) {
 	line_nr := line[pos+3..].all_before(':')
 	println('path=$path filename=$filename linenr=$line_nr')
 	for i := 0; i < ved.views.len; i++ {
-		mut view := &ved.views[i]
+		mut view := unsafe { &ved.views[i] }
 		if !view.path.contains(filename) {
 			continue
 		}
