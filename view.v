@@ -1,7 +1,6 @@
 // Copyright (c) 2019 Alexander Medvednikov. All rights reserved.
 // Use of this source code is governed by a GPL license
 // that can be found in the LICENSE file.
-
 module main
 
 import os
@@ -30,7 +29,7 @@ mut:
 }
 
 fn (ved &Ved) new_view() View {
-	res := View {
+	res := View{
 		padding_left: 0
 		path: ''
 		from: 0
@@ -83,10 +82,10 @@ fn (mut view View) open_file(path string) {
 		// view.ved.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
-
 	mut lines := []string{}
-	if rlines := os.read_lines(path) { lines = rlines }
-
+	if rlines := os.read_lines(path) {
+		lines = rlines
+	}
 	view.lines = lines
 	// get words map
 	if view.lines.len < 1000 {
@@ -154,8 +153,8 @@ fn (mut view View) save_file() {
 	path := view.path
 	println('saving file "$path"')
 	println('lines.len=$view.lines.len')
-	//line0 := view.lines[0]
-	//println('line[0].len=$line0.len')
+	// line0 := view.lines[0]
+	// println('line[0].len=$line0.len')
 	mut file := os.create(path) or {
 		panic('fail')
 	}
@@ -172,22 +171,20 @@ fn (mut view View) format_file() {
 	if path.ends_with('.go') {
 		println('running goimports')
 		os.system('goimports -w "$path"')
-	}
-	else if path.ends_with('.scss') {
+	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "$path" > "$css"')
-	}
-	else if path.ends_with('.v') && path.contains('vlib/v/') {
+	} else if path.ends_with('.v') && path.contains('vlib/v/') {
 		os.system('v fmt -w $path')
 	}
 	view.reopen()
 	// update git diff
 	view.ved.get_git_diff()
 	view.changed = false
-	//println('end of save file()')
-	//println('_lines.len=$view.lines.len')
-	//line0_ := view.lines[0]
-	//println('_line[0].len=$line0_.len')
+	// println('end of save file()')
+	// println('_lines.len=$view.lines.len')
+	// line0_ := view.lines[0]
+	// println('_line[0].len=$line0_.len')
 }
 
 fn (view &View) line() string {
@@ -212,8 +209,7 @@ fn (view &View) char() int {
 fn (mut view View) set_line(newline string) {
 	if view.y + 1 > view.lines.len {
 		view.lines << newline
-	}
-	else {
+	} else {
 		view.lines[view.y] = newline
 	}
 	view.changed = true
@@ -335,7 +331,7 @@ fn (mut view View) dd() {
 fn (mut view View) shift_right() {
 	// No selection, shift current line
 	if view.vstart == -1 {
-		view.set_line('\t${view.line()}')
+		view.set_line('\t$view.line()')
 		return
 	}
 	for i := view.vstart; i <= view.vend; i++ {
@@ -380,7 +376,7 @@ fn (mut view View) shift_c() string {
 	line := view.line()
 	s := line[..view.x]
 	deleted := line[view.x..]
-	view.set_line('${s} ')
+	view.set_line('$s ')
 	view.x = s.len
 	return deleted
 }
@@ -389,8 +385,7 @@ fn (mut view View) insert_text(s string) {
 	line := view.line()
 	if line.len == 0 {
 		view.set_line('$s ')
-	}
-	else {
+	} else {
 		if view.x >= line.len {
 			view.x = line.len
 		}
@@ -398,10 +393,10 @@ fn (mut view View) insert_text(s string) {
 		if view.x >= uline.len {
 			return
 		}
-		left := uline.substr(0,view.x)
-		right := uline.substr(view.x,uline.len)
+		left := uline.substr(0, view.x)
+		right := uline.substr(view.x, uline.len)
 		// Insert chat in the middle
-		res := '${left}${s}${right}'
+		res := '$left$s$right'
 		view.set_line(res)
 	}
 	view.x += s.ustring().len
@@ -414,7 +409,7 @@ fn (mut view View) backspace(go_up bool) {
 			view.x = 0
 			view.y--
 			view.x = view.lines[view.y].len
-			view.lines.delete(view.y+1)
+			view.lines.delete(view.y + 1)
 			view.changed = true
 		}
 		return
@@ -422,10 +417,10 @@ fn (mut view View) backspace(go_up bool) {
 	uline := view.uline()
 	left := uline.left(view.x - 1)
 	mut right := ''
-	if view.x < uline.len  {
+	if view.x < uline.len {
 		right = uline.right(view.x)
 	}
-	view.set_line('${left}${right}')
+	view.set_line('$left$right')
 	view.x--
 }
 
@@ -453,11 +448,7 @@ fn (mut view View) o() {
 fn (mut view View) o_generic(delta int) {
 	view.y += delta
 	// Insert the same amount of spaces/tabs as in prev line
-	prev_line := if view.lines.len == 0 || view.y == 0 {
-		''
-	} else {
-		view.lines[view.y - 1]
-	}
+	prev_line := if view.lines.len == 0 || view.y == 0 { '' } else { view.lines[view.y - 1] }
 	mut nr_spaces := 0
 	mut nr_tabs := 0
 	mut i := 0
@@ -476,13 +467,10 @@ fn (mut view View) o_generic(delta int) {
 	} else if !new_line.ends_with(' ') {
 		new_line += ' '
 	}
-
-
-	view.x = new_line.len-1
+	view.x = new_line.len - 1
 	if view.y >= view.lines.len {
 		view.lines << new_line
-	}
-	else {
+	} else {
 		view.lines.insert(view.y, new_line)
 	}
 	view.changed = true
@@ -493,7 +481,7 @@ fn (mut view View) enter() {
 	// And move everything to the right of the cursor to it
 	pos := view.x
 	line := view.line()
-	if pos >= line.len-1 && line != '' && line != ' ' {
+	if pos >= line.len - 1 && line != '' && line != ' ' {
 		// {} insertion
 		if line.ends_with('{ ') {
 			view.o()
@@ -501,20 +489,20 @@ fn (mut view View) enter() {
 			view.insert_text('}')
 			view.y--
 			view.o()
-			//view.insert_text('\t')
-			//view.x = 0
+			// view.insert_text('\t')
+			// view.x = 0
 		} else {
 			view.o()
 		}
 		return
 	}
-	//if line == '' {
-		//view.o()
-		//return
-	//}
+	// if line == '' {
+	// view.o()
+	// return
+	// }
 	uline := line.ustring()
 	mut right := ''
-	if pos < uline.len{
+	if pos < uline.len {
 		right = uline.right(pos)
 	}
 	left := uline.left(pos)
@@ -578,8 +566,7 @@ fn (mut view View) dw() {
 		if typ == is_alpha(byte(view.char())) {
 			println('del x=$view.x len=$line.len')
 			view.delete_char()
-		}
-		else {
+		} else {
 			break
 		}
 	}
@@ -591,7 +578,6 @@ fn (mut view View) dw() {
 		}
 		view.delete_char()
 	}
-
 	ved.prev_cmd = 'dw'
 }
 
@@ -638,8 +624,7 @@ fn (mut view View) de() {
 		line := view.line()
 		if view.x >= 0 && view.x < line.len && typ == is_alpha_underscore(view.char()) {
 			view.delete_char()
-		}
-		else {
+		} else {
 			break
 		}
 	}
@@ -700,8 +685,7 @@ fn (mut view View) gq() {
 }
 
 fn is_alpha(r byte) bool {
-	return ((r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) ||
-	(r >= `0` && r <= `9`))
+	return ((r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || (r >= `0` && r <= `9`))
 }
 
 fn is_whitespace(r byte) bool {
@@ -728,4 +712,3 @@ fn break_text(s string, max int) []string {
 	}
 	return lines
 }
-

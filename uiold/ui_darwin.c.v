@@ -9,7 +9,7 @@ module uiold
 __global ( default_font &C.NSFont )
 
 
-fn focus_app(next, event, data voidptr) {
+fn focus_app(next voidptr, event voidptr, data voidptr) {
   #NSLog(@"2The hot key was pressed.");
   #NSApplication *myApp = [NSApplication sharedApplication];
   #[myApp activateIgnoringOtherApps:YES];
