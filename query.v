@@ -1,16 +1,16 @@
 // Copyright (c) 2019 Alexander Medvednikov. All rights reserved.
 // Use of this source code is governed by a GPL license
 // that can be found in the LICENSE file.
-
 module main
 
 // TODO rename to query.v once the order bug is fixed.
-
 import os
 import gx
 
 const (
-	txt_cfg = gx.TextCfg { size: 9 }
+	txt_cfg = gx.TextCfg{
+		size: 9
+	}
 )
 
 fn (mut ved Ved) load_git_tree() {
@@ -20,54 +20,42 @@ fn (mut ved Ved) load_git_tree() {
 	if dir == '' {
 		dir = '.'
 	}
-	s := os.exec('git -C $dir ls-files') or { return }
+	s := os.exec('git -C $dir ls-files') or {
+		return
+	}
 	ved.all_git_files = s.output.split_into_lines()
 	ved.all_git_files.sort_by_len()
 }
 
 fn (ved &Ved) load_all_tasks() {
-/*
+	/*
 	mut rows := ved.timer.db.q_strings('select distinct name from tasks')
 	for row in rows {
 		t := row.vals[0]
 		ved.top_tasks << t
 	}
 	println(ved.top_tasks)
-*/
+	*/
 }
 
 fn (ved &Ved) typ_to_str() string {
 	typ := ved.query_type
 	match typ {
-	.search {
-		return 'find'
-	}
-	.ctrlp {
-		return 'ctrl p (git files)'
-	}
-	.open {
-		return 'open'
-	}
-	.open_workspace {
-		return 'open workspace'
-	}
-	.cam {
-		return 'git commit -am'
-	}
-	.ctrlj {
-		return 'ctrl j'
-	}
-	.task {
-		return 'new task/activity'
-	}
-	.grep { return 'git grep'	}
+		.search { return 'find' }
+		.ctrlp { return 'ctrl p (git files)' }
+		.open { return 'open' }
+		.open_workspace { return 'open workspace' }
+		.cam { return 'git commit -am' }
+		.ctrlj { return 'ctrl j' }
+		.task { return 'new task/activity' }
+		.grep { return 'git grep' }
 	}
 	return ''
 }
 
 const (
-	small_queries = [int(QueryType.search), QueryType.cam, QueryType.open]// , GREP]
-	max_grep_lines  = 20
+	small_queries  = [int(QueryType.search), QueryType.cam, QueryType.open] // , GREP]
+	max_grep_lines = 20
 	query_width    = 400
 )
 
@@ -98,16 +86,14 @@ fn (mut ved Ved) draw_query() {
 	ved.vg.draw_text(x + 10, y + 30, q, txt_cfg)
 	if ved.query_type == .ctrlp {
 		ved.draw_ctrlp_files(x, y)
-	}
-	else if ved.query_type == QueryType.task {
+	} else if ved.query_type == QueryType.task {
 		ved.draw_top_tasks(x, y)
-	}
-	else if ved.query_type == QueryType.grep {
+	} else if ved.query_type == QueryType.grep {
 		ved.draw_git_grep(x, y)
 	}
 }
 
-fn (mut ved Ved) draw_ctrlp_files(x, y int) {
+fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 	mut j := 0
 	for file_ in ved.all_git_files {
 		if j == 10 {
@@ -123,7 +109,7 @@ fn (mut ved Ved) draw_ctrlp_files(x, y int) {
 	}
 }
 
-fn (mut ved Ved) draw_top_tasks(x, y int) {
+fn (mut ved Ved) draw_top_tasks(x int, y int) {
 	mut j := 0
 	q := ved.query.to_lower()
 	for task_ in ved.top_tasks {
@@ -140,7 +126,7 @@ fn (mut ved Ved) draw_top_tasks(x, y int) {
 	}
 }
 
-fn (mut ved Ved) draw_git_grep(x, y int) {
+fn (mut ved Ved) draw_git_grep(x int, y int) {
 	for i, line in ved.gg_lines {
 		if i == max_grep_lines {
 			break
@@ -153,7 +139,7 @@ fn (mut ved Ved) draw_git_grep(x, y int) {
 		if pos2 == -1 || pos2 >= line.len - 1 {
 			continue
 		}
-		text := line[pos2+1..].trim_space().limit(70)
+		text := line[pos2 + 1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == ved.gg_pos {
 			ved.vg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
@@ -186,7 +172,9 @@ fn (mut ved Ved) ctrlp_open() {
 
 fn (mut ved Ved) git_grep() {
 	ved.gg_pos = -1
-	s := os.exec('git -C "$ved.workspace" grep -n "$ved.search_query"') or { return }
+	s := os.exec('git -C "$ved.workspace" grep -n "$ved.search_query"') or {
+		return
+	}
 	lines := s.output.split_into_lines()
 	ved.gg_lines = []
 	for line in lines {
@@ -209,7 +197,7 @@ fn (mut ved Ved) search(goback bool) {
 		to = 0
 		di = -1
 	}
-	for i := view.y;; i += di {
+	for i := view.y; true; i += di {
 		if goback && i <= to {
 			break
 		}
@@ -231,8 +219,7 @@ fn (mut ved Ved) search(goback bool) {
 			// Found in current screen, dont move it
 			if i >= view.from && i <= view.from + ved.page_height {
 				view.y = i
-			}
-			else {
+			} else {
 				ved.move_to_line(i)
 			}
 			view.x = pos
@@ -245,4 +232,3 @@ fn (mut ved Ved) search(goback bool) {
 		}
 	}
 }
-
