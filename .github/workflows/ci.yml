@@ -28,9 +28,9 @@ jobs:
     #   run: |
     #     v vet .
     - name: v fmt -verify
+      # v fmt -verify timer.v
+      # v fmt -verify ved.v
       run: |
         v fmt -verify config.v
         v fmt -verify query.v
-        v fmt -verify timer.v
-        v fmt -verify ved.v
         v fmt -verify view.v
