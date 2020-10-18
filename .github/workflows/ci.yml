@@ -34,3 +34,51 @@ jobs:
         v fmt -verify config.v
         v fmt -verify query.v
         v fmt -verify view.v
+
+  ubuntu:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+    - name: Build V
+      run: |
+        make
+        sudo ./v symlink
+    - name: Build ved
+      run: v -prod .
+
+  macos:
+    runs-on: macos-10.15
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+    - name: Build V
+      run: |
+        make
+        sudo ./v symlink
+    - name: Build ved
+      run: v -prod .
+
+  windows:
+    runs-on: windows-2019
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+    - name: Build V
+      run: |
+        .\make.bat
+        .\v.exe symlink
+    - name: Build ved
+      run: v -prod .
