@@ -49,6 +49,10 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: ved
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install --quiet -y libfreetype6-dev libxi-dev libxcursor-dev
     - name: Build V
       run: |
         make
@@ -92,8 +96,7 @@ jobs:
     - name: Build V
       run: |
         .\make.bat
-        .\v.exe symlink
     - name: Build ved
       run: |
         cd ved
-        v -prod .
+        ..\v.exe -prod .
