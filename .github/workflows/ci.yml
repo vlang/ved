@@ -52,7 +52,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install --quiet -y libfreetype6-dev libxi-dev libxcursor-dev
+        sudo apt-get install --quiet -y libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
     - name: Build V
       run: |
         make
