@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  schedule:
+    - cron:  '31 1,12 * * *'
+
+jobs:
+  code-formatting:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+    - name: Build V
+      run: |
+        make
+        sudo ./v symlink
+    # - name: v vet
+    #   run: |
+    #     v vet .
+    - name: v fmt -verify
+      run: |
+        v fmt -verify config.v
+        v fmt -verify query.v
+        v fmt -verify timer.v
+        v fmt -verify ved.v
+        v fmt -verify view.v
