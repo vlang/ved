@@ -16,7 +16,7 @@ import sokol.sapp
 
 const (
 	settings_path = os.join_path(os.home_dir(), '.ved')
-	codeblog_path = os.join_path(os.home_dir(), 'code', 'blog')    
+	codeblog_path = os.join_path(os.home_dir(), 'code', 'blog')
 	session_path = os.join_path(settings_path, 'session')
 	timer_path   = os.join_path(settings_path, 'timer')
 	tasks_path   = os.join_path(settings_path, 'tasks')
@@ -408,7 +408,7 @@ fn (ved &Ved) split_x(i int) int {
 	return ved.split_width() * (i)
 }
 
-fn (mut ved Ved) draw_split(i, split_from int) {
+fn (mut ved Ved) draw_split(i int, split_from int) {
 	view := ved.views[i]
 	ved.is_ml_comment = false
 	split_width := ved.split_width()
@@ -472,7 +472,7 @@ fn (ved &Ved) max_chars(nr_tabs int) int {
 	return width / ved.char_width - 1
 }
 
-fn (mut ved Ved) add_chunk(typ ChunkKind, start, end int) {
+fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 	chunk := Chunk {
 		typ: typ
 		start: start
@@ -481,7 +481,7 @@ fn (mut ved Ved) add_chunk(typ ChunkKind, start, end int) {
 	ved.chunks << chunk
 }
 
-fn (mut ved Ved) draw_line(x, y int, line string) {
+fn (mut ved Ved) draw_line(x int, y int, line string) {
 	// Red/green test hack
 	if line.contains('[32m') &&
 	line.contains('PASS') {
@@ -1245,7 +1245,7 @@ fn (mut ved Ved) char_query(s string) {
 	}
 }
 
-fn (mut ved Ved) key_visual(key sapp.KeyCode, super, shift bool) {
+fn (mut ved Ved) key_visual(key sapp.KeyCode, super bool, shift bool) {
 	mut view := ved.view
 	match key {
 	.escape {
