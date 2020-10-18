@@ -18,14 +18,12 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: vlang/v
-        path: v
     - name: Checkout ved
       uses: actions/checkout@v2
       with:
         path: ved
     - name: Build V
       run: |
-        cd v
         make
         sudo ./v symlink
     # - name: v vet
@@ -35,22 +33,67 @@ jobs:
       # v fmt -verify timer.v
       # v fmt -verify ved.v
       run: |
+        cd ved
         v fmt -verify config.v
         v fmt -verify query.v
         v fmt -verify view.v
 
-  # build:
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os: [ubuntu-20.04, macos-10.15, windows-2019]
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
-  #   - name: Set up latest V
-  #     uses: nocturlab/setup-vlang-action@v1
-  #     with:
-  #       v-version: latest
-  #     id: v
-  #   - name: Build ved
-  #     run: v -prod .
+  ubuntu:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+      with:
+        path: ved
+    - name: Build V
+      run: |
+        make
+        sudo ./v symlink
+    - name: Build ved
+      run: |
+        cd ved
+        v -prod .
+
+  macos:
+    runs-on: macos-10.15
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+      with:
+        path: ved
+    - name: Build V
+      run: |
+        make
+        sudo ./v symlink
+    - name: Build ved
+      run: |
+        cd ved
+        v -prod .
+
+  windows:
+    runs-on: windows-2019
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - name: Checkout ved
+      uses: actions/checkout@v2
+      with:
+        path: ved
+    - name: Build V
+      run: |
+        .\make.bat
+        .\v.exe symlink
+    - name: Build ved
+      run: |
+        cd ved
+        v -prod .
