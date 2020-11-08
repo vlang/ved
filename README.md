@@ -27,7 +27,7 @@ There is one dependency: `freetype`.
 Ubuntu:
 
 ```
-sudo apt install libfreetype6-dev
+sudo apt install libfreetype6-dev libx11-dev libxrandr-dev mesa-common-dev
 ```
 
 Fedora:
