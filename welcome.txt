@@ -1,0 +1,64 @@
+Ved - a fast Vim-like editor written in V.
+
+Ved works best with workspaces (directories with code).
+You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
+
+To open multiple workspaces, run
+
+`ved path/to/project1 path/to/project2`
+
+
+
+Key bindings:
+
+`C` is the Apple key on macOS, `Ctrl` on all other systems.
+
+```
+C o    open a file
+C s    save
+C r    reload current file
+C p    open ctrlp (fuzzy search)
+/      search in current file
+C g    copy current file's path to clipboard
+tt     go to the previous file
+
+C c    git commit -am
+C -    git diff
+?      git grep (search across all files in current workspace)
+
+C u    build current project (build instructions must be located in "build")
+C y    alternative build of the current project (build instructions must be located in "build2")
+C 1    switch to Ved from any other application (only on macOS for now)
+
+C d    go to the previous split
+C e    go to the next split
+C [    go to the previous workspace
+C ]    go to the next workspace
+
+C a    start a new task
+C t    show the Timer/Pomodoro window
+
+
+```
+
+Supported vi bindings:
+
+```
+j k h l
+C-F C-B
+L H
+w b
+dw de cw ce
+di ci
+A I
+o O
+v
+zz
+y d p J
+.
+< >
+/ * n
+gg G
+x r
+C-n (autocomplete)
+```

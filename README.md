@@ -90,7 +90,7 @@ Ved works best with workspaces (directories with code). You can have multiple wo
 
 To open multiple workspaces, run
 
-`ved path/to/project1 path/to/project2 `
+`ved path/to/project1 path/to/project2`
 
 Key bindings:
 

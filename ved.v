@@ -251,6 +251,10 @@ fn main() {
 			ved.add_workspace(cur_dir)
 		}
 		ved.open_workspace(0)
+		if ved.workspaces.len == 1 {
+			ved_exe_dir := os.dir(os.executable())
+			ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
+		}
 	}
 	ved.load_session()
 	ved.load_timer()
