@@ -457,10 +457,10 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			if view.hl_on {
 				s := if line == ' ' { ' '} else { line.trim_space().limit(max) }
 				//println('line="$s"')
-				ved.draw_line(line_x, y, s)// SYNTAX HL
+				ved.draw_line(line_x, y, s)
 			}
 			else {
-				ved.gg.draw_text(line_x, y, line.trim_space(), ved.cfg.txt_cfg)// NO SYNTAX
+				ved.gg.draw_text(line_x, y, line.trim_space(), ved.cfg.txt_cfg)
 			}
 		}
 		line_nr++
