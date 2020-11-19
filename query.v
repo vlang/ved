@@ -73,17 +73,17 @@ fn (mut ved Ved) draw_query() {
 	}
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
-	ved.vg.draw_rect(x, y, width, height, gx.white)
+	ved.gg.draw_rect(x, y, width, height, gx.white)
 	// query window title
-	ved.vg.draw_rect(x, y, width, ved.line_height, ved.cfg.title_color)
-	ved.vg.draw_text(x + 10, y, ved.typ_to_str(), ved.cfg.file_name_cfg)
+	ved.gg.draw_rect(x, y, width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_text(x + 10, y, ved.typ_to_str(), ved.cfg.file_name_cfg)
 	// query background
-	ved.vg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
 	mut q := ved.query
 	if ved.query_type == QueryType.search || ved.query_type == QueryType.grep {
 		q = ved.search_query
 	}
-	ved.vg.draw_text(x + 10, y + 30, q, txt_cfg)
+	ved.gg.draw_text(x + 10, y + 30, q, txt_cfg)
 	if ved.query_type == .ctrlp {
 		ved.draw_ctrlp_files(x, y)
 	} else if ved.query_type == QueryType.task {
@@ -104,7 +104,7 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 		if !file.contains(ved.query.to_lower()) {
 			continue
 		}
-		ved.vg.draw_text(x + 10, y + 60 + 30 * j, file, txt_cfg)
+		ved.gg.draw_text(x + 10, y + 60 + 30 * j, file, txt_cfg)
 		j++
 	}
 }
@@ -121,7 +121,7 @@ fn (mut ved Ved) draw_top_tasks(x int, y int) {
 			continue
 		}
 		// println('DOES CONTAIN "$file" $j')
-		ved.vg.draw_text(x + 10, y + 60 + 30 * j, task, txt_cfg)
+		ved.gg.draw_text(x + 10, y + 60 + 30 * j, task, txt_cfg)
 		j++
 	}
 }
@@ -142,10 +142,10 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 		text := line[pos2 + 1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == ved.gg_pos {
-			ved.vg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
+			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
 		}
-		ved.vg.draw_text(x + 10, yy, path, txt_cfg)
-		ved.vg.draw_text(x + 250, yy, text, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, path, txt_cfg)
+		ved.gg.draw_text(x + 250, yy, text, txt_cfg)
 	}
 }
 
