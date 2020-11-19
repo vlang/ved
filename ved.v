@@ -12,8 +12,6 @@ import strings
 import sokol.sapp
 //import darwin
 
-// noicell
-
 const (
 	settings_path = os.join_path(os.home_dir(), '.ved')
 	codeblog_path = os.join_path(os.home_dir(), 'code', 'blog')
@@ -388,6 +386,10 @@ fn (mut ved Ved) draw() {
 		ved.gg.draw_text(task_time_x, 1, '${ved.task_minutes()}m',
 			ved.cfg.file_name_cfg)
 	}
+	// Draw "i" in insert mode
+	if ved.mode == .insert {
+		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
+	}
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ved.views.len refresh=$ved.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -402,8 +404,8 @@ fn (mut ved Ved) draw() {
 	// Cursor
 	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.char_width
 	if cursor_tab_off > 0 {
-		// If there's a tab, need to shift the cursor to the left by 1
-		cursor_x -= ved.char_width
+		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
+		cursor_x -= ved.char_width * cursor_tab_off
 	}
 	ved.gg.draw_empty_rect(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
 	//ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
@@ -781,6 +783,7 @@ fn (mut ved Ved) key_insert(key sapp.KeyCode, mod sapp.Modifier) {
 	//shift := mod == .shift
 	match key {
 	.backspace {
+		ved.just_switched = true // prevent backspace symbol being added in char handler
 		ved.view.backspace(ved.cfg.backspace_go_up)
 	}
 	.enter {
@@ -810,7 +813,7 @@ fn (mut ved Ved) key_insert(key sapp.KeyCode, mod sapp.Modifier) {
 	}
 	else {}
 	}
-	if (key == .k || key == .s) && super {
+	if (key == .l || key == .s) && super {
 		ved.view.save_file()
 		ved.mode = .normal
 		return
@@ -938,6 +941,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			ved.query = ''
 			ved.mode = .query
 			ved.query_type = .task
+			ved.just_switched = true
 		}
 	}
 	.a {
@@ -1035,6 +1039,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			ved.mode = .query
 			ved.query_type = .open
 			ved.query = ''
+			ved.just_switched = true
 			return
 		}
 		else if shift {
@@ -1088,6 +1093,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 	}
 	.l {
 		if super {
+			ved.just_switched = true
 			ved.view.save_file()
 		}
 		else if shift {

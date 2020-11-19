@@ -3,13 +3,12 @@
 // that can be found in the LICENSE file.
 module main
 
-// TODO rename to query.v once the order bug is fixed.
 import os
 import gx
 
 const (
 	txt_cfg = gx.TextCfg{
-		size: 16
+		size: 18
 	}
 )
 

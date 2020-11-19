@@ -414,7 +414,9 @@ fn (mut view View) backspace(go_up bool) {
 		}
 		return
 	}
+	line:=view.line()
 	uline := view.uline()
+	println('line="$line" uline="$uline"')
 	left := uline.left(view.x - 1)
 	mut right := ''
 	if view.x < uline.len {
@@ -425,9 +427,7 @@ fn (mut view View) backspace(go_up bool) {
 }
 
 fn (mut view View) yy() {
-	mut ylines := []string{}
-	ylines << (view.line())
-	view.ved.ylines = ylines
+	view.ved.ylines = [view.line()]
 }
 
 fn (mut view View) p() {

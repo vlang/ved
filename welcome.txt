@@ -5,15 +5,13 @@ You can have multiple workspaces and quickly switch between them with `C [` and 
 
 To open multiple workspaces, run
 
-`ved path/to/project1 path/to/project2`
-
+ved path/to/project1 path/to/project2
 
 
 Key bindings:
 
-`C` is the Apple key on macOS, `Ctrl` on all other systems.
+"C" means the Apple key on macOS, control key on all other systems.
 
-```
 C o    open a file
 C s    save
 C r    reload current file
@@ -39,11 +37,8 @@ C a    start a new task
 C t    show the Timer/Pomodoro window
 
 
-```
+Supported Vim bindings:
 
-Supported vi bindings:
-
-```
 j k h l
 C-F C-B
 L H
@@ -61,4 +56,3 @@ y d p J
 gg G
 x r
 C-n (autocomplete)
-```
