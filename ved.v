@@ -10,6 +10,7 @@ import time
 import uiold
 import strings
 import sokol.sapp
+import clipboard
 //import darwin
 
 const (
@@ -96,6 +97,7 @@ mut:
 	gg_lines         []string
 	gg_pos           int
 	cfg              Config
+	cb &clipboard.Clipboard
 }
 
 struct ViSize {
@@ -168,6 +170,7 @@ fn main() {
 		//font_size: 13
 		view: 0
 		gg: 0
+		cb: clipboard.new()
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
@@ -256,24 +259,9 @@ fn main() {
 	}
 	ved.load_session()
 	ved.load_timer()
-	//println(int(glfw.get_time() -t))
 	go ved.loop()
 	ved.refresh = true
 	ved.gg.run()
-	/*
-	for !ved.main_wnd.should_close() {
-		if ved.refresh || ved.mode == .timer {
-			gl.clear()
-			gl.clear_color(ved.cfg.bgcolor.r, ved.cfg.bgcolor.g, ved.cfg.bgcolor.b, 255)
-		}
-		ved.draw()
-		if ved.mode == .timer {
-			ved.timer.draw()
-		}
-		w.swap_buffers()
-		glfw.wait_events()
-	}
-	*/
 }
 
 fn on_event(e &sapp.Event, mut ved Ved) {
@@ -748,7 +736,6 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 		}
 	}
 	.up {
-		println('.a_key UP')
 		if ved.mode == .query && ved.query_type == .grep {
 			ved.gg_pos--
 			if ved.gg_pos < 0 {
@@ -758,9 +745,8 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 	}
 	.v {
 		if super {
-			// QTODO
-			//clip := ved.main_wnd.get_clipboard_text()
-			//ved.query = ved.query + clip
+			clip := ved.cb.paste()
+			ved.query += clip
 		}
 	}
 	else {}
@@ -834,12 +820,8 @@ fn (mut ved Ved) key_insert(key sapp.KeyCode, mod sapp.Modifier) {
 		return
 	}
 	if key == .v && super {
-		// ved.view.insert_text(ui.get_clipboard_text())
-		// QTODO
-		/*
-		clip := ved.main_wnd.get_clipboard_text()
-		ved.view.insert_text(clip)
-		*/
+		ved.view.insert_text(ved.cb.paste())
+		ved.just_switched = true
 	}
 }
 
