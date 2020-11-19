@@ -120,7 +120,8 @@ Options:
 const ( fpath = os.resource_abs_path('RobotoMono-Regular.ttf') )
 
 fn main() {
-	if '-h' in os.args || '--help' in os.args {
+	args := os.args
+	if '-h' in args || '--help' in args {
 		println(help_text)
 		return
 	}
@@ -128,9 +129,9 @@ fn main() {
 		os.mkdir(settings_path) or { panic(err) }
 	}
 	mut nr_splits := 3
-	is_window := '-window' in os.args
+	is_window := '-window' in args
 
-	if '-two_splits' in os.args {
+	if '-two_splits' in args {
 		nr_splits = 2
 	}
 	if is_window {
@@ -138,7 +139,7 @@ fn main() {
 	}
 	//size := gg.Size{5120, 2880}
 	mut size:=gg.Size{2560, 1480}
-	if '-laptop' in os.args {
+	if '-laptop' in args {
 		size = gg.Size{1280 * 1, 800*1}
 		nr_splits = 2
 	}
@@ -207,15 +208,15 @@ fn main() {
 	// Open workspaces or a file
 	$if debug {
 		println('args:')
-		println(os.args)
+		println(args)
 	}
 	mut cur_dir := os.getwd()
 	if cur_dir.ends_with('/ved.app/Contents/Resources') {
 		cur_dir = cur_dir.replace('/ved.app/Contents/Resources', '')
 	}
 	// Open a single text file
-	if os.args.len == 2 && !os.args[1].starts_with('-') && !os.is_dir(os.args[1]) {
-		path := os.args[1]
+	if args.len > 1 && os.is_file(args[args.len-1]) {
+		path := args[args.len-1]
 		if !os.exists(path) {
 			println('file "$path" does not exist')
 			exit(1)
@@ -231,7 +232,7 @@ fn main() {
 	// Open multiple workspaces
 	else {
 		println('open multiple workspaces')
-		for i, arg in os.args {
+		for i, arg in args {
 			println(arg)
 			if i == 0 {
 				continue
@@ -1716,7 +1717,6 @@ fn (mut ved Ved) go_to_error(line string) {
 		println('error_y=$view.error_y')
 		view.move_to_line(view.error_y)
 		// view.ved.main_wnd.refresh()
-		//glfw.post_empty_event()
 		return // Done after the first view with the error
 	}
 	// File with the error is not open right now, do it
@@ -1728,7 +1728,6 @@ fn (mut ved Ved) go_to_error(line string) {
 			ved.view.open_file(git_file) //ved.workspace + '/' + line)
 			ved.view.error_y = line_nr.int() -1
 			ved.view.move_to_line(ved.view.error_y)
-			//glfw.post_empty_event()
 			return
 		}
 	}
