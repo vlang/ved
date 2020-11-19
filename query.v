@@ -9,7 +9,7 @@ import gx
 
 const (
 	txt_cfg = gx.TextCfg{
-		size: 9
+		size: 16
 	}
 )
 

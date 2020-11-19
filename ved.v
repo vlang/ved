@@ -442,26 +442,28 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			nr_tabs++
 			line_x += ved.char_width * ved.cfg.tab_size
 		}
+		s := line[nr_tabs..] // tabs have been skipped, remove them from the string
+		if s == '' {
+			line_nr++
+			continue
+		}
 		// Number of chars to display in this view
-		if line.len > 0 {
-			// mut max := (split_width - view.padding_left - ved.char_width * TAB_SIZE *
-			// nr_tabs) / ved.char_width - 1
-			max := ved.max_chars(nr_tabs)
-			if view.y == j {
-				// Display entire line if its current
-				// if line.len > max {
-				// ved.gg.draw_rect(line_x, y - 1, ved.win_width, line_height, vcolor)
-				// }
-				// max = line.len
-			}
-			if view.hl_on {
-				s := if line == ' ' { ' '} else { line.trim_space().limit(max) }
-				//println('line="$s"')
-				ved.draw_line(line_x, y, s)
-			}
-			else {
-				ved.gg.draw_text(line_x, y, line.trim_space(), ved.cfg.txt_cfg)
-			}
+		// mut max := (split_width - view.padding_left - ved.char_width * TAB_SIZE *
+		// nr_tabs) / ved.char_width - 1
+		max := ved.max_chars(nr_tabs)
+		if view.y == j {
+			// Display entire line if its current
+			// if line.len > max {
+			// ved.gg.draw_rect(line_x, y - 1, ved.win_width, line_height, vcolor)
+			// }
+			// max = line.len
+		}
+		if view.hl_on {
+			//println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
+			ved.draw_line(line_x, y, s)
+		}
+		else {
+			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
 		line_nr++
 	}
