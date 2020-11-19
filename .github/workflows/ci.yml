@@ -80,7 +80,8 @@ jobs:
     - name: Build ved
       run: |
         cd ved
-        v -prod .
+        v .
+        #v -prod .
 
   windows:
     runs-on: windows-2019
