@@ -167,7 +167,7 @@ fn main() {
 		cur_split: 0
 		mode: 0
 		line_height: 20
-		char_width: 8 // font_size: 13
+		char_width: 8	// font_size: 13
 		view: 0
 		gg: 0
 		cb: clipboard.new()
@@ -182,7 +182,7 @@ fn main() {
 	ved.keys = keys.split(' ')
 	ved.gg = gg.new_context({
 		width: size.width * 2
-		height: size.height * 2 // borderless_window: !is_window
+		height: size.height * 2	// borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Ved'
 		create_window: true
@@ -438,7 +438,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			nr_tabs++
 			line_x += ved.char_width * ved.cfg.tab_size
 		}
-		s := line[nr_tabs..] // tabs have been skipped, remove them from the string
+		mut s := line[nr_tabs..] // tabs have been skipped, remove them from the string
 		if s == '' {
 			line_nr++
 			continue
@@ -456,7 +456,10 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 		if view.hl_on {
 			// println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
-			ved.draw_line(line_x, y, s)
+			if max >0 && max < s.len {
+				s = s[..max]
+			}
+			ved.draw_text_line(line_x, y, s)
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
@@ -478,7 +481,7 @@ fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 	ved.chunks << chunk
 }
 
-fn (mut ved Ved) draw_line(x int, y int, line string) {
+fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 	// Red/green test hack
 	if line.contains('[32m') && line.contains('PASS') {
 		ved.gg.draw_text(x, y, line[5..], ved.cfg.green_cfg)
