@@ -396,8 +396,13 @@ fn (mut ved Ved) draw() {
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cursor
-	cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.char_width
+	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.char_width
+	if cursor_tab_off > 0 {
+		// If there's a tab, need to shift the cursor to the left by 1
+		cursor_x -= ved.char_width
+	}
 	ved.gg.draw_empty_rect(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	//ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
 		ved.draw_query()
