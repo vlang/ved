@@ -43,7 +43,7 @@ j k h l
 C-F C-B
 L H
 w b
-dw de cw ce
+dw de cw ce ci
 di ci
 A I
 o O

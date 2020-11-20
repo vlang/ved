@@ -53,11 +53,11 @@ Discord (primary community): https://discord.gg/n7c74HM. Join the #ved channel.
 
 ### This is pre-alpha software.
 
-I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018). I've set it up to my liking, I know its limitations and how to bypass them. 
+I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018). I've set it up to my liking, I know its limitations and how to bypass them.
 
 For everyone else it's going to be unstable and unconfigurable at this stage.
 
-This will be gradually fixed. The goal is to have a stable and highly customizable editor. 
+This will be gradually fixed. The goal is to have a stable and highly customizable editor.
 
 ### Main features
 
@@ -131,7 +131,7 @@ j k h l
 C-F C-B
 L H
 w b
-dw de cw ce
+dw de cw ce ci
 di ci
 A I
 o O

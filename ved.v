@@ -167,7 +167,7 @@ fn main() {
 		cur_split: 0
 		mode: 0
 		line_height: 20
-		char_width: 8	// font_size: 13
+		char_width: 8 // font_size: 13
 		view: 0
 		gg: 0
 		cb: clipboard.new()
@@ -183,7 +183,7 @@ fn main() {
 	ved.keys = keys.split(' ')
 	ved.gg = gg.new_context({
 		width: size.width * 2
-		height: size.height * 2	// borderless_window: !is_window
+		height: size.height * 2 // borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Ved'
 		create_window: true
@@ -196,7 +196,7 @@ fn main() {
 		keydown_fn: key_down
 		char_fn: on_char
 		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
-		ui_mode:true
+		ui_mode: true
 	})
 	println('FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.gg)
@@ -214,6 +214,7 @@ fn main() {
 		cur_dir = cur_dir.replace('/ved.app/Contents/Resources', '')
 	}
 	// Open a single text file
+	mut first_launch := false
 	if args.len > 1 && os.is_file(args[args.len - 1]) {
 		path := args[args.len - 1]
 		if !os.exists(path) {
@@ -248,16 +249,17 @@ fn main() {
 			}
 		}
 		if ved.workspaces.len == 0 {
+			first_launch = true
 			ved.add_workspace(cur_dir)
 		}
 		ved.open_workspace(0)
-		if ved.workspaces.len == 1 && ved.view.path == '' {
-			ved_exe_dir := os.dir(os.executable())
-			ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
-		}
 	}
 	ved.load_session()
 	ved.load_timer()
+	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
+		ved_exe_dir := os.dir(os.executable())
+		ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
+	}
 	go ved.loop()
 	ved.refresh = true
 	ved.gg.run()
@@ -279,7 +281,7 @@ fn frame(mut ved Ved) {
 	// if !ved.refresh {
 	// return
 	// }
-	//println('frame() ${time.now()}')
+	// println('frame() ${time.now()}')
 	ved.gg.begin()
 	ved.draw()
 	ved.gg.end()
@@ -459,7 +461,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 		if view.hl_on {
 			// println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
-			if max >0 && max < s.len {
+			if max > 0 && max < s.len {
 				s = s[..max]
 			}
 			ved.draw_text_line(line_x, y, s)
@@ -841,6 +843,7 @@ fn (mut ved Ved) ctrl_n() {
 		// If any word starts with our subword, add the rest
 		if map_word.starts_with(word) {
 			ved.view.insert_text(map_word[word.len..])
+			ved.just_switched = true
 			return
 		}
 	}
@@ -852,6 +855,10 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 	mut view := ved.view
 	ved.refresh = true
 	if ved.prev_key == .r {
+		return
+	}
+	if ved.prev_cmd == 'ci' {
+		view.ci(key)
 		return
 	}
 	match key {
@@ -968,7 +975,11 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 				ved.set_insert()
 				ved.prev_cmd = 'I'
 			} else {
-				ved.set_insert()
+				if ved.prev_key == .c {
+					ved.prev_cmd = 'ci'
+				} else {
+					ved.set_insert()
+				}
 			}
 		}
 		.j {

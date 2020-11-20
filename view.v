@@ -5,6 +5,7 @@ module main
 
 import os
 import strings
+import sokol.sapp
 
 struct View {
 mut:
@@ -635,6 +636,35 @@ fn (mut view View) de() {
 		}
 	}
 	ved.prev_cmd = 'de'
+}
+
+// delete all characters before and after the cursor inside '', "", () etc
+fn (mut view View) ci(key sapp.KeyCode) {
+	mut ved := view.ved
+	line := view.line()
+	defer {
+	ved.prev_cmd = ''
+	}
+	match key {
+		.apostrophe {
+			if !line.contains("'") {
+				return
+			}
+			mut start := view.x
+			for line[start] != `'` {
+				start--
+			}
+			mut end := view.x
+			for line[end] != `'` {
+				end++
+			}
+			view.set_line(line[..start+1] + line[end..])
+			view.x = start + 1
+			view.ved.set_insert()
+		}
+		else{}
+	}
+	//view.dw()
 }
 
 fn (mut view View) zz() {
