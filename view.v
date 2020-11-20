@@ -17,7 +17,7 @@ mut:
 	path         string
 	short_path   string
 	prev_path    string // for tt
-	open_paths []string // all open files (tabs)
+	open_paths   []string // all open files (tabs)
 	lines        []string
 	page_height  int
 	vstart       int
@@ -81,9 +81,9 @@ fn (mut view View) open_file(path string) {
 		if view.short_path.starts_with('/') {
 			view.short_path = view.short_path[1..]
 		}
-		//short_path := 	 	view.short_path = path[view.ved.workspace.len..]
+		// short_path := 	 	view.short_path = path[view.ved.workspace.len..]
 	}
-	if view.short_path !in view.open_paths  {
+	if view.short_path !in view.open_paths {
 		view.open_paths << view.short_path
 	}
 	mut ved := view.ved
@@ -123,7 +123,7 @@ fn (mut view View) open_file(path string) {
 		view.lines << ''
 	}
 	view.path = path
-	//view.short_path = path.replace(view.ved.workspace, '')
+	// view.short_path = path.replace(view.ved.workspace, '')
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'
@@ -423,7 +423,7 @@ fn (mut view View) backspace(go_up bool) {
 		}
 		return
 	}
-	line:=view.line()
+	line := view.line()
 	uline := view.uline()
 	println('line="$line" uline="$uline"')
 	left := uline.left(view.x - 1)
@@ -564,7 +564,7 @@ fn (mut view View) cw() {
 }
 
 // returns the removed word
-fn (mut view View) dw(del_whitespace bool) { //string {
+fn (mut view View) dw(del_whitespace bool) { // string {
 	mut ved := view.ved
 	typ := is_alpha(byte(view.char()))
 	// While cur char has the same type - delete it
@@ -574,7 +574,7 @@ fn (mut view View) dw(del_whitespace bool) { //string {
 			break
 		}
 		if typ == is_alpha(byte(view.char())) {
-			//println('del x=$view.x len=$line.len')
+			// println('del x=$view.x len=$line.len')
 			view.delete_char()
 		} else {
 			break
@@ -582,13 +582,13 @@ fn (mut view View) dw(del_whitespace bool) { //string {
 	}
 	// Delete whitespace after the deleted word
 	if del_whitespace {
-	for is_whitespace(byte(view.char())) {
-		line := view.line()
-		if view.x < 0 || view.x >= line.len {
-			break
+		for is_whitespace(byte(view.char())) {
+			line := view.line()
+			if view.x < 0 || view.x >= line.len {
+				break
+			}
+			view.delete_char()
 		}
-		view.delete_char()
-	}
 	}
 	ved.prev_cmd = 'dw'
 }
@@ -648,7 +648,7 @@ fn (mut view View) ci(key sapp.KeyCode) {
 	mut ved := view.ved
 	line := view.line()
 	defer {
-	ved.prev_cmd = ''
+		ved.prev_cmd = ''
 	}
 	match key {
 		.apostrophe {
@@ -656,20 +656,20 @@ fn (mut view View) ci(key sapp.KeyCode) {
 				return
 			}
 			mut start := view.x
-			for line[start] != `'` {
+			for line[start] != `\'` {
 				start--
 			}
 			mut end := view.x
-			for line[end] != `'` {
+			for line[end] != `\'` {
 				end++
 			}
-			view.set_line(line[..start+1] + line[end..])
+			view.set_line(line[..start + 1] + line[end..])
 			view.x = start + 1
 			view.ved.set_insert()
 		}
-		else{}
+		else {}
 	}
-	//view.dw()
+	// view.dw()
 }
 
 fn (mut view View) zz() {
