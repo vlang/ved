@@ -76,11 +76,13 @@ fn (mut view View) open_file(path string) {
 	if path == '' {
 		return
 	}
-	view.short_path = path[view.ved.workspace.len..]
-	if view.short_path.starts_with('/') {
-		view.short_path = view.short_path[1..]
+	if path.len > view.ved.workspace.len {
+		view.short_path = path[view.ved.workspace.len..]
+		if view.short_path.starts_with('/') {
+			view.short_path = view.short_path[1..]
+		}
+		//short_path := 	 	view.short_path = path[view.ved.workspace.len..]
 	}
-	//short_path := 	 	view.short_path = path[view.ved.workspace.len..]
 	if view.short_path !in view.open_paths  {
 		view.open_paths << view.short_path
 	}
@@ -556,12 +558,13 @@ fn (mut view View) d_visual() {
 
 fn (mut view View) cw() {
 	mut ved := view.ved
-	view.dw()
+	view.dw(false)
 	ved.prev_cmd = 'cw'
 	view.ved.set_insert()
 }
 
-fn (mut view View) dw() {
+// returns the removed word
+fn (mut view View) dw(del_whitespace bool) { //string {
 	mut ved := view.ved
 	typ := is_alpha(byte(view.char()))
 	// While cur char has the same type - delete it
@@ -571,19 +574,21 @@ fn (mut view View) dw() {
 			break
 		}
 		if typ == is_alpha(byte(view.char())) {
-			println('del x=$view.x len=$line.len')
+			//println('del x=$view.x len=$line.len')
 			view.delete_char()
 		} else {
 			break
 		}
 	}
 	// Delete whitespace after the deleted word
+	if del_whitespace {
 	for is_whitespace(byte(view.char())) {
 		line := view.line()
 		if view.x <= 0 || view.x >= line.len {
 			break
 		}
 		view.delete_char()
+	}
 	}
 	ved.prev_cmd = 'dw'
 }

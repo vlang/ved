@@ -1120,7 +1120,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			if ved.prev_key == .c {
 				view.cw()
 			} else if ved.prev_key == .d {
-				view.dw()
+				view.dw(true)
 			} else {
 				view.w()
 			}
@@ -1297,6 +1297,7 @@ fn (mut ved Ved) exit_visual() {
 	view.vend = -1
 }
 
+// repeat previous command
 fn (mut ved Ved) dot() {
 	prev_cmd := ved.prev_cmd
 	match prev_cmd {
@@ -1304,10 +1305,10 @@ fn (mut ved Ved) dot() {
 			ved.view.dd()
 		}
 		'dw' {
-			ved.view.dw()
+			ved.view.dw(true)
 		}
 		'cw' {
-			ved.view.dw()
+			ved.view.cw()
 			// println('dot cw prev i=$ved.prev_insert')
 			ved.view.insert_text(ved.prev_insert)
 			ved.prev_cmd = 'cw'
@@ -1619,9 +1620,9 @@ fn (mut ved Ved) build_app(extra string) {
 			break
 		}
 	}
+	ved.gg.refresh_ui()
 	// ved.refresh = true
-	// glfw.post_empty_event()
-	time.sleep(4) // delay is_building to prevent flickering in the right split
+	//time.sleep(4) // delay is_building to prevent flickering in the right split
 	ved.is_building = false
 	/*
 	// Reopen files (they were formatted)
@@ -1720,7 +1721,7 @@ fn (mut ved Ved) go_to_error(line string) {
 fn (mut ved Ved) loop() {
 	for {
 		ved.refresh = true
-		// glfw.post_empty_event()
+		ved.gg.refresh_ui()
 		// ved.timer.tick(vid)
 		time.sleep(5)
 	}
@@ -1733,7 +1734,6 @@ fn (mut ved Ved) key_u() {
 	} else {
 		ved.refresh = true
 		go ved.build_app1()
-		// glfw.post_empty_event()
 	}
 }
 
