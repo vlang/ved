@@ -87,7 +87,7 @@ mut:
 	task_start_unix      u64
 	cur_task             string
 	words                []string
-	file_y_pos           map[string]int
+	file_y_pos           map[string]int // to save current line for each file s
 	refresh              bool = true
 	line_height          int
 	char_width           int
@@ -610,15 +610,12 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 // ved.view.x = (pos.x - ved.view.padding_left) / char_width - 1
 // }
 fn key_down(key sapp.KeyCode, mod sapp.Modifier, mut ved Ved) {
-	// single super
-	/*
-	if key == glfw.key_left_super {
-		return
-	}
-	*/
 	super := mod == .super
 	shift := mod == .shift
 	if key == .escape {
+		if ved.mode == .visual {
+			ved.exit_visual()
+		}
 		ved.mode = .normal
 	}
 	// Reset error line
@@ -638,8 +635,8 @@ fn on_char(code u32, mut ved Ved) {
 		ved.just_switched = false
 		return
 	}
-	buf := [0, 0, 0, 0, 0]
-	s := utf32_to_str_no_malloc(code, buf.data)
+	buf := [0, 0, 0, 0, 0]!!
+	s := utf32_to_str_no_malloc(code, buf) // .data)
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
@@ -1231,9 +1228,6 @@ fn (mut ved Ved) char_query(s string) {
 fn (mut ved Ved) key_visual(key sapp.KeyCode, super bool, shift bool) {
 	mut view := ved.view
 	match key {
-		.escape {
-			ved.exit_visual()
-		}
 		.j {
 			view.vend++
 			if view.vend >= view.lines.len {
@@ -1296,6 +1290,7 @@ fn (mut ved Ved) set_insert() {
 }
 
 fn (mut ved Ved) exit_visual() {
+	println('exit visual')
 	ved.mode = .normal
 	mut view := ved.view
 	view.vstart = -1

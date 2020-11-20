@@ -238,9 +238,16 @@ fn (mut ved Ved) search(goback bool) {
 			break
 		}
 		// Haven't found it, try from the top
-		if !passed && i == view.lines.len - 1 {
+		if !goback && !passed && i == view.lines.len - 1 {
 			i = 0
 			passed = true
 		}
+		/*
+		// Same, but for reverse search
+		else if goback && !passed && i == 0 {
+			i = view.lines.len - 1
+			passed = true
+		}
+		*/
 	}
 }

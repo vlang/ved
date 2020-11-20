@@ -18,7 +18,8 @@ C r    reload current file
 C p    open ctrlp (fuzzy search)
 /      search in current file
 C g    copy current file's path to clipboard
-tt     go to the previous file
+t      go to the previous file
+gd     go to definition
 
 C c    git commit -am
 C -    git diff
