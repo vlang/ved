@@ -572,9 +572,9 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 	// txt := join_strings(runes)
 	for i, chunk in ved.chunks {
 		// println('chunk #$i start=$chunk.start end=$chunk.end typ=$chunk.typ')
-		// Initial text chunk (not initial, but the one right before current chunk,
+		// Initial text chunk (not necessarily initial, but the one right before current chunk,
 		// since we don't have a seperate chunk for text)
-		if chunk.start > pos + 1 {
+		if chunk.start > pos {
 			s := line[pos..chunk.start]
 			ved.gg.draw_text(x + pos * ved.char_width, y, s, ved.cfg.txt_cfg)
 		}
