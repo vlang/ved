@@ -142,7 +142,7 @@ fn main() {
 	// size := gg.Size{5120, 2880}
 	mut size := gg.Size{2560, 1480}
 	if '-laptop' in args {
-		size = gg.Size{1280 * 1, 800 * 1}
+		size = gg.Size{1440 * 1, 900 * 1}
 		nr_splits = 2
 	}
 	// TODO
@@ -174,6 +174,7 @@ fn main() {
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
+	println('height=$size.height')
 	ved.page_height = size.height / ved.line_height - 1
 	// TODO V keys only
 	keys := 'case defer none match pub struct interface in sizeof assert enum import go ' +
@@ -195,6 +196,7 @@ fn main() {
 		keydown_fn: key_down
 		char_fn: on_char
 		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
+		ui_mode:true
 	})
 	println('FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.gg)
@@ -249,7 +251,7 @@ fn main() {
 			ved.add_workspace(cur_dir)
 		}
 		ved.open_workspace(0)
-		if ved.workspaces.len == 1 {
+		if ved.workspaces.len == 1 && ved.view.path == '' {
 			ved_exe_dir := os.dir(os.executable())
 			ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
 		}
@@ -277,6 +279,7 @@ fn frame(mut ved Ved) {
 	// if !ved.refresh {
 	// return
 	// }
+	//println('frame() ${time.now()}')
 	ved.gg.begin()
 	ved.draw()
 	ved.gg.end()
@@ -625,6 +628,7 @@ fn key_down(key sapp.KeyCode, mod sapp.Modifier, mut ved Ved) {
 		.query { ved.key_query(key, super) }
 		.timer { ved.timer.key_down(key, super) }
 	}
+	ved.gg.refresh_ui()
 }
 
 fn on_char(code u32, mut ved Ved) {
@@ -664,6 +668,7 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 	match key {
 		.backspace {
 			ved.gg_pos = -1
+			ved.just_switched = true
 			if ved.query_type != .search && ved.query_type != .grep {
 				if ved.query.len == 0 {
 					return
@@ -724,6 +729,7 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 			if ved.mode == .query && ved.query_type == .grep {
 				ved.gg_pos++
 			}
+			ved.just_switched = true
 		}
 		.up {
 			if ved.mode == .query && ved.query_type == .grep {
@@ -1069,8 +1075,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			}
 			// copy file path to clipboard
 			else if super {
-				// QTODO
-				// ved.main_wnd.set_clipboard_text(ved.view.path)
+				ved.cb.copy(ved.view.path)
 			}
 			// go to beginning
 			else {
@@ -1661,7 +1666,6 @@ fn (mut ved Ved) run_file() {
 		}
 	}
 	ved.refresh = true
-	// glfw.post_empty_event()
 }
 
 fn (mut ved Ved) go_to_error(line string) {

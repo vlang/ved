@@ -16,6 +16,7 @@ mut:
 	path         string
 	short_path   string
 	prev_path    string // for tt
+	open_paths []string // all open files (tabs)
 	lines        []string
 	page_height  int
 	vstart       int
@@ -74,6 +75,14 @@ fn (mut view View) open_file(path string) {
 	if path == '' {
 		return
 	}
+	view.short_path = path[view.ved.workspace.len..]
+	if view.short_path.starts_with('/') {
+		view.short_path = view.short_path[1..]
+	}
+	//short_path := 	 	view.short_path = path[view.ved.workspace.len..]
+	if view.short_path !in view.open_paths  {
+		view.open_paths << view.short_path
+	}
 	mut ved := view.ved
 	mut is_new := false
 	if path != view.path {
@@ -111,10 +120,7 @@ fn (mut view View) open_file(path string) {
 		view.lines << ''
 	}
 	view.path = path
-	view.short_path = path.replace(view.ved.workspace, '')
-	if view.short_path.starts_with('/') {
-		view.short_path = view.short_path[1..]
-	}
+	//view.short_path = path.replace(view.ved.workspace, '')
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'

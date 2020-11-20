@@ -3,6 +3,7 @@
 // that can be found in the LICENSE file.
 module main
 
+
 import os
 import gx
 
@@ -22,8 +23,12 @@ fn (mut ved Ved) load_git_tree() {
 	s := os.exec('git -C $dir ls-files') or {
 		return
 	}
-	ved.all_git_files = s.output.split_into_lines()
-	ved.all_git_files.sort_by_len()
+	ved.all_git_files = []
+	ved.all_git_files << ved.view.open_paths
+	mut git_files := s.output.split_into_lines()
+	git_files.sort_by_len()
+	ved.all_git_files << git_files
+	//ved.all_git_files.sort_by_len()
 }
 
 fn (ved &Ved) load_all_tasks() {
@@ -66,9 +71,12 @@ fn (mut ved Ved) draw_query() {
 	if int(ved.query_type) in small_queries {
 		height = 70
 	}
-	if ved.query_type == .grep {
+	if ved.query_type ==.grep {
 		width *= 2
 		height *= 2
+	}
+	else if ved.query_type == .ctrlp {
+		height = 500
 	}
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
@@ -95,15 +103,19 @@ fn (mut ved Ved) draw_query() {
 fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 	mut j := 0
 	for file_ in ved.all_git_files {
-		if j == 10 {
+		if j == 15 {
 			break
+		}
+		yy := y + 60 + 30 * j
+		if j == ved.gg_pos {
+			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
 		}
 		mut file := file_.to_lower()
 		file = file.trim_space()
 		if !file.contains(ved.query.to_lower()) {
 			continue
 		}
-		ved.gg.draw_text(x + 10, y + 60 + 30 * j, file, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, file, txt_cfg)
 		j++
 	}
 }
@@ -152,6 +164,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 // fn input_enter(s string, ved * Ved) {
 // if s != '' {
 fn (mut ved Ved) ctrlp_open() {
+	ved.gg_pos = -1
 	// Open the first file in the list
 	for file_ in ved.all_git_files {
 		mut file := file_.to_lower()
