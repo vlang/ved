@@ -570,7 +570,7 @@ fn (mut view View) dw(del_whitespace bool) { //string {
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
-		if view.x <= 0 || view.x >= line.len - 1 {
+		if view.x < 0 || view.x >= line.len - 1 {
 			break
 		}
 		if typ == is_alpha(byte(view.char())) {
@@ -584,7 +584,7 @@ fn (mut view View) dw(del_whitespace bool) { //string {
 	if del_whitespace {
 	for is_whitespace(byte(view.char())) {
 		line := view.line()
-		if view.x <= 0 || view.x >= line.len {
+		if view.x < 0 || view.x >= line.len {
 			break
 		}
 		view.delete_char()
