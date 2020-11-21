@@ -81,13 +81,15 @@ fn (mut t Timer) load_tasks() {
 		name := words[0].trim_space()
 		duration := words[1].trim_space()
 		productive := !name.starts_with('@')
+		color:=if productive { color_productive } else { color_distracting }
+		name2:=if productive { name } else { name[1..] }
 		task := Task{
 			start: hour * 60 + min
 			end: hour_end * 60 + min_end
-			name: if productive { name } else { name[1..] }
+			name: name2
 			duration: duration
 			duration_min: duration[..duration.len - 1].int()
-			color: if productive { color_productive } else { color_distracting }
+			color: color
 			productive: productive
 		}
 		// println('task:')
