@@ -82,7 +82,8 @@ fn (mut t Timer) load_tasks() {
 		duration := words[1].trim_space()
 		productive := !name.starts_with('@')
 		color:=if productive { color_productive } else { color_distracting }
-		name2:=if productive { name } else { name[1..] }
+		// TODO autofree bug remove clone()
+		name2 := if productive { name.clone() } else { name[1..] }
 		task := Task{
 			start: hour * 60 + min
 			end: hour_end * 60 + min_end
