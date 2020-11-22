@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module main
 
-
 import os
 import gx
 
@@ -28,7 +27,7 @@ fn (mut ved Ved) load_git_tree() {
 	mut git_files := s.output.split_into_lines()
 	git_files.sort_by_len()
 	ved.all_git_files << git_files
-	//ved.all_git_files.sort_by_len()
+	// ved.all_git_files.sort_by_len()
 }
 
 fn (ved &Ved) load_all_tasks() {
@@ -71,11 +70,10 @@ fn (mut ved Ved) draw_query() {
 	if int(ved.query_type) in small_queries {
 		height = 70
 	}
-	if ved.query_type ==.grep {
+	if ved.query_type == .grep {
 		width *= 2
 		height *= 2
-	}
-	else if ved.query_type == .ctrlp {
+	} else if ved.query_type == .ctrlp {
 		height = 500
 	}
 	x := (ved.win_width - width) / 2
