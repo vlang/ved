@@ -200,7 +200,7 @@ fn (view &View) line() string {
 	if view.y < 0 || view.y >= view.lines.len {
 		return ''
 	}
-	return view.lines[view.y]
+	return view.lines[view.y].clone()
 }
 
 fn (view &View) uline() ustring {
