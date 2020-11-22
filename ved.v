@@ -1097,6 +1097,12 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 				ved.view.shift_f()
 			}
 		}
+		.page_down {
+			ved.view.shift_f()
+		}
+		.page_up {
+			ved.view.shift_b()
+		}
 		.b {
 			if super {
 				// force crash
