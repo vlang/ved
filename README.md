@@ -1,17 +1,14 @@
 # Ved - small and fast text editor written in V
 
 [![Build Status](https://github.com/vlang/ved/workflows/CI/badge.svg)](https://github.com/vlang/ved/commits/master)
-<a href='https://patreon.com/vlang'><img src='https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dvlang%26type%3Dpledges' height='20'></a>
-
+[![Patreon][patreon-badge]][patreon-url]
 
 <img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
-
 
 
 ### Building from source
 
 First you need to [install V](https://github.com/vlang/v#installing-v-from-source). This will take a couple of seconds.
-
 
 ```
 git clone https://github.com/vlang/ved
@@ -25,7 +22,6 @@ Ved should build in under a second.
 There is one dependency: `freetype`.
 
 Ubuntu:
-
 ```
 sudo apt install libfreetype6-dev libx11-dev libxrandr-dev mesa-common-dev libxi-dev libxcursor-dev
 ```
@@ -33,7 +29,6 @@ sudo apt install libfreetype6-dev libx11-dev libxrandr-dev mesa-common-dev libxi
 Fedora:
 ```
 sudo dnf install freetype-devel
-
 ```
 
 macOS:
@@ -44,7 +39,6 @@ brew install freetype
 Windows:
 ```
 v setup-freetype
-
 ```
 
 ### Communities:
@@ -53,7 +47,8 @@ Discord (primary community): https://discord.gg/n7c74HM. Join the #ved channel.
 
 ### This is pre-alpha software.
 
-I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018). I've set it up to my liking, I know its limitations and how to bypass them.
+I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018).
+I've set it up to my liking, I know its limitations and how to bypass them.
 
 For everyone else it's going to be unstable and unconfigurable at this stage.
 
@@ -76,6 +71,7 @@ This will be gradually fixed. The goal is to have a stable and highly customizab
 - Cross-platform (Windows, macOS, Linux)
 
 ### Known issues
+
 - No way to change key bindings, color settings, etc
 - Vim-mode only
 - No mouse support
@@ -86,7 +82,8 @@ Most of these are relatively easy to fix.
 
 ### Instructions
 
-Ved works best with workspaces (directories with code). You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
+Ved works best with workspaces (directories with code).
+You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
 
 To open multiple workspaces, run
 
@@ -126,7 +123,6 @@ C t    show the Timer/Pomodoro window
 ```
 
 Supported vi bindings:
-
 ```
 j k h l
 C-F C-B
@@ -147,13 +143,11 @@ x r
 C-n (autocomplete)
 ```
 
+Many bindings are missing, and the design is not scalable.
+Most of them are hard-coded, so there needs to be extra logic for handling `db`, `cb` etc.
+This has to be improved.
 
+<!-- Links -->
+[patreon-badge]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dvlang%26type%3Dpledges
 
-Many bindings are missing, and the design is not scalable. Most of them are hard-coded, so there needs to be extra logic for handling `db`, `cb` etc. This has to be improved.
-
-
-### Support the development
-
-You can support the development of Ved and V on Patreon:
-
-<a href='https://patreon.com/vlang'><img src='https://camo.githubusercontent.com/3baa6f57d721101b50f691de31b730b9fbcc3a8a/68747470733a2f2f766c616e672e696f2f696d672f70617472656f6e2e706e67' width=200></a>
+[patreon-url]: https://patreon.com/vlang
