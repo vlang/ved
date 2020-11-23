@@ -1,6 +1,6 @@
 # Ved - small and fast text editor written in V
 
-[![Build Status](https://github.com/vlang/ved/workflows/CI/badge.svg)](https://github.com/vlang/ved/commits/master)
+[![Build Status][workflow-badge]][workflow-url]
 [![Patreon][patreon-badge]][patreon-url]
 
 <img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
@@ -148,6 +148,8 @@ Most of them are hard-coded, so there needs to be extra logic for handling `db`,
 This has to be improved.
 
 <!-- Links -->
+[workflow-badge]: https://github.com/vlang/ved/workflows/CI/badge.svg)
 [patreon-badge]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dvlang%26type%3Dpledges
 
+[workflow-url]: https://github.com/vlang/ved/commits/master
 [patreon-url]: https://patreon.com/vlang
