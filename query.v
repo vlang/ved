@@ -153,7 +153,8 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 		if i == ved.gg_pos {
 			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
 		}
-		ved.gg.draw_text(x + 10, yy, path, txt_cfg)
+		line_nr := line[pos + 1..pos2]
+		ved.gg.draw_text(x + 10, yy, path + ':$line_nr', txt_cfg)
 		ved.gg.draw_text(x + 250, yy, text, txt_cfg)
 	}
 }

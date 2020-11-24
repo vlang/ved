@@ -66,7 +66,7 @@ mut:
 	just_switched        bool // for keydown/char events to avoid dup keys
 	prev_key             sapp.KeyCode
 	prev_cmd             string
-	prev_insert          string
+	prev_insert          string // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files        []string
 	top_tasks            []string
 	gg                   &gg.Context
@@ -698,7 +698,12 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 				if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
 					line := ved.gg_lines[ved.gg_pos]
 					path := line.all_before(':')
-					line_nr := line[path.len + 1..].int() - 1
+					pos := line.index(':') or {
+						0
+					}
+					pos2 := line.index_after(':', pos + 1)
+					// line_nr := line[path.len + 1..].int() - 1
+					line_nr := line[pos + 1..pos2].int() - 1
 					ved.view.open_file(ved.workspace + '/' + path)
 					ved.view.move_to_line(line_nr)
 					ved.view.zz()
@@ -1215,7 +1220,9 @@ fn (mut ved Ved) char_insert(s string) {
 		return
 	}
 	ved.view.insert_text(s)
-	ved.prev_insert = ved.prev_insert + s
+	ved.prev_insert += s
+	// println('inc pi "$s"')
+	println(ved.prev_insert)
 }
 
 fn (mut ved Ved) char_query(s string) {
@@ -1225,7 +1232,7 @@ fn (mut ved Ved) char_query(s string) {
 	mut q := ved.query
 	if ved.query_type == .search || ved.query_type == .grep {
 		q = ved.search_query
-		ved.search_query = '$q$s'
+		ved.search_query = q + s
 	} else {
 		ved.query = q + s
 	}
@@ -1315,7 +1322,7 @@ fn (mut ved Ved) dot() {
 		}
 		'cw' {
 			ved.view.cw()
-			// println('dot cw prev i=$ved.prev_insert')
+			println('dot cw prev_insert=$ved.prev_insert')
 			ved.view.insert_text(ved.prev_insert)
 			ved.prev_cmd = 'cw'
 		}
@@ -1628,7 +1635,7 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 	ved.gg.refresh_ui()
 	// ved.refresh = true
-	//time.sleep(4) // delay is_building to prevent flickering in the right split
+	// time.sleep(4) // delay is_building to prevent flickering in the right split
 	ved.is_building = false
 	/*
 	// Reopen files (they were formatted)
