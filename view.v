@@ -560,7 +560,9 @@ fn (mut view View) cw() {
 	mut ved := view.ved
 	view.dw(false)
 	ved.prev_cmd = 'cw'
-	view.ved.set_insert()
+	//view.ved.set_insert() // don't call this since it resets prev_insert
+	ved.mode = .insert
+	ved.just_switched = true
 }
 
 // returns the removed word

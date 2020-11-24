@@ -1221,7 +1221,6 @@ fn (mut ved Ved) char_insert(s string) {
 	}
 	ved.view.insert_text(s)
 	ved.prev_insert += s
-	// println('inc pi "$s"')
 	println(ved.prev_insert)
 }
 
