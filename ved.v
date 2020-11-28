@@ -1224,7 +1224,7 @@ fn (mut ved Ved) char_insert(s string) {
 	}
 	ved.view.insert_text(s)
 	ved.prev_insert += s
-	println(ved.prev_insert)
+	//println(ved.prev_insert)
 }
 
 fn (mut ved Ved) char_query(s string) {
