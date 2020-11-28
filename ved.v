@@ -420,7 +420,8 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
 		line := view.lines[j].clone() // TODO autofree remove
 		if line.len > 5000 {
-			panic('line len too big! views[$i].lines[$j] ($line.len) path=$ved.view.path')
+			println('line len too big! views[$i].lines[$j] ($line.len) path=$ved.view.path')
+			continue
 		}
 		x := split_x + view.padding_left
 		y := line_nr * ved.line_height

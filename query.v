@@ -182,7 +182,8 @@ fn (mut ved Ved) ctrlp_open() {
 }
 
 fn (mut ved Ved) git_grep() {
-	ved.gg_pos = -1
+	ved.gg_pos = 0 // select the first result for faster switching to the right file =
+	// (especially if there's only one result)
 	s := os.exec('git -C "$ved.workspace" grep -n "$ved.search_query"') or {
 		return
 	}
