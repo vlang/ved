@@ -182,8 +182,8 @@ fn main() {
 		'if $' + 'else'
 	ved.keys = keys.split(' ')
 	ved.gg = gg.new_context({
-		width: size.width * 2
-		height: size.height * 2 // borderless_window: !is_window
+		width: size.width
+		height: size.height // borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Ved'
 		create_window: true
@@ -284,6 +284,9 @@ fn frame(mut ved Ved) {
 	// println('frame() ${time.now()}')
 	ved.gg.begin()
 	ved.draw()
+	if ved.mode == .timer {
+		ved.timer.draw()
+	}
 	ved.gg.end()
 	ved.refresh = false
 }

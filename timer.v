@@ -1,15 +1,15 @@
 module main
 
+import time
 import gg
 import gx
 import os
-import time
 import sokol.sapp
 
 const (
 	time_cfg = gx.TextCfg{
 		color: gx.gray
-		size: 5
+		size: 14
 	}
 )
 
@@ -81,7 +81,7 @@ fn (mut t Timer) load_tasks() {
 		name := words[0].trim_space()
 		duration := words[1].trim_space()
 		productive := !name.starts_with('@')
-		color:=if productive { color_productive } else { color_distracting }
+		color := if productive { color_productive } else { color_distracting }
 		// TODO autofree bug remove clone()
 		name2 := if productive { name.clone() } else { name[1..] }
 		task := Task{
@@ -112,11 +112,6 @@ fn new_timer(gg &gg.Context) Timer {
 	timer.load_tasks()
 	return timer
 }
-
-const (
-	hour_height = 30.0
-		// scale = 3
-)
 
 // fn (mut t Timer) load_tasks() {
 // }
