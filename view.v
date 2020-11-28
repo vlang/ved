@@ -201,7 +201,7 @@ fn (view &View) line() string {
 	if view.y < 0 || view.y >= view.lines.len {
 		return ''
 	}
-	return view.lines[view.y].clone()
+	return view.lines[view.y]
 }
 
 fn (view &View) uline() ustring {
@@ -561,7 +561,7 @@ fn (mut view View) cw() {
 	mut ved := view.ved
 	view.dw(false)
 	ved.prev_cmd = 'cw'
-	//view.ved.set_insert() // don't call this since it resets prev_insert
+	// view.ved.set_insert() // don't call this since it resets prev_insert
 	ved.mode = .insert
 	ved.just_switched = true
 }

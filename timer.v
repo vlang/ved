@@ -155,7 +155,7 @@ fn (mut t Timer) draw() {
 	// Large right vertical line
 	t.gg.draw_line(window_x + 30 + hour_width, window_y + 10, window_x + 30 + hour_width,
 		window_y + 10 + 24 * hour_width, gx.gray)
-	// Draw the in the top right corner
+	// Draw the date in the top right corner
 	t.gg.draw_text_def(window_x + window_width - 100, 20, t.date.ymmdd())
 	// Draw total time
 	h := total / 60

@@ -421,7 +421,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	// Lines
 	mut line_nr := 1 // relative y
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
-		line := view.lines[j]//.clone() // TODO autofree remove
+		line := view.lines[j]
 		if line.len > 5000 {
 			println('line len too big! views[$i].lines[$j] ($line.len) path=$ved.view.path')
 			continue
@@ -1227,7 +1227,7 @@ fn (mut ved Ved) char_insert(s string) {
 	}
 	ved.view.insert_text(s)
 	ved.prev_insert += s
-	//println(ved.prev_insert)
+	// println(ved.prev_insert)
 }
 
 fn (mut ved Ved) char_query(s string) {
@@ -1398,6 +1398,7 @@ fn (mut ved Ved) add_workspace(path string) {
 	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
+	// TODO autofree bug. not freed
 	mut workspace := if path == '.' { os.getwd() } else { path }
 	if workspace.ends_with('/.') {
 		workspace = workspace[..workspace.len - 2]
