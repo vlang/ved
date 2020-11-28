@@ -418,7 +418,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	// Lines
 	mut line_nr := 1 // relative y
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
-		line := view.lines[j].clone() // TODO autofree remove
+		line := view.lines[j]//.clone() // TODO autofree remove
 		if line.len > 5000 {
 			println('line len too big! views[$i].lines[$j] ($line.len) path=$ved.view.path')
 			continue
@@ -489,6 +489,7 @@ fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 
 fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 	// Red/green test hack
+	/*
 	if line.contains('[32m') && line.contains('PASS') {
 		ved.gg.draw_text(x, y, line[5..], ved.cfg.green_cfg)
 		return
@@ -496,6 +497,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		ved.gg.draw_text(x, y, line[5..], ved.cfg.red_cfg)
 		return
 	}
+	*/
 	// } else if line[0] == `-` {
 	ved.chunks = []
 	// ved.chunks.len = 0 // TODO V should not allow this
