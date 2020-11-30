@@ -63,13 +63,11 @@ jobs:
       with:
         path: ved
     - name: Build V
-      run: |
-        make
-        sudo ./v symlink
+      run: make
     - name: Build ved
       run: |
         cd ved
-        v .
+        ../v .
         #v -prod .
 
   windows:
