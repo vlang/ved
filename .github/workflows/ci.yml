@@ -67,7 +67,7 @@ jobs:
     - name: Build ved
       run: |
         cd ved
-        ../v .
+        ../v -cc cc .
         #v -prod .
 
   windows:
