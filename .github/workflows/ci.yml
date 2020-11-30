@@ -2,11 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-      - '**'
   pull_request:
-    branches:
-      - '**'
   schedule:
     - cron:  '31 1,12 * * *'
 
@@ -23,20 +19,15 @@ jobs:
       with:
         path: ved
     - name: Build V
-      run: |
-        make
-        sudo ./v symlink
+      run: make
     # - name: v vet
     #   run: |
     #     v vet .
     - name: v fmt -verify
       # v fmt -verify timer.v
-      # v fmt -verify ved.v
       run: |
         cd ved
-        v fmt -verify config.v
-        v fmt -verify query.v
-        v fmt -verify view.v
+        ../v fmt -verify config.v query.v ved.v view.v
 
   ubuntu:
     runs-on: ubuntu-20.04
@@ -54,13 +45,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install --quiet -y libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
     - name: Build V
-      run: |
-        make
-        sudo ./v symlink
+      run: make
     - name: Build ved
       run: |
         cd ved
-        v -prod .
+        ../v -cc cc -prod .
 
   macos:
     runs-on: macos-10.15
