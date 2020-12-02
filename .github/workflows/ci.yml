@@ -49,7 +49,7 @@ jobs:
     - name: Build ved
       run: |
         cd ved
-        ../v -cc cc -prod .
+        ../v -prod .
 
   macos:
     runs-on: macos-10.15
@@ -67,13 +67,11 @@ jobs:
     - name: Build ved
       run: |
         cd ved
-        ../v -cc cc .
+        ../v .
         #v -prod .
 
   windows:
     runs-on: windows-2019
-    env:
-        VFLAGS: -cc gcc
     steps:
     - name: Checkout V
       uses: actions/checkout@v2
@@ -89,4 +87,4 @@ jobs:
     - name: Build ved
       run: |
         cd ved
-        ..\v.exe -cc cc -prod .
+        ..\v.exe -prod .
