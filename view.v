@@ -173,6 +173,12 @@ fn (mut view View) save_file() {
 	}
 	file.close()
 	go view.format_file()
+	// If another split has the same file open, update it
+	for mut v in view.ved.views {
+		if v.path == view.path {
+			v.reopen()
+		}
+	}
 }
 
 fn (mut view View) format_file() {
