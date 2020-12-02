@@ -22,12 +22,15 @@ fn (mut ved Ved) load_git_tree() {
 	s := os.exec('git -C $dir ls-files') or {
 		return
 	}
+	/*
 	ved.all_git_files = []
 	ved.all_git_files << ved.view.open_paths
 	mut git_files := s.output.split_into_lines()
 	git_files.sort_by_len()
 	ved.all_git_files << git_files
-	// ved.all_git_files.sort_by_len()
+	*/
+	ved.all_git_files = s.output.split_into_lines()
+	ved.all_git_files.sort_by_len()
 }
 
 fn (ved &Ved) load_all_tasks() {
@@ -73,7 +76,7 @@ fn (mut ved Ved) draw_query() {
 	if ved.query_type == .grep {
 		width *= 2
 		height *= 2
-	} else if ved.query_type == .ctrlp {
+	} else if ved.query_type in [.ctrlp, .ctrlj] {
 		height = 500
 	}
 	x := (ved.win_width - width) / 2
@@ -91,10 +94,12 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_text(x + 10, y + 30, q, txt_cfg)
 	if ved.query_type == .ctrlp {
 		ved.draw_ctrlp_files(x, y)
-	} else if ved.query_type == QueryType.task {
+	} else if ved.query_type == .task {
 		ved.draw_top_tasks(x, y)
-	} else if ved.query_type == QueryType.grep {
+	} else if ved.query_type == .grep {
 		ved.draw_git_grep(x, y)
+	} else if ved.query_type == .ctrlj {
+		ved.draw_open_files(x, y)
 	}
 }
 
@@ -110,6 +115,29 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 		}
 		mut file := file_.to_lower()
 		file = file.trim_space()
+		if !file.contains(ved.query.to_lower()) {
+			continue
+		}
+		ved.gg.draw_text(x + 10, yy, file, txt_cfg)
+		j++
+	}
+}
+
+// TODO merge with ctrlp_files
+fn (mut ved Ved) draw_open_files(x int, y int) {
+	mut j := 0
+	println('draw open_files len=$ved.open_paths.len')
+	for file_ in ved.open_paths[ved.workspace_idx] {
+		if j == 15 {
+			break
+		}
+		yy := y + 60 + 30 * j
+		if j == ved.gg_pos {
+			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
+		}
+		mut file := file_.to_lower()
+		file = file.trim_space()
+		println(file)
 		if !file.contains(ved.query.to_lower()) {
 			continue
 		}
@@ -170,6 +198,22 @@ fn (mut ved Ved) ctrlp_open() {
 		file = file.trim_space()
 		if file.contains(ved.query.to_lower()) {
 			mut path := file_.trim_space()
+			mut space := ved.workspace
+			if space == '' {
+				space = '.'
+			}
+			path = '$space/$path'
+			ved.view.open_file(path)
+			break
+		}
+	}
+}
+
+// TODO merge with fn above
+fn (mut ved Ved) ctrlj_open() {
+	for p in ved.open_paths[ved.workspace_idx] {
+		if p.contains(ved.query.to_lower()) {
+			mut path := p.trim_space()
 			mut space := ved.workspace
 			if space == '' {
 				space = '.'

@@ -17,7 +17,6 @@ mut:
 	path         string
 	short_path   string
 	prev_path    string // for tt
-	open_paths   []string // all open files (tabs)
 	lines        []string
 	page_height  int
 	vstart       int
@@ -83,10 +82,13 @@ fn (mut view View) open_file(path string) {
 		}
 		// short_path := 	 	view.short_path = path[view.ved.workspace.len..]
 	}
-	if view.short_path !in view.open_paths {
-		view.open_paths << view.short_path
-	}
 	mut ved := view.ved
+	if os.exists(view.short_path) && view.short_path !in ved.open_paths[ved.workspace_idx] {
+		if ved.open_paths[ved.workspace_idx].len == 0 {
+			ved.open_paths[ved.workspace_idx] = []string{cap: ved.nr_splits}
+		}
+		ved.open_paths[ved.workspace_idx] << view.short_path
+	}
 	mut is_new := false
 	if path != view.path {
 		is_new = true

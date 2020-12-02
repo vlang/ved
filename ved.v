@@ -13,44 +13,13 @@ import clipboard
 
 // import darwin
 const (
-	settings_path = os.join_path(os.home_dir(), '.ved')
-	codeblog_path = os.join_path(os.home_dir(), 'code', 'blog')
-	session_path  = os.join_path(settings_path, 'session')
-	timer_path    = os.join_path(settings_path, 'timer')
-	tasks_path    = os.join_path(settings_path, 'tasks')
+	settings_path     = os.join_path(os.home_dir(), '.ved')
+	codeblog_path     = os.join_path(os.home_dir(), 'code', 'blog')
+	session_path      = os.join_path(settings_path, 'session')
+	timer_path        = os.join_path(settings_path, 'timer')
+	tasks_path        = os.join_path(settings_path, 'tasks')
+	max_nr_workspaces = 10
 )
-
-enum EditorMode {
-	normal = 0
-	insert = 1
-	query = 2
-	visual = 3
-	timer = 4
-}
-
-enum QueryType {
-	ctrlp = 0
-	search = 1
-	cam = 2
-	open = 3
-	ctrlj = 4
-	task = 5
-	grep = 6
-	open_workspace = 7
-}
-
-// For syntax highlighting
-enum ChunkKind {
-	a_string = 1
-	a_comment = 2
-	a_key = 3
-}
-
-struct Chunk {
-	start int
-	end   int
-	typ   ChunkKind
-}
 
 struct Ved {
 mut:
@@ -97,6 +66,39 @@ mut:
 	gg_pos               int
 	cfg                  Config
 	cb                   &clipboard.Clipboard
+	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+}
+
+// For syntax highlighting
+enum ChunkKind {
+	a_string = 1
+	a_comment = 2
+	a_key = 3
+}
+
+enum EditorMode {
+	normal = 0
+	insert = 1
+	query = 2
+	visual = 3
+	timer = 4
+}
+
+enum QueryType {
+	ctrlp = 0
+	search = 1
+	cam = 2
+	open = 3
+	ctrlj = 4
+	task = 5
+	grep = 6
+	open_workspace = 7
+}
+
+struct Chunk {
+	start int
+	end   int
+	typ   ChunkKind
 }
 
 struct ViSize {
@@ -171,6 +173,7 @@ fn main() {
 		view: 0
 		gg: 0
 		cb: clipboard.new()
+		open_paths: [][]string{len: max_nr_workspaces}
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
@@ -690,6 +693,8 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 		.enter {
 			if ved.query_type == .ctrlp {
 				ved.ctrlp_open()
+			} else if ved.query_type == .ctrlj {
+				ved.ctrlj_open()
 			} else if ved.query_type == .cam {
 				ved.git_commit()
 			} else if ved.query_type == .open {
@@ -994,8 +999,11 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			if shift {
 				ved.view.join()
 			} else if super {
-				// ved.mode = .query
-				// ved.query_type = CTRLJ
+				ved.mode = .query
+				ved.query_type = .ctrlj
+				// ved.load_open_files()
+				ved.query = ''
+				ved.just_switched = true
 			} else {
 				// println('J isb=$ved.is_building')
 				ved.view.j()
@@ -1402,6 +1410,10 @@ fn (mut ved Ved) add_workspace(path string) {
 	mut workspace := if path == '.' { os.getwd() } else { path }
 	if workspace.ends_with('/.') {
 		workspace = workspace[..workspace.len - 2]
+	}
+	if ved.workspaces.len >= max_nr_workspaces {
+		//ui.alert('workspace limit')
+		return
 	}
 	ved.workspaces << workspace
 	for i := 0; i < ved.nr_splits; i++ {
