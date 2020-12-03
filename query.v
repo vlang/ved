@@ -44,15 +44,14 @@ fn (ved &Ved) load_all_tasks() {
 	*/
 }
 
-fn (ved &Ved) typ_to_str() string {
-	typ := ved.query_type
-	match typ {
+fn (q QueryType) str() string {
+	match q {
 		.search { return 'find' }
 		.ctrlp { return 'ctrl p (git files)' }
 		.open { return 'open' }
 		.open_workspace { return 'open workspace' }
 		.cam { return 'git commit -am' }
-		.ctrlj { return 'ctrl j' }
+		.ctrlj { return 'ctrl j (opened files)' }
 		.task { return 'new task/activity' }
 		.grep { return 'git grep' }
 	}
@@ -84,7 +83,7 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_rect(x, y, width, height, gx.white)
 	// query window title
 	ved.gg.draw_rect(x, y, width, ved.line_height, ved.cfg.title_color)
-	ved.gg.draw_text(x + 10, y, ved.typ_to_str(), ved.cfg.file_name_cfg)
+	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
 	// query background
 	ved.gg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
 	mut q := ved.query

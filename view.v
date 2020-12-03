@@ -75,15 +75,16 @@ fn (mut view View) open_file(path string) {
 	if path == '' {
 		return
 	}
-	if path.len > view.ved.workspace.len {
+	// This path is in current workspace? Trim it. /code/v/file.v => file.v
+	if path.starts_with(view.ved.workspace + '/') {
 		view.short_path = path[view.ved.workspace.len..]
 		if view.short_path.starts_with('/') {
 			view.short_path = view.short_path[1..]
 		}
-		// short_path := 	 	view.short_path = path[view.ved.workspace.len..]
 	}
 	mut ved := view.ved
-	if os.exists(view.short_path) && view.short_path !in ved.open_paths[ved.workspace_idx] {
+	// if os.exists(view.short_path) &&
+	if view.short_path !in ['out', ''] && view.short_path !in ved.open_paths[ved.workspace_idx] {
 		if ved.open_paths[ved.workspace_idx].len == 0 {
 			ved.open_paths[ved.workspace_idx] = []string{cap: ved.nr_splits}
 		}
