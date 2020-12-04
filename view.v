@@ -97,11 +97,14 @@ fn (mut view View) open_file(path string) {
 		// view.ved.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
+	/*
 	mut lines := []string{}
 	if rlines := os.read_lines(path) {
 		lines = rlines
 	}
 	view.lines = lines
+	*/
+	view.lines = os.read_lines(path) or { []string{} }
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -168,9 +171,7 @@ fn (mut view View) save_file() {
 	println('lines.len=$view.lines.len')
 	// line0 := view.lines[0]
 	// println('line[0].len=$line0.len')
-	mut file := os.create(path) or {
-		panic('fail')
-	}
+	mut file := os.create(path) or { panic('fail') }
 	for line in view.lines {
 		file.writeln(line.trim_right(' \t'))
 	}
