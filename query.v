@@ -19,9 +19,7 @@ fn (mut ved Ved) load_git_tree() {
 	if dir == '' {
 		dir = '.'
 	}
-	s := os.exec('git -C $dir ls-files') or {
-		return
-	}
+	s := os.exec('git -C $dir ls-files') or { return }
 	/*
 	ved.all_git_files = []
 	ved.all_git_files << ved.view.open_paths
@@ -167,9 +165,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 		if i == max_grep_lines {
 			break
 		}
-		pos := line.index(':') or {
-			continue
-		}
+		pos := line.index(':') or { continue }
 		path := line[..pos].limit(30)
 		pos2 := line.index_after(':', pos + 1)
 		if pos2 == -1 || pos2 >= line.len - 1 {
@@ -227,9 +223,7 @@ fn (mut ved Ved) ctrlj_open() {
 fn (mut ved Ved) git_grep() {
 	ved.gg_pos = 0 // select the first result for faster switching to the right file =
 	// (especially if there's only one result)
-	s := os.exec('git -C "$ved.workspace" grep -n "$ved.search_query"') or {
-		return
-	}
+	s := os.exec('git -C "$ved.workspace" grep -n "$ved.search_query"') or { return }
 	lines := s.output.split_into_lines()
 	ved.gg_lines = []
 	for line in lines {
