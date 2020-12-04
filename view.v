@@ -707,6 +707,7 @@ fn (mut view View) tt() {
 }
 
 fn (mut view View) move_to_line(line int) {
+	view.prev_y = view.y
 	view.from = line
 	view.y = line
 	view.zz()

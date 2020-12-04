@@ -42,7 +42,6 @@ mut:
 	query                string
 	search_query         string
 	query_type           QueryType
-	// main_wnd         &glfw.Window
 	workspace            string
 	workspace_idx        int
 	workspaces           []string
@@ -67,6 +66,7 @@ mut:
 	cfg                  Config
 	cb                   &clipboard.Clipboard
 	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y               int // for jumping back ('')
 }
 
 // For syntax highlighting
@@ -142,10 +142,13 @@ fn main() {
 		nr_splits = 1
 	}
 	// size := gg.Size{5120, 2880}
-	mut size := gg.Size{2560, 1480}
-	if '-laptop' in args {
-		size = gg.Size{1440 * 1, 900 * 1}
-		nr_splits = 2
+	mut size := gg.screen_size()
+	if size.width == 0 || size.height == 0 {
+		size = gg.Size{2560, 1480}
+		if '-laptop' in args {
+			size = gg.Size{1440 * 1, 900 * 1}
+			nr_splits = 2
+		}
 	}
 	// TODO
 	/*
@@ -932,6 +935,13 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 		.equal {
 			ved.open_blog()
 		}
+		.apostrophe {
+			if ved.prev_key == .apostrophe {
+				ved.prev_key = 0
+				ved.move_to_line(ved.prev_y)
+				return
+			}
+		}
 		._0 {
 			if super {
 				ved.query = ''
@@ -1110,6 +1120,8 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 					ved.view.gg()
 				}
 			}
+			ved.prev_key = 0
+			return
 		}
 		.f {
 			if super {
@@ -1412,7 +1424,7 @@ fn (mut ved Ved) add_workspace(path string) {
 		workspace = workspace[..workspace.len - 2]
 	}
 	if ved.workspaces.len >= max_nr_workspaces {
-		//ui.alert('workspace limit')
+		// ui.alert('workspace limit')
 		return
 	}
 	ved.workspaces << workspace
@@ -1429,6 +1441,7 @@ fn short_space(workspace string) string {
 }
 
 fn (mut ved Ved) move_to_line(n int) {
+	ved.prev_y = ved.view.y
 	ved.view.from = n
 	ved.view.y = n
 }
