@@ -1109,6 +1109,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			// go to end
 			if shift && !super {
 				ved.view.shift_g()
+				// ved.prev_key = 0
 			}
 			// copy file path to clipboard
 			else if super {
@@ -1118,9 +1119,11 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			else {
 				if ved.prev_key == .g {
 					ved.view.gg()
+					// ved.prev_key = 0
+				} else {
+					ved.prev_key = .g
 				}
 			}
-			ved.prev_key = 0
 			return
 		}
 		.f {

@@ -61,6 +61,7 @@ jobs:
       run: |
         cd ved
         v -prod .
+        v -autofree .
 
   macos:
     runs-on: macos-10.15
