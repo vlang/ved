@@ -38,9 +38,7 @@ struct Task {
 
 fn (mut t Timer) load_tasks() {
 	// println('timer.load_tasks()')
-	lines := os.read_lines(tasks_path) or {
-		return
-	}
+	lines := os.read_lines(tasks_path) or { return }
 	// println(lines)
 	mut tasks := []Task{}
 	today := t.date.ymmdd()
@@ -167,11 +165,11 @@ fn (mut t Timer) draw() {
 
 fn (mut timer Timer) key_down(key sapp.KeyCode, super bool) {
 	match key {
-		.up {
+		.up, .k {
 			timer.date = timer.date.add_days(-1)
 			timer.load_tasks()
 		}
-		.down {
+		.down, .j {
 			timer.date = timer.date.add_days(1)
 			timer.load_tasks()
 		}
