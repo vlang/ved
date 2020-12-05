@@ -13,44 +13,13 @@ import clipboard
 
 // import darwin
 const (
-	settings_path = os.join_path(os.home_dir(), '.ved')
-	codeblog_path = os.join_path(os.home_dir(), 'code', 'blog')
-	session_path  = os.join_path(settings_path, 'session')
-	timer_path    = os.join_path(settings_path, 'timer')
-	tasks_path    = os.join_path(settings_path, 'tasks')
+	settings_path     = os.join_path(os.home_dir(), '.ved')
+	codeblog_path     = os.join_path(os.home_dir(), 'code', 'blog')
+	session_path      = os.join_path(settings_path, 'session')
+	timer_path        = os.join_path(settings_path, 'timer')
+	tasks_path        = os.join_path(settings_path, 'tasks')
+	max_nr_workspaces = 10
 )
-
-enum EditorMode {
-	normal = 0
-	insert = 1
-	query = 2
-	visual = 3
-	timer = 4
-}
-
-enum QueryType {
-	ctrlp = 0
-	search = 1
-	cam = 2
-	open = 3
-	ctrlj = 4
-	task = 5
-	grep = 6
-	open_workspace = 7
-}
-
-// For syntax highlighting
-enum ChunkKind {
-	a_string = 1
-	a_comment = 2
-	a_key = 3
-}
-
-struct Chunk {
-	start int
-	end   int
-	typ   ChunkKind
-}
 
 struct Ved {
 mut:
@@ -73,7 +42,6 @@ mut:
 	query                string
 	search_query         string
 	query_type           QueryType
-	// main_wnd         &glfw.Window
 	workspace            string
 	workspace_idx        int
 	workspaces           []string
@@ -97,6 +65,40 @@ mut:
 	gg_pos               int
 	cfg                  Config
 	cb                   &clipboard.Clipboard
+	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y               int // for jumping back ('')
+}
+
+// For syntax highlighting
+enum ChunkKind {
+	a_string = 1
+	a_comment = 2
+	a_key = 3
+}
+
+enum EditorMode {
+	normal = 0
+	insert = 1
+	query = 2
+	visual = 3
+	timer = 4
+}
+
+enum QueryType {
+	ctrlp = 0
+	search = 1
+	cam = 2
+	open = 3
+	ctrlj = 4
+	task = 5
+	grep = 6
+	open_workspace = 7
+}
+
+struct Chunk {
+	start int
+	end   int
+	typ   ChunkKind
 }
 
 struct ViSize {
@@ -127,9 +129,7 @@ fn main() {
 		return
 	}
 	if !os.is_dir(settings_path) {
-		os.mkdir(settings_path) or {
-			panic(err)
-		}
+		os.mkdir(settings_path) or { panic(err) }
 	}
 	mut nr_splits := 3
 	is_window := '-window' in args
@@ -140,10 +140,13 @@ fn main() {
 		nr_splits = 1
 	}
 	// size := gg.Size{5120, 2880}
-	mut size := gg.Size{2560, 1480}
-	if '-laptop' in args {
-		size = gg.Size{1440 * 1, 900 * 1}
-		nr_splits = 2
+	mut size := gg.screen_size()
+	if size.width == 0 || size.height == 0 {
+		size = gg.Size{2560, 1480}
+		if '-laptop' in args {
+			size = gg.Size{1440 * 1, 900 * 1}
+			nr_splits = 2
+		}
 	}
 	// TODO
 	/*
@@ -171,6 +174,7 @@ fn main() {
 		view: 0
 		gg: 0
 		cb: clipboard.new()
+		open_paths: [][]string{len: max_nr_workspaces}
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
@@ -178,10 +182,10 @@ fn main() {
 	ved.page_height = size.height / ved.line_height - 1
 	// TODO V keys only
 	keys := 'case defer none match pub struct interface in sizeof assert enum import go ' +
-		'return module fn if for break continue asm unsafe mut ' + 'type const else true else for false use $' +
+		'return module fn if for break continue asm unsafe mut is ' + 'type const else true else for false use $' +
 		'if $' + 'else'
 	ved.keys = keys.split(' ')
-	ved.gg = gg.new_context({
+	ved.gg = gg.new_context(
 		width: size.width
 		height: size.height // borderless_window: !is_window
 		fullscreen: !is_window
@@ -197,7 +201,7 @@ fn main() {
 		char_fn: on_char
 		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
 		ui_mode: true
-	})
+	)
 	println('FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.gg)
 	ved.load_all_tasks()
@@ -690,6 +694,8 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 		.enter {
 			if ved.query_type == .ctrlp {
 				ved.ctrlp_open()
+			} else if ved.query_type == .ctrlj {
+				ved.ctrlj_open()
 			} else if ved.query_type == .cam {
 				ved.git_commit()
 			} else if ved.query_type == .open {
@@ -704,9 +710,7 @@ fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
 				if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
 					line := ved.gg_lines[ved.gg_pos]
 					path := line.all_before(':')
-					pos := line.index(':') or {
-						0
-					}
+					pos := line.index(':') or { 0 }
 					pos2 := line.index_after(':', pos + 1)
 					// line_nr := line[path.len + 1..].int() - 1
 					line_nr := line[pos + 1..pos2].int() - 1
@@ -927,6 +931,13 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 		.equal {
 			ved.open_blog()
 		}
+		.apostrophe {
+			if ved.prev_key == .apostrophe {
+				ved.prev_key = 0
+				ved.move_to_line(ved.prev_y)
+				return
+			}
+		}
 		._0 {
 			if super {
 				ved.query = ''
@@ -994,8 +1005,11 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			if shift {
 				ved.view.join()
 			} else if super {
-				// ved.mode = .query
-				// ved.query_type = CTRLJ
+				ved.mode = .query
+				ved.query_type = .ctrlj
+				// ved.load_open_files()
+				ved.query = ''
+				ved.just_switched = true
 			} else {
 				// println('J isb=$ved.is_building')
 				ved.view.j()
@@ -1091,6 +1105,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			// go to end
 			if shift && !super {
 				ved.view.shift_g()
+				// ved.prev_key = 0
 			}
 			// copy file path to clipboard
 			else if super {
@@ -1100,8 +1115,12 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			else {
 				if ved.prev_key == .g {
 					ved.view.gg()
+					// ved.prev_key = 0
+				} else {
+					ved.prev_key = .g
 				}
 			}
+			return
 		}
 		.f {
 			if super {
@@ -1403,6 +1422,10 @@ fn (mut ved Ved) add_workspace(path string) {
 	if workspace.ends_with('/.') {
 		workspace = workspace[..workspace.len - 2]
 	}
+	if ved.workspaces.len >= max_nr_workspaces {
+		// ui.alert('workspace limit')
+		return
+	}
 	ved.workspaces << workspace
 	for i := 0; i < ved.nr_splits; i++ {
 		ved.views << ved.new_view()
@@ -1410,22 +1433,19 @@ fn (mut ved Ved) add_workspace(path string) {
 }
 
 fn short_space(workspace string) string {
-	pos := workspace.last_index('/') or {
-		return workspace
-	}
+	pos := workspace.last_index('/') or { return workspace }
 	return workspace[pos + 1..]
 }
 
 fn (mut ved Ved) move_to_line(n int) {
+	ved.prev_y = ved.view.y
 	ved.view.from = n
 	ved.view.y = n
 }
 
 fn (ved &Ved) save_session() {
 	println('saving session...')
-	mut f := os.create(session_path) or {
-		panic('fail')
-	}
+	mut f := os.create(session_path) or { panic('fail') }
 	for view in ved.views {
 		// if view.path == '' {
 		// continue
@@ -1444,9 +1464,7 @@ fn toi(s string) u64 {
 }
 
 fn (ved &Ved) save_timer() {
-	mut f := os.create(timer_path) or {
-		return
-	}
+	mut f := os.create(timer_path) or { return }
 	f.writeln('task=$ved.cur_task')
 	f.writeln('task_start=$ved.task_start_unix')
 	// f.writeln('timer_typ=$ved.timer.cur_type')
@@ -1466,9 +1484,7 @@ fn (mut ved Ved) load_timer() {
 	// task_start=1223212221
 	// timer_typ=7
 	// timer_start=12321321
-	lines := os.read_lines(timer_path) or {
-		return
-	}
+	lines := os.read_lines(timer_path) or { return }
 	if lines.len == 0 {
 		return
 	}
@@ -1495,9 +1511,7 @@ fn (mut ved Ved) load_timer() {
 
 fn (mut ved Ved) load_session() {
 	println('load session "$session_path"')
-	paths := os.read_lines(session_path) or {
-		return
-	}
+	paths := os.read_lines(session_path) or { return }
 	println(paths)
 	ved.load_views(paths)
 }
@@ -1610,12 +1624,8 @@ fn (mut ved Ved) build_app(extra string) {
 	// }
 	os.write_file('$dir/out', 'Building...')
 	last_view.open_file('$dir/out')
-	out := os.exec('sh $dir/build$extra') or {
-		return
-	}
-	mut f2 := os.create('$dir/out') or {
-		panic('fail')
-	}
+	out := os.exec('sh $dir/build$extra') or { return }
+	mut f2 := os.create('$dir/out') or { panic('fail') }
 	f2.writeln(out.output)
 	f2.close()
 	last_view.open_file('$dir/out')
@@ -1670,12 +1680,8 @@ fn (mut ved Ved) run_file() {
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
 	os.chdir(dir)
-	out := os.exec('v $view.path') or {
-		return
-	}
-	mut f := os.create('$dir/out') or {
-		panic('foo')
-	}
+	out := os.exec('v $view.path') or { return }
+	mut f := os.create('$dir/out') or { panic('foo') }
 	f.writeln(out.output)
 	f.close()
 	// TODO COPYPASTA
@@ -1722,9 +1728,7 @@ fn (mut ved Ved) go_to_error(line string) {
 		return
 	}
 	// File with the error is not open right now, do it
-	s := os.exec('git -C $ved.workspace ls-files') or {
-		return
-	}
+	s := os.exec('git -C $ved.workspace ls-files') or { return }
 	mut lines := s.output.split_into_lines()
 	lines.sort_by_len()
 	for git_file in lines {
@@ -1774,9 +1778,7 @@ fn (mut ved Ved) go_to_def() {
 			continue
 		}
 		file = '$ved.workspace/$file'
-		lines := os.read_lines(file) or {
-			continue
-		}
+		lines := os.read_lines(file) or { continue }
 		// println('trying file $file with $lines.len lines')
 		for j, line in lines {
 			if line.contains(query) {
@@ -1843,9 +1845,7 @@ fn (ved &Ved) insert_task() {
 	if ved.cur_task == '' || ved.task_minutes() == 0 {
 		return
 	}
-	mut f := os.open_append(tasks_path) or {
-		panic(err)
-	}
+	mut f := os.open_append(tasks_path) or { panic(err) }
 	task_name := ved.cur_task.limit(max_task_len) + strings.repeat(` `, max_task_len - ved.cur_task.len)
 	mins := ved.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `, 4 - mins.len)

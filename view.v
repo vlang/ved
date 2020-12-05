@@ -17,7 +17,6 @@ mut:
 	path         string
 	short_path   string
 	prev_path    string // for tt
-	open_paths   []string // all open files (tabs)
 	lines        []string
 	page_height  int
 	vstart       int
@@ -76,17 +75,21 @@ fn (mut view View) open_file(path string) {
 	if path == '' {
 		return
 	}
-	if path.len > view.ved.workspace.len {
+	// This path is in current workspace? Trim it. /code/v/file.v => file.v
+	if path.starts_with(view.ved.workspace + '/') {
 		view.short_path = path[view.ved.workspace.len..]
 		if view.short_path.starts_with('/') {
 			view.short_path = view.short_path[1..]
 		}
-		// short_path := 	 	view.short_path = path[view.ved.workspace.len..]
-	}
-	if view.short_path !in view.open_paths {
-		view.open_paths << view.short_path
 	}
 	mut ved := view.ved
+	// if os.exists(view.short_path) &&
+	if view.short_path !in ['out', ''] && view.short_path !in ved.open_paths[ved.workspace_idx] {
+		if ved.open_paths[ved.workspace_idx].len == 0 {
+			ved.open_paths[ved.workspace_idx] = []string{cap: ved.nr_splits}
+		}
+		ved.open_paths[ved.workspace_idx] << view.short_path
+	}
 	mut is_new := false
 	if path != view.path {
 		is_new = true
@@ -94,11 +97,14 @@ fn (mut view View) open_file(path string) {
 		// view.ved.file_y_pos.set(view.path, view.y)
 		view.prev_path = view.path
 	}
+	/*
 	mut lines := []string{}
 	if rlines := os.read_lines(path) {
 		lines = rlines
 	}
 	view.lines = lines
+	*/
+	view.lines = os.read_lines(path) or { []string{} }
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -165,14 +171,18 @@ fn (mut view View) save_file() {
 	println('lines.len=$view.lines.len')
 	// line0 := view.lines[0]
 	// println('line[0].len=$line0.len')
-	mut file := os.create(path) or {
-		panic('fail')
-	}
+	mut file := os.create(path) or { panic('fail') }
 	for line in view.lines {
 		file.writeln(line.trim_right(' \t'))
 	}
 	file.close()
 	go view.format_file()
+	// If another split has the same file open, update it
+	for mut v in view.ved.views {
+		if v.path == view.path {
+			v.reopen()
+		}
+	}
 }
 
 fn (mut view View) format_file() {
@@ -184,7 +194,7 @@ fn (mut view View) format_file() {
 	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "$path" > "$css"')
-	} else if path.ends_with('.v') && (path.contains('vlib/v/') || path.contains('/ved/')) {
+	} else if path.ends_with('.v') && (path.contains('/vlib/') || path.contains('/ved/')) {
 		os.system('v fmt -w $path')
 	}
 	view.reopen()
@@ -698,6 +708,7 @@ fn (mut view View) tt() {
 }
 
 fn (mut view View) move_to_line(line int) {
+	view.prev_y = view.y
 	view.from = line
 	view.y = line
 	view.zz()
