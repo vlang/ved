@@ -148,7 +148,7 @@ Most of them are hard-coded, so there needs to be extra logic for handling `db`,
 This has to be improved.
 
 <!-- Links -->
-[workflow-badge]: https://github.com/vlang/ved/workflows/CI/badge.svg)
+[workflow-badge]: https://github.com/vlang/ved/workflows/CI/badge.svg
 [patreon-badge]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dvlang%26type%3Dpledges
 
 [workflow-url]: https://github.com/vlang/ved/commits/master
