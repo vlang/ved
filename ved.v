@@ -123,7 +123,7 @@ const (
 )
 
 fn main() {
-	args := os.args
+	args := os.args.clone()
 	if '-h' in args || '--help' in args {
 		println(help_text)
 		return
