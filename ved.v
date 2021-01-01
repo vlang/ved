@@ -864,6 +864,8 @@ fn (mut ved Ved) ctrl_n() {
 fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 	super := mod == .super || mod == .ctrl
 	shift := mod == .shift
+	// println(int(mod))
+	shift_and_super := int(mod) == 9
 	mut view := ved.view
 	ved.refresh = true
 	if ved.prev_key == .r {
@@ -1033,7 +1035,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			}
 		}
 		.o {
-			if shift && super {
+			if shift_and_super {
 				ved.mode = .query
 				ved.query_type = .open_workspace
 				ved.query = ''
@@ -1052,7 +1054,9 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 			}
 		}
 		.p {
-			if super {
+			if shift_and_super {
+				os.system('git -C "$ved.workspace" pull --rebase')
+			} else if super {
 				ved.mode = .query
 				ved.query_type = .ctrlp
 				ved.load_git_tree()
