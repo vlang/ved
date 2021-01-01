@@ -67,6 +67,7 @@ mut:
 	cb                   &clipboard.Clipboard
 	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
 	prev_y               int // for jumping back ('')
+	now                  time.Time // cached value of time.now() to avoid calling it for every frame
 }
 
 // For syntax highlighting
@@ -306,7 +307,6 @@ fn (mut ved Ved) draw() {
 		// split_x := split_width * (ved.cur_split - from)
 		// ved.gg.draw_rect(split_x, 0, split_width - 1, ved.win_height, ved.cfg.bgcolor)
 	}
-	now := time.now()
 	// Coords
 	y := (ved.view.y - ved.view.from) * ved.line_height + ved.line_height
 	// Cur line
@@ -362,7 +362,7 @@ fn (mut ved Ved) draw() {
 	ved.gg.draw_text(ved.win_width - 220, 1, '[$space_name]', ved.cfg.file_name_cfg)
 	ved.gg.draw_text(ved.win_width - 150, 1, '$cur_space/$nr_spaces', ved.cfg.file_name_cfg)
 	// Time
-	ved.gg.draw_text(ved.win_width - 50, 1, now.hhmm(), ved.cfg.file_name_cfg)
+	ved.gg.draw_text(ved.win_width - 50, 1, ved.now.hhmm(), ved.cfg.file_name_cfg)
 	// ved.gg.draw_text(ved.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
 	/*
@@ -1716,7 +1716,7 @@ fn (mut ved Ved) go_to_error(line string) {
 	line_nr := line[pos + 3..].all_before(':')
 	println('path=$path filename=$filename linenr=$line_nr')
 	for i := 0; i < ved.views.len; i++ {
-		mut view := unsafe {&ved.views[i]}
+		mut view := unsafe { &ved.views[i] }
 		if !view.path.contains(filename) {
 			continue
 		}
@@ -1744,6 +1744,7 @@ fn (mut ved Ved) go_to_error(line string) {
 fn (mut ved Ved) loop() {
 	for {
 		ved.refresh = true
+		ved.now = time.now()
 		ved.gg.refresh_ui()
 		// ved.timer.tick(vid)
 		time.sleep(5)
@@ -1829,9 +1830,8 @@ fn (ved &Ved) handle_segfault() {
 }
 
 fn (ved &Ved) task_minutes() int {
-	now := time.now()
-	mut seconds := now.unix - ved.task_start_unix
-	if ved.task_start_unix == 0 {
+	mut seconds := ved.now.unix - ved.task_start_unix
+	if ved.task_start_unix <= 0 {
 		seconds = 0
 	}
 	return int(seconds / 60)
