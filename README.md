@@ -1,9 +1,10 @@
 # Ved - small and fast text editor written in V
 
-[![Build Status][workflow-badge]][workflow-url]
-[![Patreon][patreon-badge]][patreon-url]
+[![Patreon-badge](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/vlang)
 
-<img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
+[![Workflow-badge](https://github.com/vlang/ved/workflows/CI/badge.svg)](https://github.com/vlang/ved/commits/master)
+
+<img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png"> 
 
 
 ### Building from source
