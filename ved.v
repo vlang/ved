@@ -66,8 +66,8 @@ mut:
 	cfg                  Config
 	cb                   &clipboard.Clipboard
 	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y               int // for jumping back ('')
-	now                  time.Time // cached value of time.now() to avoid calling it for every frame
+	prev_y               int        // for jumping back ('')
+	now                  time.Time  // cached value of time.now() to avoid calling it for every frame
 }
 
 // For syntax highlighting
