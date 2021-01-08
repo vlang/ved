@@ -57,7 +57,7 @@ fn (q QueryType) str() string {
 }
 
 const (
-	small_queries  = [int(QueryType.search), QueryType.cam, QueryType.open] // , GREP]
+	small_queries  = [int(QueryType.search), int(QueryType.cam), int(QueryType.open)] // , GREP]
 	max_grep_lines = 20
 	query_width    = 400
 )

@@ -66,8 +66,8 @@ mut:
 	cfg                  Config
 	cb                   &clipboard.Clipboard
 	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y               int // for jumping back ('')
-	now                  time.Time // cached value of time.now() to avoid calling it for every frame
+	prev_y               int        // for jumping back ('')
+	now                  time.Time  // cached value of time.now() to avoid calling it for every frame
 }
 
 // For syntax highlighting
@@ -169,7 +169,7 @@ fn main() {
 		nr_splits: nr_splits
 		splits_per_workspace: nr_splits
 		cur_split: 0
-		mode: 0
+		mode: EditorMode(0)
 		line_height: 20
 		char_width: 8 // font_size: 13
 		view: 0
@@ -662,7 +662,7 @@ fn on_char(code u32, mut ved Ved) {
 			if !ved.just_switched && ved.prev_key == .r {
 				if s != 'r' {
 					ved.view.r(s)
-					ved.prev_key = 0
+					ved.prev_key = sapp.KeyCode(0)
 					ved.prev_cmd = 'r'
 					ved.prev_insert = s
 				}
@@ -935,7 +935,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 		}
 		.apostrophe {
 			if ved.prev_key == .apostrophe {
-				ved.prev_key = 0
+				ved.prev_key = sapp.KeyCode(0)
 				ved.move_to_line(ved.prev_y)
 				return
 			}
