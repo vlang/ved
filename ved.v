@@ -645,7 +645,7 @@ fn on_char(code u32, mut ved Ved) {
 		ved.just_switched = false
 		return
 	}
-	buf := [0, 0, 0, 0, 0]!!
+	buf := [0, 0, 0, 0, 0]!
 	s := utf32_to_str_no_malloc(code, buf) // .data)
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
