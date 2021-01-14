@@ -60,14 +60,14 @@ mut:
 	line_height          int
 	char_width           int
 	// font_size        int
-	is_ml_comment        bool
-	gg_lines             []string
-	gg_pos               int
-	cfg                  Config
-	cb                   &clipboard.Clipboard
-	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y               int        // for jumping back ('')
-	now                  time.Time  // cached value of time.now() to avoid calling it for every frame
+	is_ml_comment bool
+	gg_lines      []string
+	gg_pos        int
+	cfg           Config
+	cb            &clipboard.Clipboard
+	open_paths    [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y        int        // for jumping back ('')
+	now           time.Time  // cached value of time.now() to avoid calling it for every frame
 }
 
 // For syntax highlighting
@@ -646,7 +646,7 @@ fn on_char(code u32, mut ved Ved) {
 		ved.just_switched = false
 		return
 	}
-	buf := [0, 0, 0, 0, 0]!
+	buf := [0, 0, 0, 0, 0]
 	s := utf32_to_str_no_malloc(code, buf) // .data)
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
@@ -1722,7 +1722,7 @@ fn (mut ved Ved) go_to_error(line string) {
 	vals := line[pos + 3..].split(':')
 	println(vals)
 	line_nr := vals[0].int()
-	col:=vals[1].int()
+	col := vals[1].int()
 	println('path=$path filename=$filename linenr=$line_nr col=$col')
 	for i := 0; i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
