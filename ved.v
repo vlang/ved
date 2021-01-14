@@ -261,6 +261,7 @@ fn main() {
 	}
 	ved.load_session()
 	ved.load_timer()
+	println('first_launch=$first_launch')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
 		ved_exe_dir := os.dir(os.executable())
 		ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
@@ -467,11 +468,11 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			// }
 			// max = line.len
 		}
+		if max > 0 && max < s.len {
+			s = s[..max]
+		}
 		if view.hl_on {
 			// println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
-			if max > 0 && max < s.len {
-				s = s[..max]
-			}
 			ved.draw_text_line(line_x, y, s)
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
@@ -645,7 +646,7 @@ fn on_char(code u32, mut ved Ved) {
 		ved.just_switched = false
 		return
 	}
-	buf := [0, 0, 0, 0, 0]!!
+	buf := [0, 0, 0, 0, 0]!
 	s := utf32_to_str_no_malloc(code, buf) // .data)
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
@@ -1393,9 +1394,9 @@ fn (mut ved Ved) prev_split() {
 }
 
 fn (mut ved Ved) open_workspace(idx int) {
-	$if debug {
-		println('open workspace($idx)')
-	}
+	//$if debug {
+	println('open workspace($idx)')
+	//}
 	if idx >= ved.workspaces.len {
 		ved.open_workspace(0)
 		return
@@ -1415,9 +1416,9 @@ fn (mut ved Ved) open_workspace(idx int) {
 }
 
 fn (mut ved Ved) add_workspace(path string) {
-	$if debug {
-		println('add_workspace("$path")')
-	}
+	//$if debug {
+	println('add_workspace("$path")')
+	//}
 	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
 	// }
@@ -1450,7 +1451,8 @@ fn (mut ved Ved) move_to_line(n int) {
 fn (ved &Ved) save_session() {
 	println('saving session...')
 	mut f := os.create(session_path) or { panic('fail') }
-	for view in ved.views {
+	for i, view in ved.views {
+		println('saving view #$i $view.path')
 		// if view.path == '' {
 		// continue
 		// }
@@ -1717,16 +1719,22 @@ fn (mut ved Ved) go_to_error(line string) {
 	}
 	path := line[..pos]
 	filename := path.all_after('/') + '.v'
-	line_nr := line[pos + 3..].all_before(':')
-	println('path=$path filename=$filename linenr=$line_nr')
+	vals := line[pos + 3..].split(':')
+	println(vals)
+	line_nr := vals[0].int()
+	col:=vals[1].int()
+	println('path=$path filename=$filename linenr=$line_nr col=$col')
 	for i := 0; i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
 		if !view.path.contains(filename) {
 			continue
 		}
-		view.error_y = line_nr.int() - 1
+		view.error_y = line_nr - 1
 		println('error_y=$view.error_y')
 		view.move_to_line(view.error_y)
+		if col > 0 {
+			view.x = col - 1
+		}
 		// view.ved.main_wnd.refresh()
 		// Done after the first view with the error
 		return
@@ -1738,7 +1746,7 @@ fn (mut ved Ved) go_to_error(line string) {
 	for git_file in lines {
 		if git_file.contains(filename) {
 			ved.view.open_file(git_file) // ved.workspace + '/' + line)
-			ved.view.error_y = line_nr.int() - 1
+			ved.view.error_y = line_nr - 1
 			ved.view.move_to_line(ved.view.error_y)
 			return
 		}
