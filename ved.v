@@ -15,9 +15,9 @@ import clipboard
 const (
 	settings_path     = os.join_path(os.home_dir(), '.ved')
 	codeblog_path     = os.join_path(os.home_dir(), 'code', 'blog')
-	session_path      = os.join_path(main.settings_path, 'session')
-	timer_path        = os.join_path(main.settings_path, 'timer')
-	tasks_path        = os.join_path(main.settings_path, 'tasks')
+	session_path      = os.join_path(settings_path, 'session')
+	timer_path        = os.join_path(settings_path, 'timer')
+	tasks_path        = os.join_path(settings_path, 'tasks')
 	max_nr_workspaces = 10
 )
 
@@ -126,11 +126,11 @@ const (
 fn main() {
 	args := os.args.clone()
 	if '-h' in args || '--help' in args {
-		println(main.help_text)
+		println(help_text)
 		return
 	}
-	if !os.is_dir(main.settings_path) {
-		os.mkdir(main.settings_path) or { panic(err) }
+	if !os.is_dir(settings_path) {
+		os.mkdir(settings_path) or { panic(err) }
 	}
 	mut nr_splits := 3
 	is_window := '-window' in args
@@ -175,7 +175,7 @@ fn main() {
 		view: 0
 		gg: 0
 		cb: clipboard.new()
-		open_paths: [][]string{len: main.max_nr_workspaces}
+		open_paths: [][]string{len: max_nr_workspaces}
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
@@ -262,7 +262,7 @@ fn main() {
 	ved.load_session()
 	ved.load_timer()
 	println('first_launch=$first_launch')
-	if ved.workspaces.len == 1 && first_launch && !os.exists(main.session_path) {
+	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
 		ved_exe_dir := os.dir(os.executable())
 		ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
 	}
@@ -1427,7 +1427,7 @@ fn (mut ved Ved) add_workspace(path string) {
 	if workspace.ends_with('/.') {
 		workspace = workspace[..workspace.len - 2]
 	}
-	if ved.workspaces.len >= main.max_nr_workspaces {
+	if ved.workspaces.len >= max_nr_workspaces {
 		// ui.alert('workspace limit')
 		return
 	}
@@ -1450,7 +1450,7 @@ fn (mut ved Ved) move_to_line(n int) {
 
 fn (ved &Ved) save_session() {
 	println('saving session...')
-	mut f := os.create(main.session_path) or { panic('fail') }
+	mut f := os.create(session_path) or { panic('fail') }
 	for i, view in ved.views {
 		println('saving view #$i $view.path')
 		// if view.path == '' {
@@ -1459,7 +1459,7 @@ fn (ved &Ved) save_session() {
 		if view.path == 'out' {
 			continue
 		}
-		f.writeln(view.path)
+		f.writeln(view.path) or { panic(err) }
 	}
 	f.close()
 }
@@ -1470,16 +1470,16 @@ fn toi(s string) u64 {
 }
 
 fn (ved &Ved) save_timer() {
-	mut f := os.create(main.timer_path) or { return }
-	f.writeln('task=$ved.cur_task')
-	f.writeln('task_start=$ved.task_start_unix')
-	// f.writeln('timer_typ=$ved.timer.cur_type')
+	mut f := os.create(timer_path) or { return }
+	f.writeln('task=$ved.cur_task') or { panic(err) }
+	f.writeln('task_start=$ved.task_start_unix') or { panic(err) }
+	// f.writeln('timer_typ=$ved.timer.cur_type') or { panic(err) }
 	/*
 	if ved.timer.started {
-		f.writeln('timer_start=$ved.timer.start_unix')
+		f.writeln('timer_start=$ved.timer.start_unix') or { panic(err) }
 	}
 	else {
-		f.writeln('timer_start=0')
+		f.writeln('timer_start=0') or { panic(err) }
 	}
 	*/
 	f.close()
@@ -1490,7 +1490,7 @@ fn (mut ved Ved) load_timer() {
 	// task_start=1223212221
 	// timer_typ=7
 	// timer_start=12321321
-	lines := os.read_lines(main.timer_path) or { return }
+	lines := os.read_lines(timer_path) or { return }
 	if lines.len == 0 {
 		return
 	}
@@ -1516,8 +1516,8 @@ fn (mut ved Ved) load_timer() {
 }
 
 fn (mut ved Ved) load_session() {
-	println('load session "$main.session_path"')
-	paths := os.read_lines(main.session_path) or { return }
+	println('load session "$session_path"')
+	paths := os.read_lines(session_path) or { return }
 	println(paths)
 	ved.load_views(paths)
 }
@@ -1579,7 +1579,7 @@ fn (ved &Ved) get_git_diff_full() string {
 
 fn (ved &Ved) open_blog() {
 	now := time.now()
-	path := os.join_path(main.codeblog_path, '$now.year', '${now.month:02d}', '${now.day:02d}')
+	path := os.join_path(codeblog_path, '$now.year', '${now.month:02d}', '${now.day:02d}')
 	if !os.exists(path) {
 		os.system('touch $path')
 	}
@@ -1628,11 +1628,11 @@ fn (mut ved Ved) build_app(extra string) {
 	// panic('ff')
 	// return
 	// }
-	os.write_file('$dir/out', 'Building...')
+	os.write_file('$dir/out', 'Building...') or { panic(err) }
 	last_view.open_file('$dir/out')
 	out := os.exec('sh $dir/build$extra') or { return }
 	mut f2 := os.create('$dir/out') or { panic('fail') }
-	f2.writeln(out.output)
+	f2.writeln(out.output) or { panic(err) }
 	f2.close()
 	last_view.open_file('$dir/out')
 	last_view.shift_g()
@@ -1688,7 +1688,7 @@ fn (mut ved Ved) run_file() {
 	os.chdir(dir)
 	out := os.exec('v $view.path') or { return }
 	mut f := os.create('$dir/out') or { panic('foo') }
-	f.writeln(out.output)
+	f.writeln(out.output) or { panic(err) }
 	f.close()
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
@@ -1857,13 +1857,15 @@ fn (ved &Ved) insert_task() {
 	if ved.cur_task == '' || ved.task_minutes() == 0 {
 		return
 	}
-	mut f := os.open_append(main.tasks_path) or { panic(err) }
-	task_name := ved.cur_task.limit(main.max_task_len) +
-		strings.repeat(` `, main.max_task_len - ved.cur_task.len)
+	mut f := os.open_append(tasks_path) or { panic(err) }
+	task_name := ved.cur_task.limit(max_task_len) +
+		strings.repeat(` `, max_task_len - ved.cur_task.len)
 	mins := ved.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `, 4 - mins.len)
 	f.writeln('| $task_name | $mins $mins_pad | ' + time.unix(int(ved.task_start_unix)).format() +
-		' | ' + time.now().hhmm() + ' |')
-	f.writeln('|-----------------------------------------------------------------------------|')
+		' | ' + time.now().hhmm() + ' |') or { panic(err) }
+	f.writeln('|-----------------------------------------------------------------------------|') or {
+		panic(err)
+	}
 	f.close()
 }
