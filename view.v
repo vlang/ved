@@ -173,7 +173,7 @@ fn (mut view View) save_file() {
 	// println('line[0].len=$line0.len')
 	mut file := os.create(path) or { panic('fail') }
 	for line in view.lines {
-		file.writeln(line.trim_right(' \t'))
+		file.writeln(line.trim_right(' \t')) or { panic(err) }
 	}
 	file.close()
 	go view.format_file()
