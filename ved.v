@@ -8,7 +8,7 @@ import os
 import time
 import uiold
 import strings
-import sokol.sapp
+//import sokol.sapp
 import clipboard
 
 // import darwin
@@ -33,7 +33,7 @@ mut:
 	view                 &View
 	mode                 EditorMode
 	just_switched        bool // for keydown/char events to avoid dup keys
-	prev_key             sapp.KeyCode
+	prev_key             gg.KeyCode
 	prev_cmd             string
 	prev_insert          string // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files        []string
@@ -271,7 +271,7 @@ fn main() {
 	ved.gg.run()
 }
 
-fn on_event(e &sapp.Event, mut ved Ved) {
+fn on_event(e &gg.Event, mut ved Ved) {
 	ved.refresh = true
 }
 
@@ -620,7 +620,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 // ved.view.y = pos.y / line_height - 1
 // ved.view.x = (pos.x - ved.view.padding_left) / char_width - 1
 // }
-fn key_down(key sapp.KeyCode, mod sapp.Modifier, mut ved Ved) {
+fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	super := mod == .super
 	shift := mod == .shift
 	if key == .escape {
@@ -663,7 +663,7 @@ fn on_char(code u32, mut ved Ved) {
 			if !ved.just_switched && ved.prev_key == .r {
 				if s != 'r' {
 					ved.view.r(s)
-					ved.prev_key = sapp.KeyCode(0)
+					ved.prev_key = gg.KeyCode(0)
 					ved.prev_cmd = 'r'
 					ved.prev_insert = s
 				}
@@ -674,7 +674,7 @@ fn on_char(code u32, mut ved Ved) {
 	}
 }
 
-fn (mut ved Ved) key_query(key sapp.KeyCode, super bool) {
+fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 	match key {
 		.backspace {
 			ved.gg_pos = -1
@@ -775,7 +775,7 @@ fn (ved &Ved) git_commit() {
 	// os.system('gitter $dir')
 }
 
-fn (mut ved Ved) key_insert(key sapp.KeyCode, mod sapp.Modifier) {
+fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 	super := mod == .super || mod == .ctrl
 	// shift := mod == .shift
 	match key {
@@ -862,7 +862,7 @@ fn (mut ved Ved) ctrl_n() {
 	}
 }
 
-fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
+fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	super := mod == .super || mod == .ctrl
 	shift := mod == .shift
 	// println(int(mod))
@@ -936,7 +936,7 @@ fn (mut ved Ved) key_normal(key sapp.KeyCode, mod sapp.Modifier) {
 		}
 		.apostrophe {
 			if ved.prev_key == .apostrophe {
-				ved.prev_key = sapp.KeyCode(0)
+				ved.prev_key = gg.KeyCode(0)
 				ved.move_to_line(ved.prev_y)
 				return
 			}
@@ -1267,7 +1267,7 @@ fn (mut ved Ved) char_query(s string) {
 	}
 }
 
-fn (mut ved Ved) key_visual(key sapp.KeyCode, super bool, shift bool) {
+fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 	mut view := ved.view
 	match key {
 		.j {

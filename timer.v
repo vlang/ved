@@ -4,7 +4,6 @@ import time
 import gg
 import gx
 import os
-import sokol.sapp
 
 const (
 	time_cfg = gx.TextCfg{
@@ -163,7 +162,7 @@ fn (mut t Timer) draw() {
 	})
 }
 
-fn (mut timer Timer) key_down(key sapp.KeyCode, super bool) {
+fn (mut timer Timer) key_down(key gg.KeyCode, super bool) {
 	match key {
 		.up, .k {
 			timer.date = timer.date.add_days(-1)

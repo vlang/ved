@@ -5,7 +5,7 @@ module main
 
 import os
 import strings
-import sokol.sapp
+import gg
 
 struct View {
 mut:
@@ -81,6 +81,9 @@ fn (mut view View) open_file(path string) {
 		if view.short_path.starts_with('/') {
 			view.short_path = view.short_path[1..]
 		}
+	}
+	else {
+		view.short_path = path
 	}
 	mut ved := view.ved
 	// if os.exists(view.short_path) &&
@@ -339,7 +342,7 @@ fn (mut view View) shift_b() {
 fn (mut view View) dd() {
 	if view.lines.len != 0 {
 		mut ved := view.ved
-		ved.prev_key = sapp.KeyCode(-1)
+		ved.prev_key = gg.KeyCode(-1)
 		ved.prev_cmd = 'dd'
 		ved.ylines = []
 		ved.ylines << view.line()
@@ -657,7 +660,7 @@ fn (mut view View) de() {
 }
 
 // delete all characters before and after the cursor inside '', "", () etc
-fn (mut view View) ci(key sapp.KeyCode) {
+fn (mut view View) ci(key gg.KeyCode) {
 	mut ved := view.ved
 	line := view.line()
 	defer {
@@ -703,7 +706,7 @@ fn (mut view View) tt() {
 		return
 	}
 	mut ved := view.ved
-	ved.prev_key = sapp.KeyCode(-1)
+	ved.prev_key = gg.KeyCode(-1)
 	view.open_file(view.prev_path)
 }
 
