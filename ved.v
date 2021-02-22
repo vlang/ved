@@ -8,7 +8,7 @@ import os
 import time
 import uiold
 import strings
-//import sokol.sapp
+// import sokol.sapp
 import clipboard
 
 // import darwin

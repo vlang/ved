@@ -81,8 +81,7 @@ fn (mut view View) open_file(path string) {
 		if view.short_path.starts_with('/') {
 			view.short_path = view.short_path[1..]
 		}
-	}
-	else {
+	} else {
 		view.short_path = path
 	}
 	mut ved := view.ved
