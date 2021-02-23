@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Alexander Medvednikov. All rights reserved.
+// Copyright (c) 2019-2021 Alexander Medvednikov. All rights reserved.
 // Use of this source code is governed by a GPL license
 // that can be found in the LICENSE file.
 module main
@@ -81,8 +81,7 @@ fn (mut view View) open_file(path string) {
 		if view.short_path.starts_with('/') {
 			view.short_path = view.short_path[1..]
 		}
-	}
-	else {
+	} else {
 		view.short_path = path
 	}
 	mut ved := view.ved

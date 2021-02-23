@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Alexander Medvednikov. All rights reserved.
+// Copyright (c) 2019-2021 Alexander Medvednikov. All rights reserved.
 // Use of this source code is governed by a GPL license
 // that can be found in the LICENSE file.
 module main
@@ -8,10 +8,11 @@ import os
 import time
 import uiold
 import strings
-//import sokol.sapp
+// import sokol.sapp
 import clipboard
 
 // import darwin
+
 const (
 	settings_path     = os.join_path(os.home_dir(), '.ved')
 	codeblog_path     = os.join_path(os.home_dir(), 'code', 'blog')
