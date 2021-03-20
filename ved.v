@@ -1759,7 +1759,7 @@ fn (mut ved Ved) loop() {
 		ved.now = time.now()
 		ved.gg.refresh_ui()
 		// ved.timer.tick(vid)
-		time.sleep(5)
+		time.sleep(5 * time.second)
 	}
 }
 
