@@ -8,7 +8,7 @@ import os
 import time
 import uiold
 import strings
-// import sokol.sapp
+//import sokol.sapp
 import clipboard
 
 // import darwin
@@ -647,7 +647,7 @@ fn on_char(code u32, mut ved Ved) {
 		return
 	}
 	buf := [0, 0, 0, 0, 0]
-	s := unsafe { utf32_to_str_no_malloc(code, buf) } // .data)
+	s := utf32_to_str_no_malloc(code, buf) // .data)
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
@@ -1759,7 +1759,7 @@ fn (mut ved Ved) loop() {
 		ved.now = time.now()
 		ved.gg.refresh_ui()
 		// ved.timer.tick(vid)
-		time.wait(5 * time.second)
+		time.sleep(5 * time.second)
 	}
 }
 
