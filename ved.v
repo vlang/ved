@@ -8,7 +8,7 @@ import os
 import time
 import uiold
 import strings
-//import sokol.sapp
+// import sokol.sapp
 import clipboard
 
 // import darwin
@@ -647,7 +647,7 @@ fn on_char(code u32, mut ved Ved) {
 		return
 	}
 	buf := [0, 0, 0, 0, 0]
-	s := utf32_to_str_no_malloc(code, buf) // .data)
+	s := unsafe { utf32_to_str_no_malloc(code, buf) } // .data)
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
@@ -1630,7 +1630,10 @@ fn (mut ved Ved) build_app(extra string) {
 	// }
 	os.write_file('$dir/out', 'Building...') or { panic(err) }
 	last_view.open_file('$dir/out')
-	out := os.exec('sh $dir/build$extra') or { return }
+	out := os.execute('sh $dir/build$extra')
+	if out.exit_code == -1 {
+		return
+	}
 	mut f2 := os.create('$dir/out') or { panic('fail') }
 	f2.writeln(out.output) or { panic(err) }
 	f2.close()
@@ -1686,7 +1689,10 @@ fn (mut ved Ved) run_file() {
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
 	os.chdir(dir)
-	out := os.exec('v $view.path') or { return }
+	out := os.execute('v $view.path')
+	if out.exit_code == -1 {
+		return
+	}
 	mut f := os.create('$dir/out') or { panic('foo') }
 	f.writeln(out.output) or { panic(err) }
 	f.close()
@@ -1740,7 +1746,10 @@ fn (mut ved Ved) go_to_error(line string) {
 		return
 	}
 	// File with the error is not open right now, do it
-	s := os.exec('git -C $ved.workspace ls-files') or { return }
+	s := os.execute('git -C $ved.workspace ls-files')
+	if s.exit_code == -1 {
+		return
+	}
 	mut lines := s.output.split_into_lines()
 	lines.sort_by_len()
 	for git_file in lines {

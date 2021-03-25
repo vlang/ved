@@ -24,10 +24,7 @@ jobs:
     #   run: |
     #     v vet .
     - name: v fmt -verify
-      # v fmt -verify timer.v
-      run: |
-        cd ved
-        ../v fmt -verify config.v query.v ved.v view.v
+      run: ./v fmt -verify ved
 
   ubuntu:
     runs-on: ubuntu-20.04
