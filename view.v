@@ -96,7 +96,7 @@ fn (mut view View) open_file(path string) {
 	if path != view.path {
 		is_new = true
 		// Save cursor pos (Y)
-		// view.ved.file_y_pos.set(view.path, view.y)
+		view.ved.file_y_pos[view.path] = view.y
 		view.prev_path = view.path
 	}
 	/*
@@ -138,6 +138,7 @@ fn (mut view View) open_file(path string) {
 	view.padding_left = s.len * ved.char_width + 8
 	view.ved.save_session()
 	// Go to old y
+	/*
 	if is_new {
 		tmp := view.y
 		if view.prev_y > -1 {
@@ -146,11 +147,11 @@ fn (mut view View) open_file(path string) {
 		}
 		view.prev_y = tmp
 	}
-	if false {
-		y := view.ved.file_y_pos[view.path]
-		if y > 0 {
-			view.y = y
-		}
+	*/
+	y := view.ved.file_y_pos[view.path]
+	if y > 0 {
+		view.y = y
+		view.zz()
 	}
 	view.hash_comment = !view.path.ends_with('.v')
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
