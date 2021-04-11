@@ -8,7 +8,6 @@ import os
 import time
 import uiold
 import strings
-// import sokol.sapp
 import clipboard
 
 // import darwin
@@ -460,7 +459,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		// Number of chars to display in this view
 		// mut max := (split_width - view.padding_left - ved.char_width * TAB_SIZE *
 		// nr_tabs) / ved.char_width - 1
-		max := ved.max_chars(nr_tabs)
+		max := ved.max_chars(i, nr_tabs)
 		if view.y == j {
 			// Display entire line if its current
 			// if line.len > max {
@@ -468,6 +467,9 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			// }
 			// max = line.len
 		}
+		// if s.contains('width :=') {
+		// println('"$s" max=$max')
+		//}
 		if max > 0 && max < s.len {
 			s = s[..max]
 		}
@@ -481,8 +483,8 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	}
 }
 
-fn (ved &Ved) max_chars(nr_tabs int) int {
-	width := ved.split_width() - ved.view.padding_left - ved.char_width * ved.cfg.tab_size * nr_tabs
+fn (ved &Ved) max_chars(view_idx int, nr_tabs int) int {
+	width := ved.split_width() - ved.views[view_idx].padding_left - ved.char_width * ved.cfg.tab_size * nr_tabs
 	return width / ved.char_width - 1
 }
 
@@ -943,7 +945,17 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		._0 {
 			if super {
+				// new task
 				ved.query = ''
+				ved.mode = .query
+				ved.query_type = .task
+				ved.just_switched = true
+			}
+		}
+		._9 {
+			if super {
+				// new @task
+				ved.query = '@'
 				ved.mode = .query
 				ved.query_type = .task
 				ved.just_switched = true

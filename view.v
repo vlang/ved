@@ -137,21 +137,13 @@ fn (mut view View) open_file(path string) {
 	s := '$nr_lines'
 	view.padding_left = s.len * ved.char_width + 8
 	view.ved.save_session()
-	// Go to old y
-	/*
-	if is_new {
-		tmp := view.y
-		if view.prev_y > -1 {
-			view.y = view.prev_y
-			view.zz()
-		}
-		view.prev_y = tmp
-	}
-	*/
+	// Go to old y for this file
 	y := view.ved.file_y_pos[view.path]
 	if y > 0 {
 		view.y = y
-		view.zz()
+		if path != view.path {
+			view.zz()
+		}
 	}
 	view.hash_comment = !view.path.ends_with('.v')
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
@@ -165,11 +157,11 @@ fn (mut view View) reopen() {
 }
 
 fn (mut view View) save_file() {
-	view.x = view.x // TODO remove once the mut bug is fixed
 	if view.path == '' {
 		return
 	}
 	path := view.path
+	view.ved.file_y_pos[view.path] = view.y
 	println('saving file "$path"')
 	println('lines.len=$view.lines.len')
 	// line0 := view.lines[0]
@@ -719,6 +711,7 @@ fn (mut view View) move_to_line(line int) {
 
 // Fit lines  into 80 chars
 fn (mut view View) gq() {
+	/*
 	mut ved := view.ved
 	if ved.mode != .visual {
 		return
@@ -740,6 +733,7 @@ fn (mut view View) gq() {
 		view.o()
 	}
 	ved.mode = .normal
+	*/
 }
 
 fn is_alpha(r byte) bool {
