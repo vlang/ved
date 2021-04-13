@@ -20,11 +20,10 @@ jobs:
         path: ved
     - name: Build V
       run: make
-    # - name: v vet
-    #   run: |
-    #     v vet .
+    - name: v vet
+      run: ./v vet ved/
     - name: v fmt -verify
-      run: ./v fmt -verify ved
+      run: ./v fmt -verify ved/
 
   ubuntu:
     runs-on: ubuntu-20.04
