@@ -412,7 +412,7 @@ fn (mut ved Ved) draw() {
 }
 
 fn (ved &Ved) split_x(i int) int {
-	return ved.split_width() * (i)
+	return ved.split_width() * i
 }
 
 fn (mut ved Ved) draw_split(i int, split_from int) {
