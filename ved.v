@@ -523,7 +523,8 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			break
 		}
 		// Comment   /*
-		if i > 0 && line[i - 1] == `/` && line[i] == `*` {
+		// (unless it's /* line */ which is a single line)
+		if i > 0 && line[i - 1] == `/` && line[i] == `*` && !(line[line.len-2] == `*` && line[line.len-1] == `/`){
 			// All after /* is  a comment
 			ved.add_chunk(.a_comment, start, line.len)
 			ved.is_ml_comment = true
