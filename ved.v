@@ -412,7 +412,7 @@ fn (mut ved Ved) draw() {
 }
 
 fn (ved &Ved) split_x(i int) int {
-	return ved.split_width() * (i)
+	return ved.split_width() * i
 }
 
 fn (mut ved Ved) draw_split(i int, split_from int) {
@@ -524,7 +524,8 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		}
 		// Comment   /*
 		// (unless it's /* line */ which is a single line)
-		if i > 0 && line[i - 1] == `/` && line[i] == `*` && !(line[line.len-2] == `*` && line[line.len-1] == `/`){
+		if i > 0 && line[i - 1] == `/` && line[i] == `*` && !(line[line.len - 2] == `*`
+			&& line[line.len - 1] == `/`) {
 			// All after /* is  a comment
 			ved.add_chunk(.a_comment, start, line.len)
 			ved.is_ml_comment = true
