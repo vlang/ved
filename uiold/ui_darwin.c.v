@@ -8,6 +8,8 @@ module uiold
 
 #include "@VROOT/uiold/uiold.m"
 
+struct C.NSFont {}
+
 __global default_font &C.NSFont
 
 fn C.reg_key_vid2()
