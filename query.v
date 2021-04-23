@@ -226,7 +226,7 @@ fn (mut ved Ved) ctrlj_open() {
 fn (mut ved Ved) git_grep() {
 	ved.gg_pos = 0 // select the first result for faster switching to the right file =
 	// (especially if there's only one result)
-	s := os.execute('git -C "$ved.workspace" grep -n "$ved.search_query"')
+	s := os.execute('git -C "$ved.workspace" grep -F -n "$ved.search_query"')
 	if s.exit_code == -1 {
 		return
 	}
