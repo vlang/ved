@@ -92,9 +92,7 @@ fn (mut view View) open_file(path string) {
 		}
 		ved.open_paths[ved.workspace_idx] << view.short_path
 	}
-	mut is_new := false
 	if path != view.path {
-		is_new = true
 		// Save cursor pos (Y)
 		view.ved.file_y_pos[view.path] = view.y
 		view.prev_path = view.path

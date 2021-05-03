@@ -1874,36 +1874,47 @@ fn (ved &Ved) task_minutes() int {
 
 const (
 	max_task_len = 40
-	separator = '|-----------------------------------------------------------------------------|'
+	separator    = '|-----------------------------------------------------------------------------|'
 )
 
-fn (ved &Ved) insert_task() ?{
+fn (ved &Ved) insert_task() ? {
 	if ved.cur_task == '' || ved.task_minutes() == 0 {
 		return
 	}
 	start_time := time.unix(int(ved.task_start_unix))
-	mut f := os.open_append(tasks_path)?
+	mut f := os.open_append(tasks_path) ?
 	task_name := ved.cur_task.limit(max_task_len) +
 		strings.repeat(` `, max_task_len - ved.cur_task.len)
 	mins := ved.task_minutes().str() + 'm'
 	mins_pad := strings.repeat(` `, 4 - mins.len)
 	now := time.now()
-	if start_time.day == now.day && start_time.month==now.month {
+	if start_time.day == now.day && start_time.month == now.month {
 		// Single day entry
-		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() +
-		' | ' + time.now().hhmm() + ' |') ?
-	}
-	else {
+		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() + ' | ' +
+			time.now().hhmm() + ' |') ?
+	} else {
 		// Two day entry (separated by 00:00)
-		midnight := time.Time{year:start_time.year, month:start_time.month, day:start_time.day, hour:23, minute:59}
-		day_start := time.Time{year:now.year, month:now.month, day:now.day, hour:0, minute:0}
+		midnight := time.Time{
+			year: start_time.year
+			month: start_time.month
+			day: start_time.day
+			hour: 23
+			minute: 59
+		}
+		day_start := time.Time{
+			year: now.year
+			month: now.month
+			day: now.day
+			hour: 0
+			minute: 0
+		}
 
-		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() +
-		' | ' + midnight.hhmm() + ' |') ?
-		f.writeln(separator)?
-		f.writeln('| $task_name | $mins $mins_pad | ' + day_start.format() +
-		' | ' + time.now().hhmm() + ' |') ?
+		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() + ' | ' +
+			midnight.hhmm() + ' |') ?
+		f.writeln(separator) ?
+		f.writeln('| $task_name | $mins $mins_pad | ' + day_start.format() + ' | ' +
+			time.now().hhmm() + ' |') ?
 	}
-	f.writeln(separator)?
+	f.writeln(separator) ?
 	f.close()
 }
