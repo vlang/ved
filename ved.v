@@ -20,6 +20,7 @@ const (
 	max_nr_workspaces = 10
 )
 
+[heap]
 struct Ved {
 mut:
 	win_width            int
