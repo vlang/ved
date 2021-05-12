@@ -60,14 +60,16 @@ mut:
 	line_height          int
 	char_width           int
 	// font_size        int
-	is_ml_comment bool
-	gg_lines      []string
-	gg_pos        int
-	cfg           Config
-	cb            &clipboard.Clipboard
-	open_paths    [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y        int        // for jumping back ('')
-	now           time.Time  // cached value of time.now() to avoid calling it for every frame
+	is_ml_comment  bool
+	gg_lines       []string
+	gg_pos         int
+	cfg            Config
+	cb             &clipboard.Clipboard
+	open_paths     [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y         int        // for jumping back ('')
+	now            time.Time  // cached value of time.now() to avoid calling it for every frame
+	search_history []string
+	search_idx     int
 }
 
 // For syntax highlighting
@@ -742,6 +744,12 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 		.down {
 			if ved.mode == .query && ved.query_type == .grep {
 				ved.gg_pos++
+			} else if ved.mode == .query && ved.query_type == .search {
+				ved.search_idx++
+				if ved.search_idx >= ved.search_history.len {
+					ved.search_idx = ved.search_history.len - 1
+				}
+				ved.search_query = ved.search_history[ved.search_idx]
 			}
 		}
 		.tab {
@@ -757,6 +765,12 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 				if ved.gg_pos < 0 {
 					ved.gg_pos = 0
 				}
+			} else if ved.mode == .query && ved.query_type == .search {
+				ved.search_idx--
+				if ved.search_idx < 0 {
+					ved.search_idx = 0
+				}
+				ved.search_query = ved.search_history[ved.search_idx]
 			}
 		}
 		.v {
