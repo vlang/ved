@@ -296,5 +296,5 @@ fn (mut ved Ved) search(goback bool) {
 	}
 	ved.search_history << ved.search_query
 	// ved.search_idx++
-	ved.search_idx = ved.search_query.len
+	ved.search_idx = ved.search_history.len
 }
