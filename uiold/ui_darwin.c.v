@@ -10,8 +10,8 @@ module uiold
 
 struct C.NSFont {}
 
-fn C.reg_key_vid2()
+fn C.reg_key_ved2()
 
-pub fn reg_key_vid() {
-	C.reg_key_vid2()
+pub fn reg_key_ved() {
+	C.reg_key_ved2()
 }

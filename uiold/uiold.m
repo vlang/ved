@@ -5,7 +5,7 @@ void focus_app(void* next, void* event, void* data) {
 	//return noErr;
 }
 
-void reg_key_vid2() {
+void reg_key_ved2() {
 	puts("REGISTERING VED KEY2");
 	EventHotKeyRef gMyHotKeyRef;
 	EventHotKeyID gMyHotKeyID;

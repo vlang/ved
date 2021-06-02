@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>vid</string>
+	<string>ved</string>
 	<key>CFBundleIconFile</key>
-	<string>vid</string>
+	<string>ved</string>
 	<key>CFBundleIdentifier</key>
 	<string>ExampleApp</string>
 	<key>CFBundlePackageType</key>

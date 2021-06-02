@@ -210,7 +210,7 @@ fn main() {
 	ved.load_all_tasks()
 	// TODO linux and windows
 	// C.AXUIElementCreateApplication(234)
-	uiold.reg_key_vid()
+	uiold.reg_key_ved()
 	// Open workspaces or a file
 	$if debug {
 		println('args:')
@@ -1796,7 +1796,7 @@ fn (mut ved Ved) loop() {
 		ved.refresh = true
 		ved.now = time.now()
 		ved.gg.refresh_ui()
-		// ved.timer.tick(vid)
+		// ved.timer.tick(ved)
 		time.sleep(5 * time.second)
 	}
 }
@@ -1845,8 +1845,8 @@ fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	println('crash!')
 	/*
 	mut ved := &Ved{!}
-	//# vid=g_vid;
-	# vid=arg;
+	//# ved=g_ved;
+	# ved=arg;
 	println(ved.line_height)
 	// ved.save_session()
 	// ved.save_timer()
@@ -1868,7 +1868,7 @@ fn (ved &Ved) handle_segfault() {
 		return
 	}
 	/*
-	# g_vid= ctx ;
+	# g_ved= ctx ;
 	# struct sigaction sa;
 	# int *foo = NULL;
 	# memset(&sa, 0, sizeof(struct sigaction));
