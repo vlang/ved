@@ -473,8 +473,16 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		// if s.contains('width :=') {
 		// println('"$s" max=$max')
 		//}
-		if max > 0 && max < s.len {
-			s = s[..max]
+		// Handle utf8 codepoints
+		if s.len != utf8_str_len(s) {
+			u := s.ustring()
+			if max > 0 && max < u.len {
+				s = u.substr(0, max).str()
+			}
+		} else {
+			if max > 0 && max < s.len {
+				s = s[..max]
+			}
 		}
 		if view.hl_on {
 			// println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
@@ -743,8 +751,13 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 		}
 		.down {
 			if ved.mode == .query && ved.query_type == .grep {
+				// Going thru git grep results
 				ved.gg_pos++
+				if ved.gg_pos >= ved.gg_lines.len {
+					ved.gg_pos = ved.gg_lines.len - 1
+				}
 			} else if ved.mode == .query && ved.query_type == .search {
+				// History search
 				ved.search_idx++
 				if ved.search_idx >= ved.search_history.len {
 					ved.search_idx = ved.search_history.len - 1

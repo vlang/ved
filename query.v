@@ -74,7 +74,7 @@ fn (mut ved Ved) draw_query() {
 		height = 70
 	}
 	if ved.query_type == .grep {
-		width *= 2
+		width *= 3
 		height *= 2
 	} else if ved.query_type in [.ctrlp, .ctrlj] {
 		height = 500
@@ -126,7 +126,7 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 // TODO merge with ctrlp_files
 fn (mut ved Ved) draw_open_files(x int, y int) {
 	mut j := 0
-	println('draw open_files len=$ved.open_paths.len')
+	// println('draw open_files len=$ved.open_paths.len')
 	for file_ in ved.open_paths[ved.workspace_idx] {
 		if j == 15 {
 			break
@@ -169,7 +169,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 			break
 		}
 		pos := line.index(':') or { continue }
-		path := line[..pos].limit(30)
+		path := line[..pos].limit(40)
 		pos2 := line.index_after(':', pos + 1)
 		if pos2 == -1 || pos2 >= line.len - 1 {
 			continue
@@ -177,11 +177,11 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 		text := line[pos2 + 1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == ved.gg_pos {
-			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
+			ved.gg.draw_rect(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 		}
 		line_nr := line[pos + 1..pos2]
-		ved.gg.draw_text(x + 10, yy, path + ':$line_nr', txt_cfg)
-		ved.gg.draw_text(x + 250, yy, text, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, path.limit(40) + ':$line_nr', txt_cfg)
+		ved.gg.draw_text(x + 400, yy, text, txt_cfg)
 	}
 }
 
@@ -234,6 +234,9 @@ fn (mut ved Ved) git_grep() {
 	ved.gg_lines = []
 	for line in lines {
 		if line.contains('thirdparty/') {
+			continue
+		}
+		if line.contains('LICENSE:') {
 			continue
 		}
 		ved.gg_lines << line
