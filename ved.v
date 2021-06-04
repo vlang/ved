@@ -363,7 +363,7 @@ fn (mut ved Ved) draw() {
 	cur_space := ved.workspace_idx + 1
 	space_name := short_space(ved.workspace)
 	ved.gg.draw_text(ved.win_width - 220, 1, '[$space_name]', ved.cfg.file_name_cfg)
-	ved.gg.draw_text(ved.win_width - 150, 1, '$cur_space/$nr_spaces', ved.cfg.file_name_cfg)
+	ved.gg.draw_text(ved.win_width - 100, 1, '$cur_space/$nr_spaces', ved.cfg.file_name_cfg)
 	// Time
 	ved.gg.draw_text(ved.win_width - 50, 1, ved.now.hhmm(), ved.cfg.file_name_cfg)
 	// ved.gg.draw_text(ved.win_width - 550, 1, now.hhmmss(), file_name_cfg)
@@ -1481,7 +1481,7 @@ fn (mut ved Ved) add_workspace(path string) {
 
 fn short_space(workspace string) string {
 	pos := workspace.last_index('/') or { return workspace }
-	return workspace[pos + 1..]
+	return workspace[pos + 1..].limit(10)
 }
 
 fn (mut ved Ved) move_to_line(n int) {
