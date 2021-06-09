@@ -20,7 +20,13 @@ v .
 
 Ved should build in under a second.
 
-There is one dependency: `freetype`.
+By default V's built-in font rendering is used, but there's an option to use freetype, which arguably provides better rendering:
+
+```
+v -gc boehm -d use_freetype .
+```
+
+To use freetype, its files need to be installed:
 
 Ubuntu:
 ```
