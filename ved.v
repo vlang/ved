@@ -477,7 +477,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		if s.len != utf8_str_len(s) {
 			u := s.runes()
 			if max > 0 && max < u.len {
-				s = u[0..max].str()
+				s = u[..max].string()
 			}
 		} else {
 			if max > 0 && max < s.len {
