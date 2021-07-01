@@ -207,8 +207,8 @@ fn (view &View) line() string {
 	return view.lines[view.y]
 }
 
-fn (view &View) uline() ustring {
-	return view.line().ustring()
+fn (view &View) uline() []rune {
+	return view.line().runes()
 }
 
 fn (view &View) char() int {
@@ -376,10 +376,10 @@ fn (mut v View) delete_char() {
 	if u.len < 1 || v.x >= u.len {
 		return
 	}
-	left := u.left(v.x)
-	right := u.right(v.x + 1)
-	new_line := left + right
-	v.set_line(new_line)
+	mut new_line := u[..v.x]
+	right := u[u.len - v.x + 1..]
+	new_line << right
+	v.set_line(new_line.string())
 	if v.x >= new_line.len {
 		v.x = new_line.len - 1
 	}
@@ -402,17 +402,17 @@ fn (mut view View) insert_text(s string) {
 		if view.x >= line.len {
 			view.x = line.len
 		}
-		uline := line.ustring()
+		uline := line.runes()
 		if view.x >= uline.len {
 			return
 		}
-		left := uline.substr(0, view.x)
-		right := uline.substr(view.x, uline.len)
+		left := uline[..view.x]
+		right := uline[view.x..uline.len - 1]
 		// Insert chat in the middle
 		res := '$left$s$right'
 		view.set_line(res)
 	}
-	view.x += s.ustring().len
+	view.x += s.runes().len
 	view.changed = true
 }
 
@@ -429,11 +429,11 @@ fn (mut view View) backspace(go_up bool) {
 	}
 	line := view.line()
 	uline := view.uline()
-	println('line="$line" uline="$uline"')
-	left := uline.left(view.x - 1)
+	println('line="$line" uline="${uline.string()}"')
+	left := uline[..view.x - 1]
 	mut right := ''
 	if view.x < uline.len {
-		right = uline.right(view.x)
+		right = uline[uline.len - view.x..].string()
 	}
 	view.set_line('$left$right')
 	view.x--
@@ -513,12 +513,12 @@ fn (mut view View) enter() {
 	// view.o()
 	// return
 	// }
-	uline := line.ustring()
+	uline := line.runes()
 	mut right := ''
 	if pos < uline.len {
-		right = uline.right(pos)
+		right = uline[uline.len - pos..].string()
 	}
-	left := uline.left(pos)
+	left := uline[..pos].string()
 	view.set_line(left)
 	view.o()
 	view.set_line(right)
