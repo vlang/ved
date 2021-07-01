@@ -429,7 +429,7 @@ fn (mut view View) backspace(go_up bool) {
 	}
 	line := view.line()
 	uline := view.uline()
-	println('line="$line" uline="${uline.string()}"')
+	println('line="$line" uline="$uline.string()"')
 	left := uline[..view.x - 1]
 	mut right := ''
 	if view.x < uline.len {
