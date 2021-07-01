@@ -406,8 +406,8 @@ fn (mut view View) insert_text(s string) {
 		if view.x >= uline.len {
 			return
 		}
-		left := uline[..view.x]
-		right := uline[view.x..uline.len - 1]
+		left := uline[..view.x].string()
+		right := uline[view.x..uline.len - 1].string()
 		// Insert chat in the middle
 		res := '$left$s$right'
 		view.set_line(res)
