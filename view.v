@@ -377,7 +377,7 @@ fn (mut v View) delete_char() {
 		return
 	}
 	mut new_line := u[..v.x]
-	right := u[u.len - v.x + 1..]
+	right := u[v.x + 1..]
 	new_line << right
 	v.set_line(new_line.string())
 	if v.x >= new_line.len {
