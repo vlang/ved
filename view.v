@@ -433,7 +433,7 @@ fn (mut view View) backspace(go_up bool) {
 	left := uline[..view.x - 1].string()
 	mut right := ''
 	if view.x < uline.len {
-		right = uline[uline.len - view.x..].string()
+		right = uline[view.x..].string()
 	}
 	view.set_line('$left$right')
 	view.x--
@@ -516,7 +516,7 @@ fn (mut view View) enter() {
 	uline := line.runes()
 	mut right := ''
 	if pos < uline.len {
-		right = uline[uline.len - pos..].string()
+		right = uline[pos..].string()
 	}
 	left := uline[..pos].string()
 	view.set_line(left)
