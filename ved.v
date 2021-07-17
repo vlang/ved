@@ -70,6 +70,7 @@ mut:
 	now            time.Time  // cached value of time.now() to avoid calling it for every frame
 	search_history []string
 	search_idx     int
+	cq_in_a_row    int
 }
 
 // For syntax highlighting
@@ -1261,6 +1262,14 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	if key != .r {
 		// otherwise R is triggered when we press C-R
 		ved.prev_key = key
+	}
+	if key == .q && mod == .ctrl {
+		ved.cq_in_a_row++
+	} else {
+		ved.cq_in_a_row = 0
+	}
+	if ved.cq_in_a_row == 2 {
+		exit(0)
 	}
 }
 
