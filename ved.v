@@ -179,6 +179,9 @@ fn main() {
 		gg: 0
 		cb: clipboard.new()
 		open_paths: [][]string{len: max_nr_workspaces}
+		timer: Timer{
+			gg: 0
+		}
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
