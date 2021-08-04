@@ -52,7 +52,7 @@ mut:
 	chunks               []Chunk
 	is_building          bool
 	timer                Timer
-	task_start_unix      u64
+	task_start_unix      i64
 	cur_task             string
 	words                []string
 	file_y_pos           map[string]int // to save current line for each file s
@@ -1516,8 +1516,8 @@ fn (ved &Ved) save_session() {
 }
 
 // TODO fix vals[0].int()
-fn toi(s string) u64 {
-	return s.u64()
+fn toi(s string) i64 {
+	return s.i64()
 }
 
 fn (ved &Ved) save_timer() {
