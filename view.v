@@ -662,11 +662,11 @@ fn (mut view View) ci(key gg.KeyCode) {
 				return
 			}
 			mut start := view.x
-			for line[start] != `\'` {
+			for line[start] != `'` {
 				start--
 			}
 			mut end := view.x
-			for line[end] != `\'` {
+			for line[end] != `'` {
 				end++
 			}
 			view.set_line(line[..start + 1] + line[end..])

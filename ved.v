@@ -551,9 +551,9 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			break
 		}
 		// String
-		if line[i] == `\'` {
+		if line[i] == `'` {
 			i++
-			for i < line.len - 1 && line[i] != `\'` {
+			for i < line.len - 1 && line[i] != `'` {
 				i++
 			}
 			if i >= line.len {
@@ -657,13 +657,14 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	ved.gg.refresh_ui()
 }
 
+[manualfree]
 fn on_char(code u32, mut ved Ved) {
 	if ved.just_switched {
 		ved.just_switched = false
 		return
 	}
-	buf := [0, 0, 0, 0, 0]
-	s := unsafe { utf32_to_str_no_malloc(code, buf) } // .data)
+	buf := [5]byte{}
+	s := unsafe { utf32_to_str_no_malloc(code, &buf[0]) }
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
@@ -681,7 +682,7 @@ fn on_char(code u32, mut ved Ved) {
 					ved.view.r(s)
 					ved.prev_key = gg.KeyCode(0)
 					ved.prev_cmd = 'r'
-					ved.prev_insert = s
+					ved.prev_insert = s.clone()
 				}
 				return
 			}
