@@ -416,9 +416,9 @@ fn (mut view View) insert_text(s string) {
 	view.changed = true
 }
 
-fn (mut view View) backspace(go_up bool) {
+fn (mut view View) backspace() {
 	if view.x == 0 {
-		if go_up && view.y > 0 {
+		if view.ved.cfg.backspace_go_up && view.y > 0 {
 			view.x = 0
 			view.y--
 			view.x = view.lines[view.y].len
@@ -427,9 +427,9 @@ fn (mut view View) backspace(go_up bool) {
 		}
 		return
 	}
-	line := view.line()
+	// line := view.line()
 	uline := view.uline()
-	println('line="$line" uline="$uline.string()"')
+	// println('line="$line" uline="$uline.string()"')
 	left := uline[..view.x - 1].string()
 	mut right := ''
 	if view.x < uline.len {
@@ -437,6 +437,9 @@ fn (mut view View) backspace(go_up bool) {
 	}
 	view.set_line('$left$right')
 	view.x--
+	if view.ved.prev_insert.len > 0 {
+		view.ved.prev_insert = view.ved.prev_insert[..view.ved.prev_insert.len - 1] // TODO runes
+	}
 }
 
 fn (mut view View) yy() {

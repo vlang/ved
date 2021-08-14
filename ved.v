@@ -815,7 +815,7 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 	match key {
 		.backspace {
 			ved.just_switched = true // prevent backspace symbol being added in char handler
-			ved.view.backspace(ved.cfg.backspace_go_up)
+			ved.view.backspace()
 		}
 		.enter {
 			ved.view.enter()
