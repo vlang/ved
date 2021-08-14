@@ -185,7 +185,7 @@ fn main() {
 	println('height=$size.height')
 	ved.page_height = size.height / ved.line_height - 1
 	// TODO V keys only
-	keys := 'case defer none match pub struct interface in sizeof assert enum import go ' +
+	keys := 'case shared defer none match pub struct interface in sizeof assert enum import go ' +
 		'return module fn if for break continue asm unsafe mut is ' +
 		'type const else true else for false use $' + 'if $' + 'else'
 	ved.keys = keys.split(' ')
@@ -1402,8 +1402,8 @@ fn (mut ved Ved) dot() {
 			ved.view.dw(true)
 		}
 		'cw' {
-			ved.view.cw()
-			println('dot cw prev_insert=$ved.prev_insert')
+			ved.view.dw(false)
+			// println('dot cw prev_insert=$ved.prev_insert')
 			ved.view.insert_text(ved.prev_insert)
 			ved.prev_cmd = 'cw'
 		}

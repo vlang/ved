@@ -562,6 +562,7 @@ fn (mut view View) d_visual() {
 
 fn (mut view View) cw() {
 	mut ved := view.ved
+	ved.prev_insert = ''
 	view.dw(false)
 	ved.prev_cmd = 'cw'
 	// view.ved.set_insert() // don't call this since it resets prev_insert
