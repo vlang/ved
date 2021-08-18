@@ -803,7 +803,8 @@ fn (ved &Ved) git_commit() {
 fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
-	res := os.execute('zsh -c "$text" > $dir/out')
+	os.chdir(dir)
+	res := os.execute('zsh -ic "source ~/.zshrc; $text" > $dir/out')
 	if res.exit_code == -1 {
 	}
 	// TODO copypasted some code from build_app()
