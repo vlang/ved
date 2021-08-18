@@ -88,17 +88,6 @@ enum EditorMode {
 	timer = 4
 }
 
-enum QueryType {
-	ctrlp = 0
-	search = 1
-	cam = 2
-	open = 3
-	ctrlj = 4
-	task = 5
-	grep = 6
-	open_workspace = 7
-}
-
 struct Chunk {
 	start int
 	end   int
@@ -723,6 +712,8 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 				ved.cur_task = ved.query
 				ved.task_start_unix = time.now().unix
 				ved.save_timer()
+			} else if ved.query_type == .run {
+				ved.run_zsh()
 			} else if ved.query_type == .grep {
 				// Key down was pressed after typing, now pressing enter opens the file
 				if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
@@ -807,6 +798,20 @@ fn (ved &Ved) git_commit() {
 	dir := ved.workspace
 	os.system('git -C $dir commit -am "$text"')
 	// os.system('gitter $dir')
+}
+
+fn (ved &Ved) run_zsh() {
+	text := ved.query
+	dir := ved.workspace
+	res := os.execute('zsh -c "$text" > $dir/out')
+	if res.exit_code == -1 {
+	}
+	// TODO copypasted some code from build_app()
+	// mut f2 := os.create('$dir/out') or { panic('fail') }
+	// f2.writeln(out.output) or { panic(err) }
+	// f2.close()
+	mut last_view := ved.get_last_view()
+	last_view.open_file('$dir/out')
 }
 
 fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
@@ -1006,8 +1011,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.mode = .query
 				ved.query_type = .cam
 				ved.just_switched = true
-			}
-			if shift {
+			} else if shift {
 				ved.prev_insert = ved.view.shift_c()
 				ved.set_insert()
 			}
@@ -1113,7 +1117,12 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 		}
 		.r {
-			if super {
+			if shift_and_super {
+				ved.query = ''
+				ved.mode = .query
+				ved.query_type = .run
+				ved.just_switched = true
+			} else if super {
 				view.reopen()
 			} else {
 				ved.prev_key = .r

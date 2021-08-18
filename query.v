@@ -12,6 +12,18 @@ const (
 	}
 )
 
+enum QueryType {
+	ctrlp = 0
+	search = 1
+	cam = 2
+	open = 3
+	ctrlj = 4
+	task = 5
+	grep = 6
+	open_workspace = 7
+	run = 8
+}
+
 fn (mut ved Ved) load_git_tree() {
 	ved.query = ''
 	// Cache all git files
@@ -55,12 +67,15 @@ fn (q QueryType) str() string {
 		.ctrlj { return 'ctrl j (opened files)' }
 		.task { return 'new task/activity' }
 		.grep { return 'git grep' }
+		.run { return 'run a zsh command' }
 	}
 	return ''
 }
 
 const (
-	small_queries  = [int(QueryType.search), int(QueryType.cam), int(QueryType.open)] // , GREP]
+	small_queries  = [int(QueryType.search), int(QueryType.cam), int(QueryType.open),
+		int(QueryType.run),
+	] // , GREP]
 	max_grep_lines = 20
 	query_width    = 400
 )
