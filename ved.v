@@ -1105,7 +1105,12 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.p {
 			if shift_and_super {
-				os.system('git -C "$ved.workspace" pull --rebase')
+				ved.mode = .query
+				ved.query_type = .alert
+				ved.query = 'Running git pull...'
+				ved.just_switched = true
+				go ved.git_pull()
+				return
 			} else if super {
 				ved.mode = .query
 				ved.query_type = .ctrlp
@@ -1965,4 +1970,10 @@ fn (ved &Ved) insert_task() ? {
 	}
 	f.writeln(separator) ?
 	f.close()
+}
+
+fn (mut ved Ved) git_pull() {
+	os.system('git -C "$ved.workspace" pull --rebase')
+	ved.mode = .normal
+	ved.gg.refresh_ui()
 }

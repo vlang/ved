@@ -22,6 +22,7 @@ enum QueryType {
 	grep = 6
 	open_workspace = 7
 	run = 8
+	alert = 9 // e.g. "running git pull..."
 }
 
 fn (mut ved Ved) load_git_tree() {
@@ -58,24 +59,22 @@ fn (ved &Ved) load_all_tasks() {
 }
 
 fn (q QueryType) str() string {
-	match q {
-		.search { return 'find' }
-		.ctrlp { return 'ctrl p (git files)' }
-		.open { return 'open' }
-		.open_workspace { return 'open workspace' }
-		.cam { return 'git commit -am' }
-		.ctrlj { return 'ctrl j (opened files)' }
-		.task { return 'new task/activity' }
-		.grep { return 'git grep' }
-		.run { return 'run a zsh command' }
+	return match q {
+		.search { 'find' }
+		.ctrlp { 'ctrl p (git files)' }
+		.open { 'open' }
+		.open_workspace { 'open workspace' }
+		.cam { 'git commit -am' }
+		.ctrlj { 'ctrl j (opened files)' }
+		.task { 'new task/activity' }
+		.grep { 'git grep' }
+		.run { 'run a zsh command' }
+		.alert { '' }
 	}
-	return ''
 }
 
 const (
-	small_queries  = [int(QueryType.search), int(QueryType.cam), int(QueryType.open),
-		int(QueryType.run),
-	] // , GREP]
+	small_queries  = [QueryType.search, .cam, .open, .run, .alert] //.grep
 	max_grep_lines = 20
 	query_width    = 400
 )
@@ -85,7 +84,7 @@ fn (mut ved Ved) draw_query() {
 	// println('DRAW Q type=$ved.query_type')
 	mut width := query_width
 	mut height := 360
-	if int(ved.query_type) in small_queries {
+	if ved.query_type in small_queries {
 		height = 70
 	}
 	if ved.query_type == .grep {
@@ -107,14 +106,20 @@ fn (mut ved Ved) draw_query() {
 		q = ved.search_query
 	}
 	ved.gg.draw_text(x + 10, y + 30, q, txt_cfg)
-	if ved.query_type == .ctrlp {
-		ved.draw_ctrlp_files(x, y)
-	} else if ved.query_type == .task {
-		ved.draw_top_tasks(x, y)
-	} else if ved.query_type == .grep {
-		ved.draw_git_grep(x, y)
-	} else if ved.query_type == .ctrlj {
-		ved.draw_open_files(x, y)
+	match ved.query_type {
+		.ctrlp {
+			ved.draw_ctrlp_files(x, y)
+		}
+		.task {
+			ved.draw_top_tasks(x, y)
+		}
+		.grep {
+			ved.draw_git_grep(x, y)
+		}
+		.ctrlj {
+			ved.draw_open_files(x, y)
+		}
+		else {}
 	}
 }
 
