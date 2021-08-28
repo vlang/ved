@@ -803,7 +803,7 @@ fn (ved &Ved) git_commit() {
 fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
-	os.chdir(dir)
+	os.chdir(dir) or {}
 	res := os.execute('zsh -ic "source ~/.zshrc; $text" > $dir/out')
 	if res.exit_code == -1 {
 	}
@@ -1688,7 +1688,7 @@ fn (mut ved Ved) build_app(extra string) {
 	println('building...')
 	// Save each open file before building
 	ved.save_changed_files()
-	os.chdir(ved.workspace)
+	os.chdir(ved.workspace) or {}
 	dir := ved.workspace
 	mut last_view := ved.get_last_view()
 	// mut f := os.create('$dir/out') or {
@@ -1755,7 +1755,7 @@ fn (mut ved Ved) run_file() {
 	// cd to /a/b/
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
-	os.chdir(dir)
+	os.chdir(dir) or {}
 	out := os.execute('v $view.path')
 	if out.exit_code == -1 {
 		return
