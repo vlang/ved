@@ -5,6 +5,8 @@ module main
 
 import os
 import gx
+import time
+import gg
 
 const (
 	txt_cfg = gx.TextCfg{
@@ -23,6 +25,133 @@ enum QueryType {
 	open_workspace = 7
 	run = 8
 	alert = 9 // e.g. "running git pull..."
+}
+
+fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
+	match key {
+		.backspace {
+			ved.gg_pos = -1
+			ved.just_switched = true
+			if ved.query_type != .search && ved.query_type != .grep {
+				if ved.query.len == 0 {
+					return
+				}
+				ved.query = ved.query[..ved.query.len - 1]
+			} else {
+				if ved.search_query.len == 0 {
+					return
+				}
+				ved.search_query = ved.search_query[..ved.search_query.len - 1]
+			}
+			return
+		}
+		.enter {
+			if ved.query_type == .ctrlp {
+				ved.ctrlp_open()
+			} else if ved.query_type == .ctrlj {
+				ved.ctrlj_open()
+			} else if ved.query_type == .cam {
+				ved.git_commit()
+			} else if ved.query_type == .open {
+				ved.view.open_file(ved.query)
+			} else if ved.query_type == .task {
+				ved.insert_task() or {}
+				ved.cur_task = ved.query
+				ved.task_start_unix = time.now().unix
+				ved.save_timer()
+			} else if ved.query_type == .run {
+				ved.run_zsh()
+			} else if ved.query_type == .grep {
+				// Key down was pressed after typing, now pressing enter opens the file
+				if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
+					line := ved.gg_lines[ved.gg_pos]
+					path := line.all_before(':')
+					pos := line.index(':') or { 0 }
+					pos2 := line.index_after(':', pos + 1)
+					// line_nr := line[path.len + 1..].int() - 1
+					line_nr := line[pos + 1..pos2].int() - 1
+					ved.view.open_file(ved.workspace + '/' + path)
+					ved.view.move_to_line(line_nr)
+					ved.view.zz()
+					ved.mode = .normal
+				} else {
+					// Otherwise just do a git grep on a submitted query
+					ved.git_grep()
+				}
+				return
+			} else {
+				ved.search(false)
+			}
+			ved.mode = .normal
+			return
+		}
+		.escape {
+			ved.mode = .normal
+			return
+		}
+		.down {
+			if ved.mode == .query {
+				match ved.query_type {
+					.grep {
+						// Going thru git grep results
+						ved.gg_pos++
+						if ved.gg_pos >= ved.gg_lines.len {
+							ved.gg_pos = ved.gg_lines.len - 1
+						}
+					}
+					.ctrlp {
+						ved.gg_pos++
+						if ved.gg_pos >= ved.all_git_files.len {
+							ved.gg_pos = ved.all_git_files.len - 1
+						}
+					}
+					.search {
+						// History search
+						ved.search_idx++
+						if ved.search_idx >= ved.search_history.len {
+							ved.search_idx = ved.search_history.len - 1
+						}
+						ved.search_query = ved.search_history[ved.search_idx]
+					}
+					else {}
+				}
+			}
+		}
+		.up {
+			if ved.mode == .query {
+				match ved.query_type {
+					.grep, .ctrlp {
+						ved.gg_pos--
+						if ved.gg_pos < 0 {
+							ved.gg_pos = 0
+						}
+					}
+					.search {
+						ved.search_idx--
+						if ved.search_idx < 0 {
+							ved.search_idx = 0
+						}
+						ved.search_query = ved.search_history[ved.search_idx]
+					}
+					else {}
+				}
+			}
+		}
+		.tab {
+			// TODO COPY PASTA
+			if ved.mode == .query && ved.query_type == .grep {
+				ved.gg_pos++
+			}
+			ved.just_switched = true
+		}
+		.v {
+			if super {
+				clip := ved.cb.paste()
+				ved.query += clip
+			}
+		}
+		else {}
+	}
 }
 
 fn (mut ved Ved) load_git_tree() {
@@ -131,7 +260,7 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 		}
 		yy := y + 60 + 30 * j
 		if j == ved.gg_pos {
-			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
+			ved.gg.draw_rect(x, yy, query_width, 30, ved.cfg.vcolor)
 		}
 		mut file := file_.to_lower()
 		file = file.trim_space()
@@ -209,22 +338,26 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 // fn input_enter(s string, ved * Ved) {
 // if s != '' {
 fn (mut ved Ved) ctrlp_open() {
-	ved.gg_pos = -1
-	// Open the first file in the list
+	// Open the selected file in the list
+	mut i := 0
 	for file_ in ved.all_git_files {
 		mut file := file_.to_lower()
 		file = file.trim_space()
 		if file.contains(ved.query.to_lower()) {
-			mut path := file_.trim_space()
-			mut space := ved.workspace
-			if space == '' {
-				space = '.'
+			if i == ved.gg_pos || ved.gg_pos <= 0 {
+				mut path := file_.trim_space()
+				mut space := ved.workspace
+				if space == '' {
+					space = '.'
+				}
+				path = '$space/$path'
+				ved.view.open_file(path)
+				break
 			}
-			path = '$space/$path'
-			ved.view.open_file(path)
-			break
+			i++
 		}
 	}
+	ved.gg_pos = -1
 }
 
 // TODO merge with fn above
