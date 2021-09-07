@@ -38,6 +38,11 @@ Fedora:
 sudo dnf install freetype-devel
 ```
 
+Arch:
+```
+pacman -S freetype2
+```
+
 macOS:
 ```
 brew install freetype
