@@ -20,9 +20,11 @@ const (
 
 struct Timer {
 mut:
-	gg    &gg.Context
-	tasks []Task
-	date  time.Time
+	gg             &gg.Context
+	tasks          []Task
+	date           time.Time // the day being shown
+	pom_start      i64       // unix time
+	pom_is_started bool
 }
 
 struct Task {
@@ -172,6 +174,21 @@ fn (mut timer Timer) key_down(key gg.KeyCode, super bool) {
 			timer.date = timer.date.add_days(1)
 			timer.load_tasks()
 		}
+		.f {
+			// start 25 min pomodoro timer
+			timer.pom_start = time.now().unix
+			timer.pom_is_started = true
+		}
 		else {}
 	}
+}
+
+fn lock_screen() {
+	$if macos {
+		os.system('pmset displaysleepnow')
+	}
+}
+
+fn (ved &Ved) pomodoro_minutes() int {
+	return int((ved.now.unix - ved.timer.pom_start) / 60)
 }

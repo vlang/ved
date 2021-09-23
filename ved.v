@@ -45,8 +45,8 @@ mut:
 	workspace            string
 	workspace_idx        int
 	workspaces           []string
-	ylines               []string
-	git_diff_plus        string // short git diff stat top right
+	ylines               []string // for y, yy
+	git_diff_plus        string   // short git diff stat top right
 	git_diff_minus       string
 	keys                 []string
 	chunks               []Chunk
@@ -375,6 +375,10 @@ fn (mut ved Ved) draw() {
 		task_time_x := (ved.nr_splits - 1) * split_width - 50
 		ved.gg.draw_text(task_time_x, 1, '${ved.task_minutes()}m', ved.cfg.file_name_cfg)
 	}
+	// Draw pomodoro timer
+	if ved.timer.pom_is_started {
+		ved.gg.draw_text(split_width - 50, 1, '${ved.pomodoro_minutes()}m', ved.cfg.file_name_cfg)
+	}
 	// Draw "i" in insert mode
 	if ved.mode == .insert {
 		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
@@ -464,6 +468,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		// println('"$s" max=$max')
 		//}
 		// Handle utf8 codepoints
+		// old_len := s.len
 		if s.len != utf8_str_len(s) {
 			u := s.runes()
 			if max > 0 && max < u.len {
@@ -480,6 +485,9 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
+		// if old_len != s.len {
+		// ved.draw_text_line(line_x, y + 1, '!!!')
+		//}
 		line_nr++
 	}
 }
@@ -694,7 +702,7 @@ fn (ved &Ved) git_commit() {
 fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
-	os.chdir(dir) or {}
+	os.chdir(dir) or { return }
 	res := os.execute('zsh -ic "source ~/.zshrc; $text" > $dir/out')
 	if res.exit_code == -1 {
 	}
@@ -1727,6 +1735,10 @@ fn (mut ved Ved) loop() {
 		ved.gg.refresh_ui()
 		// ved.timer.tick(ved)
 		time.sleep(5 * time.second)
+		if ved.timer.pom_is_started && ved.now.unix - ved.timer.pom_start > 25 * 60 {
+			ved.timer.pom_is_started = false
+			lock_screen()
+		}
 	}
 }
 
