@@ -101,6 +101,7 @@ Key bindings:
 `C` is `⌘` on macOS, `Ctrl` on all other systems.
 
 ```
+C q    exit the editor (type it twice in a row)
 C o    open a file
 C s    save
 C r    reload current file
