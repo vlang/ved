@@ -117,7 +117,7 @@ fn (mut view View) open_file(path string) {
 				// if clean_word == '' {
 				// continue
 				// }
-				if !(word in ved.words) {
+				if word !in ved.words {
 					ved.words << word
 				}
 			}
@@ -739,7 +739,7 @@ fn (mut view View) gq() {
 }
 
 fn is_alpha(r byte) bool {
-	return ((r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || (r >= `0` && r <= `9`))
+	return (r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || (r >= `0` && r <= `9`)
 }
 
 fn is_whitespace(r byte) bool {
@@ -747,7 +747,7 @@ fn is_whitespace(r byte) bool {
 }
 
 fn is_alpha_underscore(r int) bool {
-	return (is_alpha(byte(r)) || byte(r) == `_` || byte(r) == `#` || byte(r) == `$`)
+	return is_alpha(byte(r)) || byte(r) == `_` || byte(r) == `#` || byte(r) == `$`
 }
 
 fn break_text(s string, max int) []string {
