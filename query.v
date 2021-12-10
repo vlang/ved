@@ -56,6 +56,11 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 				ved.view.open_file(ved.query)
 			} else if ved.query_type == .task {
 				ved.insert_task() or {}
+				if !ved.timer.pom_is_started && !ved.cur_task.starts_with('@') {
+					// Start pomodoro with a new task if it's not already running
+					ved.timer.pom_start = time.now().unix
+					ved.timer.pom_is_started = true
+				}
 				ved.cur_task = ved.query
 				ved.task_start_unix = time.now().unix
 				ved.save_timer()

@@ -187,7 +187,7 @@ fn (mut view View) format_file() {
 	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "$path" > "$css"')
-	} else if path.ends_with('.v') {
+	} else if path.ends_with('.v') || path.ends_with('.vsh') {
 		os.system('v fmt -w $path')
 	}
 	view.reopen()
