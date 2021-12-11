@@ -52,7 +52,7 @@ mut:
 	chunks               []Chunk
 	is_building          bool
 	timer                Timer
-	task_start_unix      i64
+	task_start_unix      u64
 	cur_task             string
 	words                []string
 	file_y_pos           map[string]int // to save current line for each file s
@@ -702,7 +702,7 @@ fn (ved &Ved) git_commit() {
 fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
-	os.chdir(dir) or { return }
+	os.chdir(dir)
 	res := os.execute('zsh -ic "source ~/.zshrc; $text" > $dir/out')
 	if res.exit_code == -1 {
 	}
@@ -1475,7 +1475,7 @@ fn (mut ved Ved) load_timer() {
 	// println('vals=')
 	// println(vals)
 	ved.cur_task = vals[0]
-	ved.task_start_unix = toi(vals[1])
+	ved.task_start_unix = vals[1].u64()
 	// ved.timer.cur_type = toi(vals[2])
 	// ved.timer.start_unix = toi(vals[3])
 	// ved.timer.started = ved.timer.start_unix != 0
@@ -1587,7 +1587,7 @@ fn (mut ved Ved) build_app(extra string) {
 	println('building...')
 	// Save each open file before building
 	ved.save_changed_files()
-	os.chdir(ved.workspace) or {}
+	os.chdir(ved.workspace)
 	dir := ved.workspace
 	mut last_view := ved.get_last_view()
 	// mut f := os.create('$dir/out') or {
@@ -1654,7 +1654,7 @@ fn (mut ved Ved) run_file() {
 	// cd to /a/b/
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
-	os.chdir(dir) or {}
+	os.chdir(dir)
 	out := os.execute('v $view.path')
 	if out.exit_code == -1 {
 		return

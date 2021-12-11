@@ -23,7 +23,7 @@ mut:
 	gg             &gg.Context
 	tasks          []Task
 	date           time.Time // the day being shown
-	pom_start      i64       // unix time
+	pom_start      u64       // unix time
 	pom_is_started bool
 }
 
