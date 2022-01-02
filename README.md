@@ -38,6 +38,11 @@ Fedora:
 sudo dnf install freetype-devel libXcursor-devel libXi-devel
 ```
 
+Arch:
+```
+pacman -S freetype2
+```
+
 macOS:
 ```
 brew install freetype
