@@ -35,7 +35,7 @@ sudo apt install libfreetype6-dev libx11-dev libxrandr-dev mesa-common-dev libxi
 
 Fedora:
 ```
-sudo dnf install freetype-devel
+sudo dnf install freetype-devel libXcursor-devel libXi-devel
 ```
 
 macOS:
