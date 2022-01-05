@@ -16,11 +16,13 @@ mut:
 	prev_x       int
 	path         string
 	short_path   string
-	prev_path    string // for tt
+	prev_path    string
+	// for tt
 	lines        []string
 	page_height  int
 	vstart       int
-	vend         int // visual borders
+	vend         int
+	// visual borders
 	changed      bool
 	error_y      int
 	ved          &Ved
@@ -57,11 +59,13 @@ fn get_clean_words(line string) []string {
 		for i < line.len && !is_alpha_underscore(int(line[i])) {
 			i++
 		}
+
 		// Read all good
 		start2 := i
 		for i < line.len && is_alpha_underscore(int(line[i])) {
 			i++
 		}
+
 		// End of word, save it
 		word := line[start2..i]
 		res << word
@@ -75,6 +79,7 @@ fn (mut view View) open_file(path string) {
 	if path == '' {
 		return
 	}
+
 	// This path is in current workspace? Trim it. /code/v/file.v => file.v
 	if path.starts_with(view.ved.workspace + '/') {
 		view.short_path = path[view.ved.workspace.len..]
@@ -85,6 +90,7 @@ fn (mut view View) open_file(path string) {
 		view.short_path = path
 	}
 	mut ved := view.ved
+
 	// if os.exists(view.short_path) &&
 	if view.short_path !in ['out', ''] && view.short_path !in ved.open_paths[ved.workspace_idx] {
 		if ved.open_paths[ved.workspace_idx].len == 0 {
@@ -105,9 +111,11 @@ fn (mut view View) open_file(path string) {
 	view.lines = lines
 	*/
 	view.lines = os.read_lines(path) or { []string{} }
+
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
+
 		// ticks := glfw.get_time()
 		for line in view.lines {
 			// words := line.split(' ')
@@ -122,19 +130,23 @@ fn (mut view View) open_file(path string) {
 				}
 			}
 		}
+
 		// took := glfw.get_time() - ticks
 	}
+
 	// Empty file, handle it
 	if view.lines.len == 0 {
 		view.lines << ''
 	}
 	view.path = path
+
 	// view.short_path = path.replace(view.ved.workspace, '')
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'
 	view.padding_left = s.len * ved.char_width + 8
 	view.ved.save_session()
+
 	// Go to old y for this file
 	y := view.ved.file_y_pos[view.path]
 	if y > 0 {
@@ -162,6 +174,7 @@ fn (mut view View) save_file() {
 	view.ved.file_y_pos[view.path] = view.y
 	println('saving file "$path"')
 	println('lines.len=$view.lines.len')
+
 	// line0 := view.lines[0]
 	// println('line[0].len=$line0.len')
 	mut file := os.create(path) or { panic('fail') }
@@ -170,6 +183,7 @@ fn (mut view View) save_file() {
 	}
 	file.close()
 	go view.format_file()
+
 	// If another split has the same file open, update it
 	for mut v in view.ved.views {
 		if v.path == view.path {
@@ -180,6 +194,7 @@ fn (mut view View) save_file() {
 
 fn (mut view View) format_file() {
 	path := view.path
+
 	// Run formatters
 	if path.ends_with('.go') {
 		println('running goimports')
@@ -191,9 +206,11 @@ fn (mut view View) format_file() {
 		os.system('v fmt -w $path')
 	}
 	view.reopen()
+
 	// update git diff
 	view.ved.get_git_diff()
 	view.changed = false
+
 	// println('end of save file()')
 	// println('_lines.len=$view.lines.len')
 	// line0_ := view.lines[0]
@@ -233,15 +250,18 @@ fn (mut view View) j() {
 		return
 	}
 	view.y++
+
 	// Reached end
 	if view.y >= view.lines.len {
 		view.y = view.lines.len - 1
 		return
 	}
+
 	// Scroll
 	if view.y >= view.from + view.page_height {
 		view.from++
 	}
+
 	// Line below is shorter, move to the end of it
 	line := view.line()
 	if view.x > line.len - 1 {
@@ -261,6 +281,7 @@ fn (mut view View) k() {
 	if view.y < view.from && view.y > 0 {
 		view.from--
 	}
+
 	// Line above is shorter, move to the end of it
 	line := view.line()
 	if view.x > line.len - 1 {
@@ -408,6 +429,7 @@ fn (mut view View) insert_text(s string) {
 		}
 		left := uline[..view.x].string()
 		right := uline[view.x..uline.len].string()
+
 		// Insert chat in the middle
 		res := '$left$s$right'
 		view.set_line(res)
@@ -427,8 +449,10 @@ fn (mut view View) backspace() {
 		}
 		return
 	}
+
 	// line := view.line()
 	uline := view.uline()
+
 	// println('line="$line" uline="$uline.string()"')
 	left := uline[..view.x - 1].string()
 	mut right := ''
@@ -463,6 +487,7 @@ fn (mut view View) o() {
 
 fn (mut view View) o_generic(delta int) {
 	view.y += delta
+
 	// Insert the same amount of spaces/tabs as in prev line
 	prev_line := if view.lines.len == 0 || view.y == 0 { '' } else { view.lines[view.y - 1] }
 	mut nr_spaces := 0
@@ -505,6 +530,7 @@ fn (mut view View) enter() {
 			view.insert_text('}')
 			view.y--
 			view.o()
+
 			// view.insert_text('\t')
 			// view.x = 0
 		} else {
@@ -512,6 +538,7 @@ fn (mut view View) enter() {
 		}
 		return
 	}
+
 	// if line == '' {
 	// view.o()
 	// return
@@ -532,6 +559,7 @@ fn (mut view View) join() {
 	if view.y == view.lines.len - 1 {
 		return
 	}
+
 	// Add next line to current line
 	line := view.line()
 	second_line := view.lines[view.y + 1]
@@ -540,6 +568,7 @@ fn (mut view View) join() {
 	view.y++
 	view.dd()
 	view.y--
+
 	// view.prev_cmd = "J"
 }
 
@@ -550,6 +579,7 @@ fn (mut v View) y_visual() {
 	}
 	mut ved := v.ved
 	ved.ylines = ylines
+
 	// Copy YY to clipboard TODO
 	// mainWindow.SetClipboardString(strings.Join(ylines, "\n"))
 	v.vstart = -1
@@ -568,6 +598,7 @@ fn (mut view View) cw() {
 	ved.prev_insert = ''
 	view.dw(false)
 	ved.prev_cmd = 'cw'
+
 	// view.ved.set_insert() // don't call this since it resets prev_insert
 	ved.mode = .insert
 	ved.just_switched = true
@@ -577,6 +608,7 @@ fn (mut view View) cw() {
 fn (mut view View) dw(del_whitespace bool) { // string {
 	mut ved := view.ved
 	typ := is_alpha(byte(view.char()))
+
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
@@ -590,6 +622,7 @@ fn (mut view View) dw(del_whitespace bool) { // string {
 			break
 		}
 	}
+
 	// Delete whitespace after the deleted word
 	if del_whitespace {
 		for is_whitespace(byte(view.char())) {
@@ -615,10 +648,12 @@ fn (mut view View) ce() {
 fn (mut view View) w() {
 	line := view.line()
 	typ := is_alpha_underscore(view.char())
+
 	// Go to end of current word
 	for view.x < line.len - 1 && typ == is_alpha_underscore(view.char()) {
 		view.x++
 	}
+
 	// Go to start of next word
 	for view.x < line.len - 1 && view.char() == 32 {
 		view.x++
@@ -632,6 +667,7 @@ fn (mut view View) b() {
 		view.x--
 	}
 	typ := is_alpha_underscore(view.char())
+
 	// Go to start of current word
 	for view.x > 0 && typ == is_alpha_underscore(view.char()) {
 		view.x--
@@ -641,6 +677,7 @@ fn (mut view View) b() {
 fn (mut view View) de() {
 	mut ved := view.ved
 	typ := is_alpha_underscore(view.char())
+
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
@@ -679,6 +716,7 @@ fn (mut view View) ci(key gg.KeyCode) {
 		}
 		else {}
 	}
+
 	// view.dw()
 }
 

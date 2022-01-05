@@ -32,10 +32,12 @@ mut:
 	cur_split            int
 	view                 &View
 	mode                 EditorMode
-	just_switched        bool // for keydown/char events to avoid dup keys
+	just_switched        bool
+	// for keydown/char events to avoid dup keys
 	prev_key             gg.KeyCode
 	prev_cmd             string
-	prev_insert          string // for `.` (re-enter the text that was just entered via cw etc)
+	prev_insert          string
+	// for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files        []string
 	top_tasks            []string
 	gg                   &gg.Context
@@ -45,8 +47,10 @@ mut:
 	workspace            string
 	workspace_idx        int
 	workspaces           []string
-	ylines               []string // for y, yy
-	git_diff_plus        string   // short git diff stat top right
+	ylines               []string
+	// for y, yy
+	git_diff_plus        string
+	// short git diff stat top right
 	git_diff_minus       string
 	keys                 []string
 	chunks               []Chunk
@@ -55,7 +59,8 @@ mut:
 	task_start_unix      i64
 	cur_task             string
 	words                []string
-	file_y_pos           map[string]int // to save current line for each file s
+	file_y_pos           map[string]int
+	// to save current line for each file s
 	refresh              bool = true
 	line_height          int
 	char_width           int
@@ -65,9 +70,12 @@ mut:
 	gg_pos         int
 	cfg            Config
 	cb             &clipboard.Clipboard
-	open_paths     [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y         int        // for jumping back ('')
-	now            time.Time  // cached value of time.now() to avoid calling it for every frame
+	open_paths     [][]string
+	// all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y         int
+	// for jumping back ('')
+	now            time.Time
+	// cached value of time.now() to avoid calling it for every frame
 	search_history []string
 	search_idx     int
 	cq_in_a_row    int
@@ -132,6 +140,7 @@ fn main() {
 	if is_window {
 		nr_splits = 1
 	}
+
 	// size := gg.Size{5120, 2880}
 	mut size := gg.screen_size()
 	if size.width == 0 || size.height == 0 {
@@ -141,6 +150,7 @@ fn main() {
 			nr_splits = 2
 		}
 	}
+
 	// TODO
 	/*
 	size := if is_window {
@@ -163,7 +173,8 @@ fn main() {
 		cur_split: 0
 		mode: EditorMode(0)
 		line_height: 20
-		char_width: 8 // font_size: 13
+		char_width: 8
+		// font_size: 13
 		view: 0
 		gg: 0
 		cb: clipboard.new()
@@ -173,6 +184,7 @@ fn main() {
 	ved.cfg.init_colors()
 	println('height=$size.height')
 	ved.page_height = size.height / ved.line_height - 1
+
 	// TODO V keys only
 	keys := 'case shared defer none match pub struct interface in sizeof assert enum import go ' +
 		'return module fn if for break continue asm unsafe mut is ' +
@@ -180,7 +192,8 @@ fn main() {
 	ved.keys = keys.split(' ')
 	ved.gg = gg.new_context(
 		width: size.width
-		height: size.height // borderless_window: !is_window
+		height: size.height
+		// borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Ved'
 		create_window: true
@@ -198,9 +211,11 @@ fn main() {
 	println('FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.gg)
 	ved.load_all_tasks()
+
 	// TODO linux and windows
 	// C.AXUIElementCreateApplication(234)
 	uiold.reg_key_ved()
+
 	// Open workspaces or a file
 	$if debug {
 		println('args:')
@@ -210,6 +225,7 @@ fn main() {
 	if cur_dir.ends_with('/ved.app/Contents/Resources') {
 		cur_dir = cur_dir.replace('/ved.app/Contents/Resources', '')
 	}
+
 	// Open a single text file
 	mut first_launch := false
 	if args.len > 1 && os.is_file(args[args.len - 1]) {
@@ -237,6 +253,7 @@ fn main() {
 			if arg.starts_with('-') {
 				continue
 			}
+
 			// relative path
 			if !arg.starts_with('/') {
 				ved.add_workspace(cur_dir + '/' + arg)
@@ -292,20 +309,25 @@ fn frame(mut ved Ved) {
 fn (mut ved Ved) draw() {
 	view := ved.view
 	split_width := ved.split_width()
+
 	// Splits from and to
 	from := ved.workspace_idx * ved.splits_per_workspace
 	to := from + ved.splits_per_workspace
+
 	// Not a full refresh? Means we need to refresh only current split.
 	if !ved.refresh {
 		// split_x := split_width * (ved.cur_split - from)
 		// ved.gg.draw_rect(split_x, 0, split_width - 1, ved.win_height, ved.cfg.bgcolor)
 	}
+
 	// Coords
 	y := (ved.view.y - ved.view.from) * ved.line_height + ved.line_height
+
 	// Cur line
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
-	ved.gg.draw_rect(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.line_height,
+	ved.gg.draw_rect_filled(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.line_height,
 		ved.cfg.vcolor)
+
 	// V selection
 	mut v_from := ved.view.vstart + 1
 	mut v_to := ved.view.vend + 1
@@ -315,9 +337,10 @@ fn (mut ved Ved) draw() {
 		v_to = ved.view.vstart + 1
 	}
 	for yy := v_from; yy <= v_to; yy++ {
-		ved.gg.draw_rect(line_x, (yy - ved.view.from) * ved.line_height, split_width - ved.view.padding_left,
+		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.line_height, split_width - ved.view.padding_left,
 			ved.line_height, ved.cfg.vcolor)
 	}
+
 	// Tab offset for cursor
 	line := ved.view.line()
 	mut cursor_tab_off := 0
@@ -328,8 +351,10 @@ fn (mut ved Ved) draw() {
 		}
 		cursor_tab_off++
 	}
+
 	// Black title background
-	ved.gg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+
 	// Current split has dark blue title
 	// ved.gg.draw_rect(split_x, 0, split_width, ved.line_height, gx.rgb(47, 11, 105))
 	// Title (file paths)
@@ -341,6 +366,7 @@ fn (mut ved Ved) draw() {
 		}
 		ved.gg.draw_text(ved.split_x(i - from) + v.padding_left + 10, 1, name, ved.cfg.file_name_cfg)
 	}
+
 	// Git diff stats
 	if ved.git_diff_plus != '+' {
 		ved.gg.draw_text(ved.win_width - 400, 1, ved.git_diff_plus, ved.cfg.plus_cfg)
@@ -348,14 +374,17 @@ fn (mut ved Ved) draw() {
 	if ved.git_diff_minus != '-' {
 		ved.gg.draw_text(ved.win_width - 350, 1, ved.git_diff_minus, ved.cfg.minus_cfg)
 	}
+
 	// Workspaces
 	nr_spaces := ved.workspaces.len
 	cur_space := ved.workspace_idx + 1
 	space_name := short_space(ved.workspace)
 	ved.gg.draw_text(ved.win_width - 220, 1, '[$space_name]', ved.cfg.file_name_cfg)
 	ved.gg.draw_text(ved.win_width - 100, 1, '$cur_space/$nr_spaces', ved.cfg.file_name_cfg)
+
 	// Time
 	ved.gg.draw_text(ved.win_width - 50, 1, ved.now.hhmm(), ved.cfg.file_name_cfg)
+
 	// ved.gg.draw_text(ved.win_width - 550, 1, now.hhmmss(), file_name_cfg)
 	// vim top right next to current time
 	/*
@@ -369,20 +398,25 @@ fn (mut ved Ved) draw() {
 		// Draw current task
 		task_text_width := ved.cur_task.len * ved.char_width
 		task_x := ved.win_width - split_width - task_text_width - 10
+
 		// ved.timer.gg.draw_text(task_x, 1, ved.timer.cur_task.to_upper(), file_name_cfg)
 		ved.gg.draw_text(task_x, 1, ved.cur_task, ved.cfg.file_name_cfg)
+
 		// Draw current task time
 		task_time_x := (ved.nr_splits - 1) * split_width - 50
 		ved.gg.draw_text(task_time_x, 1, '${ved.task_minutes()}m', ved.cfg.file_name_cfg)
 	}
+
 	// Draw pomodoro timer
 	if ved.timer.pom_is_started {
 		ved.gg.draw_text(split_width - 50, 1, '${ved.pomodoro_minutes()}m', ved.cfg.file_name_cfg)
 	}
+
 	// Draw "i" in insert mode
 	if ved.mode == .insert {
 		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
 	}
+
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ved.views.len refresh=$ved.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -390,17 +424,21 @@ fn (mut ved Ved) draw() {
 		if !ved.refresh && i != ved.cur_split {
 			// continue
 		}
+
 		// t := glfw.get_time()
 		ved.draw_split(i, from)
+
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
+
 	// Cursor
 	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.char_width
 	if cursor_tab_off > 0 {
 		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
 		cursor_x -= ved.char_width * cursor_tab_off
 	}
-	ved.gg.draw_empty_rect(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
@@ -417,8 +455,10 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	ved.is_ml_comment = false
 	split_width := ved.split_width()
 	split_x := split_width * (i - split_from)
+
 	// Vertical split line
 	ved.gg.draw_line(split_x, ved.line_height + 1, split_x, ved.win_height, ved.cfg.split_color)
+
 	// Lines
 	mut line_nr := 1 // relative y
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
@@ -429,17 +469,21 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 		x := split_x + view.padding_left
 		y := line_nr * ved.line_height
+
 		// Error bg
 		if view.error_y == j {
-			ved.gg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, ved.line_height,
-				ved.cfg.errorbgcolor)
+			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10,
+				ved.line_height, ved.cfg.errorbgcolor)
 		}
+
 		// Line number
 		line_number := j + 1
 		ved.gg.draw_text(x + 3, y, '$line_number', ved.cfg.line_nr_cfg)
+
 		// Tab offset
 		mut line_x := x + 10
 		mut nr_tabs := 0
+
 		// for k := 0; k < line.len; k++ {
 		for c in line {
 			if c != `\t` {
@@ -453,6 +497,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			line_nr++
 			continue
 		}
+
 		// Number of chars to display in this view
 		// mut max := (split_width - view.padding_left - ved.char_width * TAB_SIZE *
 		// nr_tabs) / ved.char_width - 1
@@ -464,6 +509,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			// }
 			// max = line.len
 		}
+
 		// if s.contains('width :=') {
 		// println('"$s" max=$max')
 		//}
@@ -485,6 +531,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
+
 		// if old_len != s.len {
 		// ved.draw_text_line(line_x, y + 1, '!!!')
 		//}
@@ -517,11 +564,14 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		return
 	}
 	*/
+
 	// } else if line[0] == `-` {
 	ved.chunks = []
+
 	// ved.chunks.len = 0 // TODO V should not allow this
 	for i := 0; i < line.len; i++ {
 		start := i
+
 		// Comment // #
 		if i > 0 && line[i - 1] == `/` && line[i] == `/` {
 			ved.add_chunk(.a_comment, start - 1, line.len)
@@ -531,6 +581,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			ved.add_chunk(.a_comment, start, line.len)
 			break
 		}
+
 		// Comment   /*
 		// (unless it's /* line */ which is a single line)
 		if i > 0 && line[i - 1] == `/` && line[i] == `*` && !(line[line.len - 2] == `*`
@@ -540,6 +591,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			ved.is_ml_comment = true
 			break
 		}
+
 		// End of /**/
 		if i > 0 && line[i - 1] == `*` && line[i] == `/` {
 			// All before */ is still a comment
@@ -547,6 +599,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			ved.is_ml_comment = false
 			break
 		}
+
 		// String
 		if line[i] == `'` {
 			i++
@@ -568,15 +621,18 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			}
 			ved.add_chunk(.a_string, start, i + 1)
 		}
+
 		// Key
 		for i < line.len && is_alpha_underscore(int(line[i])) {
 			i++
 		}
 		word := line[start..i]
+
 		// println('word="$word"')
 		if word in ved.keys {
 			// println('$word is key')
 			ved.add_chunk(.a_key, start, i)
+
 			// println('adding key. len=$ved.chunks.len')
 		}
 	}
@@ -590,6 +646,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		return
 	}
 	mut pos := 0
+
 	// println('"$line" nr chunks=$ved.chunks.len')
 	// TODO use runes
 	// runes := msg.runes.slice_fast(chunk.pos, chunk.end)
@@ -602,6 +659,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			s := line[pos..chunk.start]
 			ved.gg.draw_text(x + pos * ved.char_width, y, s, ved.cfg.txt_cfg)
 		}
+
 		// Keyword string etc
 		typ := chunk.typ
 		cfg := match typ {
@@ -612,6 +670,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		s := line[chunk.start..chunk.end]
 		ved.gg.draw_text(x + chunk.start * ved.char_width, y, s, cfg)
 		pos = chunk.end
+
 		// Final text chunk
 		if i == ved.chunks.len - 1 && chunk.end < line.len {
 			final := line[chunk.end..line.len]
@@ -642,6 +701,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 		}
 		ved.mode = .normal
 	}
+
 	// Reset error line
 	ved.view.error_y = -1
 	match ved.mode {
@@ -662,6 +722,7 @@ fn on_char(code u32, mut ved Ved) {
 	}
 	buf := [5]byte{}
 	s := unsafe { utf32_to_str_no_malloc(code, &buf[0]) }
+
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
@@ -696,6 +757,7 @@ fn (ved &Ved) git_commit() {
 	text := ved.query
 	dir := ved.workspace
 	os.system('git -C $dir commit -am "$text"')
+
 	// os.system('gitter $dir')
 }
 
@@ -706,6 +768,7 @@ fn (ved &Ved) run_zsh() {
 	res := os.execute('zsh -ic "source ~/.zshrc; $text" > $dir/out')
 	if res.exit_code == -1 {
 	}
+
 	// TODO copypasted some code from build_app()
 	// mut f2 := os.create('$dir/out') or { panic('fail') }
 	// f2.writeln(out.output) or { panic(err) }
@@ -716,6 +779,7 @@ fn (ved &Ved) run_zsh() {
 
 fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 	super := mod == .super || mod == .ctrl
+
 	// shift := mod == .shift
 	match key {
 		.backspace {
@@ -741,10 +805,12 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.up {
 			ved.view.k()
+
 			// ved.refresh = false
 		}
 		.down {
 			ved.view.j()
+
 			// ved.refresh = false
 		}
 		else {}
@@ -759,11 +825,13 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 		ved.key_u()
 		return
 	}
+
 	// Insert macro   TODO  customize
 	if super && key == .g {
 		ved.view.insert_text('<code></code>')
 		ved.view.x -= 7
 	}
+
 	// Autocomplete
 	if key == .n && super {
 		ved.ctrl_n()
@@ -787,6 +855,7 @@ fn (mut ved Ved) ctrl_n() {
 	}
 	mut word := line[i..end + 1]
 	word = word.trim_space()
+
 	// Dont autocomplete if  fewer than 3 chars
 	if word.len < 3 {
 		return
@@ -804,6 +873,7 @@ fn (mut ved Ved) ctrl_n() {
 fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	super := mod == .super || mod == .ctrl
 	shift := mod == .shift
+
 	// println(int(mod))
 	shift_and_super := int(mod) == 9
 	mut view := ved.view
@@ -822,6 +892,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.nr_splits = 1
 				ved.win_width = 600
 				ved.win_height = 500
+
 				// glfw.post_empty_event()
 			}
 		}
@@ -854,6 +925,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.f5 {
 			ved.run_file()
+
 			// ved.char_width -= 1
 			// ved.line_height -= 1
 			// ved.font_size -= 1
@@ -958,12 +1030,14 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			} else if super {
 				ved.mode = .query
 				ved.query_type = .ctrlj
+
 				// ved.load_open_files()
 				ved.query = ''
 				ved.just_switched = true
 			} else {
 				// println('J isb=$ved.is_building')
 				ved.view.j()
+
 				// if !ved.is_building {
 				// ved.refresh = false
 				// }
@@ -971,6 +1045,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.k {
 			ved.view.k()
+
 			// if !ved.is_building {
 			// ved.refresh = false
 			// }
@@ -1068,6 +1143,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			// go to end
 			if shift && !super {
 				ved.view.shift_g()
+
 				// ved.prev_key = 0
 			}
 			// copy file path to clipboard
@@ -1078,6 +1154,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			else {
 				if ved.prev_key == .g {
 					ved.view.gg()
+
 					// ved.prev_key = 0
 				} else {
 					ved.prev_key = .g
@@ -1139,6 +1216,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			if ved.prev_key == .z {
 				ved.view.zz()
 			}
+
 			// Next workspace
 		}
 		.right_bracket {
@@ -1166,10 +1244,12 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.up {
 			ved.view.k()
+
 			// ved.refresh = false
 		}
 		.down {
 			ved.view.j()
+
 			// ved.refresh = false
 		}
 		else {}
@@ -1191,11 +1271,13 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 // Find current word under cursor
 fn (ved &Ved) word_under_cursor() string {
 	line := ved.view.line()
+
 	// First go left
 	mut start := ved.view.x
 	for start > 0 && is_alpha_underscore(int(line[start])) {
 		start--
 	}
+
 	// Now go right
 	mut end := ved.view.x
 	for end < line.len && is_alpha_underscore(int(line[end])) {
@@ -1217,6 +1299,7 @@ fn (mut ved Ved) char_insert(s string) {
 	}
 	ved.view.insert_text(s)
 	ved.prev_insert += s
+
 	// println(ved.prev_insert)
 }
 
@@ -1241,6 +1324,7 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 			if view.vend >= view.lines.len {
 				view.vend = view.lines.len - 1
 			}
+
 			// Scroll
 			if view.vend >= view.from + view.page_height {
 				view.from++
@@ -1317,6 +1401,7 @@ fn (mut ved Ved) dot() {
 		}
 		'cw' {
 			ved.view.dw(false)
+
 			// println('dot cw prev_insert=$ved.prev_insert')
 			ved.view.insert_text(ved.prev_insert)
 			ved.prev_cmd = 'cw'
@@ -1362,6 +1447,7 @@ fn (mut ved Ved) prev_split() {
 fn (mut ved Ved) open_workspace(idx int) {
 	//$if debug {
 	println('open workspace($idx)')
+
 	//}
 	if idx >= ved.workspaces.len {
 		ved.open_workspace(0)
@@ -1374,16 +1460,19 @@ fn (mut ved Ved) open_workspace(idx int) {
 	diff := idx - ved.workspace_idx
 	ved.workspace_idx = idx
 	ved.workspace = ved.workspaces[idx]
+
 	// Update cur split index. If we are in space 0 split 1 and go to
 	// space 1, split is updated to 4 (1 + 3 * (1-0))
 	ved.cur_split += diff * ved.splits_per_workspace
 	ved.update_view()
+
 	// ved.get_git_diff()
 }
 
 fn (mut ved Ved) add_workspace(path string) {
 	//$if debug {
 	println('add_workspace("$path")')
+
 	//}
 	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
@@ -1419,6 +1508,7 @@ fn (ved &Ved) save_session() {
 	mut f := os.create(session_path) or { panic('fail') }
 	for i, view in ved.views {
 		println('saving view #$i $view.path')
+
 		// if view.path == '' {
 		// continue
 		// }
@@ -1439,6 +1529,7 @@ fn (ved &Ved) save_timer() {
 	mut f := os.create(timer_path) or { return }
 	f.writeln('task=$ved.cur_task') or { panic(err) }
 	f.writeln('task_start=$ved.task_start_unix') or { panic(err) }
+
 	// f.writeln('timer_typ=$ved.timer.cur_type') or { panic(err) }
 	/*
 	if ved.timer.started {
@@ -1466,16 +1557,19 @@ fn (mut ved Ved) load_timer() {
 		words := line.split('=')
 		if words.len != 2 {
 			vals << ''
+
 			// exit('bad timer format')
 		} else {
 			vals << words[1]
 		}
 	}
+
 	// mut task := lines[0]
 	// println('vals=')
 	// println(vals)
 	ved.cur_task = vals[0]
 	ved.task_start_unix = toi(vals[1])
+
 	// ved.timer.cur_type = toi(vals[2])
 	// ved.timer.start_unix = toi(vals[3])
 	// ved.timer.started = ved.timer.start_unix != 0
@@ -1497,6 +1591,7 @@ fn (mut ved Ved) load_views(paths []string) {
 		if path == '' || path.contains('=') {
 			continue
 		}
+
 		// view.open_file(path)
 		ved.views[i].open_file(path)
 	}
@@ -1532,6 +1627,7 @@ fn (ved &Ved) get_git_diff_full() string {
 	os.system('git -C $dir diff > $dir/out')
 	mut last_view := ved.get_last_view()
 	last_view.open_file('$dir/out')
+
 	// nothing commited (diff = 0), shot git log)
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
@@ -1563,6 +1659,7 @@ fn (ved &Ved) get_last_view() &View {
 
 fn (mut ved Ved) build_app1() {
 	ved.build_app('')
+
 	// ved.next_split()
 	// glfw.post_empty_event()
 	// ved.prev_split()
@@ -1585,11 +1682,13 @@ fn (mut ved Ved) save_changed_files() {
 fn (mut ved Ved) build_app(extra string) {
 	ved.is_building = true
 	println('building...')
+
 	// Save each open file before building
 	ved.save_changed_files()
 	os.chdir(ved.workspace) or {}
 	dir := ved.workspace
 	mut last_view := ved.get_last_view()
+
 	// mut f := os.create('$dir/out') or {
 	// panic('ff')
 	// return
@@ -1605,6 +1704,7 @@ fn (mut ved Ved) build_app(extra string) {
 	f2.close()
 	last_view.open_file('$dir/out')
 	last_view.shift_g()
+
 	// error line
 	alines := out.output.split_into_lines()
 	lines := alines.filter(it.contains('.v:'))
@@ -1617,6 +1717,7 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 	for line in lines {
 		is_warning := line.contains('warning:')
+
 		// Go to the next warning only if there are no errors.
 		// This makes Ved go to errors before warnings.
 		if !is_warning || (is_warning && no_errors) {
@@ -1625,6 +1726,7 @@ fn (mut ved Ved) build_app(extra string) {
 		}
 	}
 	ved.gg.refresh_ui()
+
 	// ved.refresh = true
 	// time.sleep(4) // delay is_building to prevent flickering in the right split
 	ved.is_building = false
@@ -1645,10 +1747,12 @@ fn (mut ved Ved) run_file() {
 	mut view := ved.view
 	ved.is_building = true
 	println('start file run')
+
 	// Save the file before building
 	if view.changed {
 		view.save_file()
 	}
+
 	// go run /a/b/c.go
 	// dir is "/a/b/"
 	// cd to /a/b/
@@ -1662,11 +1766,13 @@ fn (mut ved Ved) run_file() {
 	mut f := os.create('$dir/out') or { panic('foo') }
 	f.writeln(out.output) or { panic(err) }
 	f.close()
+
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
 	last_view.open_file('$dir/out')
 	last_view.shift_g()
 	ved.is_building = false
+
 	// error line
 	lines := out.output.split_into_lines()
 	for line in lines {
@@ -1681,6 +1787,7 @@ fn (mut ved Ved) run_file() {
 fn (mut ved Ved) go_to_error(line string) {
 	// panic: volt/twitch.v:88
 	println('go to ERROR $line')
+
 	// if !line.contains('panic:') {
 	// return
 	// }
@@ -1707,10 +1814,12 @@ fn (mut ved Ved) go_to_error(line string) {
 		if col > 0 {
 			view.x = col - 1
 		}
+
 		// view.ved.main_wnd.refresh()
 		// Done after the first view with the error
 		return
 	}
+
 	// File with the error is not open right now, do it
 	s := os.execute('git -C $ved.workspace ls-files')
 	if s.exit_code == -1 {
@@ -1733,6 +1842,7 @@ fn (mut ved Ved) loop() {
 		ved.refresh = true
 		ved.now = time.now()
 		ved.gg.refresh_ui()
+
 		// ved.timer.tick(ved)
 		time.sleep(5 * time.second)
 		if ved.timer.pom_is_started && ved.now.unix - ved.timer.pom_start > 25 * 60 {
@@ -1762,6 +1872,7 @@ fn (mut ved Ved) go_to_def() {
 			return
 		}
 	}
+
 	// Not found in current file, try all files in the git tree
 	for file_ in ved.all_git_files {
 		mut file := file_.to_lower()
@@ -1771,6 +1882,7 @@ fn (mut ved Ved) go_to_def() {
 		}
 		file = '$ved.workspace/$file'
 		lines := os.read_lines(file) or { continue }
+
 		// println('trying file $file with $lines.len lines')
 		for j, line in lines {
 			if line.contains(query) {
