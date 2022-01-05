@@ -24,8 +24,8 @@ enum QueryType {
 	grep = 6
 	open_workspace = 7
 	run = 8
-	alert = 9
 	// e.g. "running git pull..."
+	alert = 9
 }
 
 fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
