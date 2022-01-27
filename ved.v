@@ -300,13 +300,13 @@ fn (mut ved Ved) draw() {
 	// Not a full refresh? Means we need to refresh only current split.
 	if !ved.refresh {
 		// split_x := split_width * (ved.cur_split - from)
-		// ved.gg.draw_rect(split_x, 0, split_width - 1, ved.win_height, ved.cfg.bgcolor)
+		// ved.gg.draw_rect_filled(split_x, 0, split_width - 1, ved.win_height, ved.cfg.bgcolor)
 	}
 	// Coords
 	y := (ved.view.y - ved.view.from) * ved.line_height + ved.line_height
 	// Cur line
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
-	ved.gg.draw_rect(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.line_height,
+	ved.gg.draw_rect_filled(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.line_height,
 		ved.cfg.vcolor)
 	// V selection
 	mut v_from := ved.view.vstart + 1
@@ -317,7 +317,7 @@ fn (mut ved Ved) draw() {
 		v_to = ved.view.vstart + 1
 	}
 	for yy := v_from; yy <= v_to; yy++ {
-		ved.gg.draw_rect(line_x, (yy - ved.view.from) * ved.line_height, split_width - ved.view.padding_left,
+		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.line_height, split_width - ved.view.padding_left,
 			ved.line_height, ved.cfg.vcolor)
 	}
 	// Tab offset for cursor
@@ -331,9 +331,9 @@ fn (mut ved Ved) draw() {
 		cursor_tab_off++
 	}
 	// Black title background
-	ved.gg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
 	// Current split has dark blue title
-	// ved.gg.draw_rect(split_x, 0, split_width, ved.line_height, gx.rgb(47, 11, 105))
+	// ved.gg.draw_rect_filled(split_x, 0, split_width, ved.line_height, gx.rgb(47, 11, 105))
 	// Title (file paths)
 	for i := to - 1; i >= from; i-- {
 		v := ved.views[i]
@@ -402,7 +402,7 @@ fn (mut ved Ved) draw() {
 		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
 		cursor_x -= ved.char_width * cursor_tab_off
 	}
-	ved.gg.draw_empty_rect(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
@@ -433,7 +433,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		y := line_nr * ved.line_height
 		// Error bg
 		if view.error_y == j {
-			ved.gg.draw_rect(x + 10, y - 1, split_width - view.padding_left - 10, ved.line_height,
+			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10, ved.line_height,
 				ved.cfg.errorbgcolor)
 		}
 		// Line number
@@ -462,7 +462,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		if view.y == j {
 			// Display entire line if its current
 			// if line.len > max {
-			// ved.gg.draw_rect(line_x, y - 1, ved.win_width, line_height, vcolor)
+			// ved.gg.draw_rect_filled(line_x, y - 1, ved.win_width, line_height, vcolor)
 			// }
 			// max = line.len
 		}

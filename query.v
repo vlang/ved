@@ -256,12 +256,12 @@ fn (mut ved Ved) draw_query() {
 	}
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
-	ved.gg.draw_rect(x, y, width, height, gx.white)
+	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
 	// query window title
-	ved.gg.draw_rect(x, y, width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(x, y, width, ved.line_height, ved.cfg.title_color)
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
 	// query background
-	ved.gg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
 	query_to_draw := if ved.query_type in [.search, .search_in_folder, .grep] {
 		ved.search_query
 	} else {
@@ -293,7 +293,7 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 		}
 		yy := y + 60 + 30 * j
 		if j == ved.gg_pos {
-			ved.gg.draw_rect(x, yy, query_width, 30, ved.cfg.vcolor)
+			ved.gg.draw_rect_filled(x, yy, query_width, 30, ved.cfg.vcolor)
 		}
 		mut file := file_.to_lower()
 		file = file.trim_space()
@@ -315,7 +315,7 @@ fn (mut ved Ved) draw_open_files(x int, y int) {
 		}
 		yy := y + 60 + 30 * j
 		if j == ved.gg_pos {
-			ved.gg.draw_rect(x, yy, query_width * 2, 30, ved.cfg.vcolor)
+			ved.gg.draw_rect_filled(x, yy, query_width * 2, 30, ved.cfg.vcolor)
 		}
 		mut file := file_.to_lower()
 		file = file.trim_space()
@@ -359,7 +359,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 		text := line[pos2 + 1..].trim_space().limit(70)
 		yy := y + 60 + 30 * i
 		if i == ved.gg_pos {
-			ved.gg.draw_rect(x, yy, query_width * 3, 30, ved.cfg.vcolor)
+			ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 		}
 		line_nr := line[pos + 1..pos2]
 		ved.gg.draw_text(x + 10, yy, path.limit(40) + ':$line_nr', txt_cfg)
