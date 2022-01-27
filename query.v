@@ -25,6 +25,7 @@ enum QueryType {
 	open_workspace = 7
 	run = 8
 	alert = 9 // e.g. "running git pull..."
+	search_in_folder = 10
 }
 
 fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
@@ -46,46 +47,56 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 			return
 		}
 		.enter {
-			if ved.query_type == .ctrlp {
-				ved.ctrlp_open()
-			} else if ved.query_type == .ctrlj {
-				ved.ctrlj_open()
-			} else if ved.query_type == .cam {
-				ved.git_commit()
-			} else if ved.query_type == .open {
-				ved.view.open_file(ved.query)
-			} else if ved.query_type == .task {
-				ved.insert_task() or {}
-				if !ved.timer.pom_is_started && !ved.cur_task.starts_with('@') {
-					// Start pomodoro with a new task if it's not already running
-					ved.timer.pom_start = time.now().unix
-					ved.timer.pom_is_started = true
+			match ved.query_type {
+				.ctrlp {
+					ved.ctrlp_open()
 				}
-				ved.cur_task = ved.query
-				ved.task_start_unix = time.now().unix
-				ved.save_timer()
-			} else if ved.query_type == .run {
-				ved.run_zsh()
-			} else if ved.query_type == .grep {
-				// Key down was pressed after typing, now pressing enter opens the file
-				if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
-					line := ved.gg_lines[ved.gg_pos]
-					path := line.all_before(':')
-					pos := line.index(':') or { 0 }
-					pos2 := line.index_after(':', pos + 1)
-					// line_nr := line[path.len + 1..].int() - 1
-					line_nr := line[pos + 1..pos2].int() - 1
-					ved.view.open_file(ved.workspace + '/' + path)
-					ved.view.move_to_line(line_nr)
-					ved.view.zz()
-					ved.mode = .normal
-				} else {
-					// Otherwise just do a git grep on a submitted query
-					ved.git_grep()
+				.ctrlj {
+					ved.ctrlj_open()
 				}
-				return
-			} else {
-				ved.search(false)
+				.cam {
+					ved.git_commit()
+				}
+				.open {
+					ved.view.open_file(ved.query)
+				}
+				.task {
+					ved.insert_task() or {}
+					if !ved.timer.pom_is_started && !ved.cur_task.starts_with('@') {
+						// Start pomodoro with a new task if it's not already running
+						ved.timer.pom_start = time.now().unix
+						ved.timer.pom_is_started = true
+					}
+					ved.cur_task = ved.query
+					ved.task_start_unix = time.now().unix
+					ved.save_timer()
+				}
+				.run {
+					ved.run_zsh()
+				}
+				.grep {
+					// Key down was pressed after typing, now pressing enter opens the file
+					if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
+						line := ved.gg_lines[ved.gg_pos]
+						path := line.all_before(':')
+						pos := line.index(':') or { 0 }
+						pos2 := line.index_after(':', pos + 1)
+						// line_nr := line[path.len + 1..].int() - 1
+						line_nr := line[pos + 1..pos2].int() - 1
+						ved.view.open_file(ved.workspace + '/' + path)
+						ved.view.move_to_line(line_nr)
+						ved.view.zz()
+						ved.mode = .normal
+					} else {
+						// Otherwise just do a git grep on a submitted query
+						ved.git_grep()
+					}
+					return
+				}
+				else {
+					// println('CALLING SEARCH ON ENTER squery=$ved.search_query')
+					ved.search(.forward)
+				}
 			}
 			ved.mode = .normal
 			return
@@ -159,6 +170,21 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 	}
 }
 
+fn (mut ved Ved) char_query(s string) {
+	if int(s[0]) < 32 {
+		return
+	}
+	mut q := ved.query
+	println('char q($s) $ved.query_type')
+	if ved.query_type in [.search, .search_in_folder, .grep] {
+		q = ved.search_query
+		ved.search_query = q + s
+		println('new sq=$ved.search_query')
+	} else {
+		ved.query = q + s
+	}
+}
+
 fn (mut ved Ved) load_git_tree() {
 	ved.query = ''
 	// Cache all git files
@@ -195,6 +221,7 @@ fn (ved &Ved) load_all_tasks() {
 fn (q QueryType) str() string {
 	return match q {
 		.search { 'find' }
+		.search_in_folder { 'find in folder' }
 		.ctrlp { 'ctrl p (git files)' }
 		.open { 'open' }
 		.open_workspace { 'open workspace' }
@@ -235,11 +262,12 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
 	// query background
 	ved.gg.draw_rect(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
-	mut q := ved.query
-	if ved.query_type == QueryType.search || ved.query_type == QueryType.grep {
-		q = ved.search_query
+	query_to_draw := if ved.query_type in [.search, .search_in_folder, .grep] {
+		ved.search_query
+	} else {
+		ved.query
 	}
-	ved.gg.draw_text(x + 10, y + 30, q, txt_cfg)
+	ved.gg.draw_text(x + 10, y + 30, query_to_draw, txt_cfg)
 	match ved.query_type {
 		.ctrlp {
 			ved.draw_ctrlp_files(x, y)
@@ -401,7 +429,13 @@ fn (mut ved Ved) git_grep() {
 	}
 }
 
-fn (mut ved Ved) search(goback bool) {
+enum SearchType {
+	backward
+	forward
+}
+
+fn (mut ved Ved) search(search_type SearchType) {
+	println('search() query=$ved.search_query')
 	if ved.search_query == '' {
 		return
 	}
@@ -409,7 +443,8 @@ fn (mut ved Ved) search(goback bool) {
 	mut passed := false
 	mut to := view.lines.len
 	mut di := 1
-	if goback {
+	goback := search_type == .backward
+	if search_type == .backward {
 		to = 0
 		di = -1
 	}
@@ -444,8 +479,26 @@ fn (mut ved Ved) search(goback bool) {
 		}
 		// Haven't found it, try from the top
 		if !goback && !passed && i == view.lines.len - 1 {
-			i = 0
-			passed = true
+			if ved.search_dir == '' {
+				i = 0
+				passed = true
+			} else {
+				// Go to the next file in the directory
+				ext := '.' + ved.view.path.after('.')
+				files := os.walk_ext(os.dir(ved.view.path), ext)
+				for ved.search_dir_idx < files.len {
+					text := os.read_file(files[ved.search_dir_idx]) or { panic(err) }
+					if text.contains(ved.search_query) {
+						ved.view.open_file(files[ved.search_dir_idx])
+						ved.view.gg()
+						ved.search_dir_idx++
+						ved.search(search_type)
+						break
+					}
+					ved.search_dir_idx++
+				}
+				//println('ffffff $files')
+			}
 		}
 		/*
 		// Same, but for reverse search

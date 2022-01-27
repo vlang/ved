@@ -71,6 +71,8 @@ mut:
 	search_history []string
 	search_idx     int
 	cq_in_a_row    int
+	search_dir     string // for cmd+/ search in the entire directory where the current file is located
+	search_dir_idx int    // for looping thru search dir files
 }
 
 // For syntax highlighting
@@ -840,15 +842,16 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 		}
 		.slash {
+			ved.search_query = ''
+			ved.mode = .query
+			ved.just_switched = true
+			ved.search_dir = ''
 			if shift {
-				ved.search_query = ''
-				ved.mode = .query
-				ved.just_switched = true
 				ved.query_type = .grep
+			} else if super {
+				ved.query_type = .search_in_folder
+				ved.search_dir = os.dir(ved.view.path)
 			} else {
-				ved.search_query = ''
-				ved.mode = .query
-				ved.just_switched = true
 				ved.query_type = .search
 			}
 		}
@@ -978,9 +981,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		.n {
 			if shift {
 				// backwards search
-				ved.search(true)
+				ved.search(.backward)
 			} else {
-				ved.search(false)
+				ved.search(.forward)
 			}
 		}
 		.o {
@@ -1208,7 +1211,7 @@ fn (ved &Ved) word_under_cursor() string {
 
 fn (mut ved Ved) star() {
 	ved.search_query = ved.word_under_cursor()
-	ved.search(false)
+	ved.search(.forward)
 }
 
 fn (mut ved Ved) char_insert(s string) {
@@ -1218,19 +1221,6 @@ fn (mut ved Ved) char_insert(s string) {
 	ved.view.insert_text(s)
 	ved.prev_insert += s
 	// println(ved.prev_insert)
-}
-
-fn (mut ved Ved) char_query(s string) {
-	if int(s[0]) < 32 {
-		return
-	}
-	mut q := ved.query
-	if ved.query_type == .search || ved.query_type == .grep {
-		q = ved.search_query
-		ved.search_query = q + s
-	} else {
-		ved.query = q + s
-	}
 }
 
 fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
@@ -1601,7 +1591,7 @@ fn (mut ved Ved) build_app(extra string) {
 		return
 	}
 	mut f2 := os.create('$dir/out') or { panic('fail') }
-	f2.writeln(out.output) or { panic(err) }
+	f2.writeln(filter_ascii_colors(out.output)) or { panic(err) }
 	f2.close()
 	last_view.open_file('$dir/out')
 	last_view.shift_g()
@@ -1879,4 +1869,8 @@ fn (mut ved Ved) git_pull() {
 	os.system('git -C "$ved.workspace" pull --rebase')
 	ved.mode = .normal
 	ved.gg.refresh_ui()
+}
+
+fn filter_ascii_colors(s string) string {
+	return s.replace_each(['[22m', '', '[35m', '', '[39m', '', '[1m', '', '[31m', ''])
 }
