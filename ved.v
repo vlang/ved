@@ -434,8 +434,8 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		y := line_nr * ved.line_height
 		// Error bg
 		if view.error_y == j {
-			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10, ved.line_height,
-				ved.cfg.errorbgcolor)
+			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10,
+				ved.line_height, ved.cfg.errorbgcolor)
 		}
 		// Line number
 		line_number := j + 1
