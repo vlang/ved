@@ -497,7 +497,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 					}
 					ved.search_dir_idx++
 				}
-				//println('ffffff $files')
+				// println('ffffff $files')
 			}
 		}
 		/*
