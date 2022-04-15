@@ -117,6 +117,7 @@ const (
 	fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
 )
 
+[console]
 fn main() {
 	args := os.args.clone()
 	if '-h' in args || '--help' in args {
