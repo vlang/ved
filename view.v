@@ -147,6 +147,7 @@ fn (mut view View) open_file(path string) {
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
 	view.changed = false
 	view.ved.gg.refresh_ui()
+	//go view.ved.write_changes_in_file_every_5s()
 }
 
 fn (mut view View) reopen() {
@@ -576,14 +577,14 @@ fn (mut view View) cw() {
 // returns the removed word
 fn (mut view View) dw(del_whitespace bool) { // string {
 	mut ved := view.ved
-	typ := is_alpha(byte(view.char()))
+	typ := is_alpha(u8(view.char()))
 	// While cur char has the same type - delete it
 	for {
 		line := view.line()
 		if view.x < 0 || view.x >= line.len - 1 {
 			break
 		}
-		if typ == is_alpha(byte(view.char())) {
+		if typ == is_alpha(u8(view.char())) {
 			// println('del x=$view.x len=$line.len')
 			view.delete_char()
 		} else {
@@ -592,7 +593,7 @@ fn (mut view View) dw(del_whitespace bool) { // string {
 	}
 	// Delete whitespace after the deleted word
 	if del_whitespace {
-		for is_whitespace(byte(view.char())) {
+		for is_whitespace(u8(view.char())) {
 			line := view.line()
 			if view.x < 0 || view.x >= line.len {
 				break
@@ -738,16 +739,16 @@ fn (mut view View) gq() {
 	*/
 }
 
-fn is_alpha(r byte) bool {
+fn is_alpha(r u8) bool {
 	return (r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || (r >= `0` && r <= `9`)
 }
 
-fn is_whitespace(r byte) bool {
+fn is_whitespace(r u8) bool {
 	return r == ` ` || r == `\t`
 }
 
 fn is_alpha_underscore(r int) bool {
-	return is_alpha(byte(r)) || byte(r) == `_` || byte(r) == `#` || byte(r) == `$`
+	return is_alpha(u8(r)) || u8(r) == `_` || u8(r) == `#` || u8(r) == `$`
 }
 
 fn break_text(s string, max int) []string {
