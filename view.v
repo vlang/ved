@@ -147,7 +147,7 @@ fn (mut view View) open_file(path string) {
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
 	view.changed = false
 	view.ved.gg.refresh_ui()
-	//go view.ved.write_changes_in_file_every_5s()
+	// go view.ved.write_changes_in_file_every_5s()
 }
 
 fn (mut view View) reopen() {
