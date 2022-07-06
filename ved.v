@@ -1526,7 +1526,7 @@ fn (ved &Ved) get_git_diff_full() string {
 	// nothing commited (diff = 0), shot git log)
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
-		os.system('git -C $dir log -n 20 --pretty=format:"%ad %s" ' +
+		os.system('git -C $dir log -n 40 --pretty=format:"%ad %s" ' +
 			'--simplify-merges --date=format:"%Y-%m-%d %H:%M:%S    "> $dir/out')
 		last_view.open_file('$dir/out')
 	}
@@ -1829,7 +1829,7 @@ fn (ved &Ved) insert_task() ? {
 		return
 	}
 	start_time := time.unix(int(ved.task_start_unix))
-	mut f := os.open_append(tasks_path) ?
+	mut f := os.open_append(tasks_path)?
 	task_name := ved.cur_task.limit(max_task_len) +
 		strings.repeat(` `, max_task_len - ved.cur_task.len)
 	mins := ved.task_minutes().str() + 'm'
@@ -1838,7 +1838,7 @@ fn (ved &Ved) insert_task() ? {
 	if start_time.day == now.day && start_time.month == now.month {
 		// Single day entry
 		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() + ' | ' +
-			time.now().hhmm() + ' |') ?
+			time.now().hhmm() + ' |')?
 	} else {
 		// Two day entry (separated by 00:00)
 		midnight := time.Time{
@@ -1857,12 +1857,12 @@ fn (ved &Ved) insert_task() ? {
 		}
 
 		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() + ' | ' +
-			midnight.hhmm() + ' |') ?
-		f.writeln(separator) ?
+			midnight.hhmm() + ' |')?
+		f.writeln(separator)?
 		f.writeln('| $task_name | $mins $mins_pad | ' + day_start.format() + ' | ' +
-			time.now().hhmm() + ' |') ?
+			time.now().hhmm() + ' |')?
 	}
-	f.writeln(separator) ?
+	f.writeln(separator)?
 	f.close()
 }
 
