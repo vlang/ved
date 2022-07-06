@@ -1527,7 +1527,7 @@ fn (ved &Ved) get_git_diff_full() string {
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
 		os.system('git -C $dir log -n 40 --pretty=format:"%ad %s" ' +
-			'--simplify-merges --date=format:"%Y-%m-%d %H:%M:%S    "> $dir/out')
+			'--simplify-merges --date=format:"%Y-%m-%d %H:%M  "> $dir/out')
 		last_view.open_file('$dir/out')
 	}
 	last_view.gg()
