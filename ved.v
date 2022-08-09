@@ -4,6 +4,7 @@
 module main
 
 import gg
+import gx
 import os
 import time
 import uiold
@@ -73,6 +74,7 @@ mut:
 	cq_in_a_row    int
 	search_dir     string // for cmd+/ search in the entire directory where the current file is located
 	search_dir_idx int    // for looping thru search dir files
+	error_line     string // is displayed at the bottom
 }
 
 // For syntax highlighting
@@ -136,11 +138,11 @@ fn main() {
 		nr_splits = 1
 	}
 	// size := gg.Size{5120, 2880}
-	mut size := gg.screen_size()
-	if size.width == 0 || size.height == 0 {
-		size = gg.Size{2560, 1480}
+	mut ssize := gg.screen_size()
+	if ssize.width == 0 || ssize.height == 0 {
+		ssize = gg.Size{2560, 1480}
 		if '-laptop' in args {
-			size = gg.Size{1440 * 1, 900 * 1}
+			ssize = gg.Size{1440 * 1, 900 * 1}
 			nr_splits = 2
 		}
 	}
@@ -155,12 +157,12 @@ fn main() {
 		//glfw.get_monitor_size()
 	}
 	*/
-	if size.width < 1500 {
+	if ssize.width < 1500 {
 		nr_splits = 2
 	}
 	mut ved := &Ved{
-		win_width: size.width
-		win_height: size.height
+		win_width: ssize.width
+		win_height: ssize.height
 		nr_splits: nr_splits
 		splits_per_workspace: nr_splits
 		cur_split: 0
@@ -174,16 +176,16 @@ fn main() {
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
-	println('height=$size.height')
-	ved.page_height = size.height / ved.line_height - 1
+	println('height=$ssize.height')
+	ved.page_height = ssize.height / ved.line_height - 1
 	// TODO V keys only
 	keys := 'case shared defer none match pub struct interface in sizeof assert enum import go ' +
 		'return module fn if for break continue asm unsafe mut is ' +
 		'type const else true else for false use $' + 'if $' + 'else'
 	ved.keys = keys.split(' ')
 	ved.gg = gg.new_context(
-		width: size.width
-		height: size.height // borderless_window: !is_window
+		width: ssize.width
+		height: ssize.height // borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Ved'
 		create_window: true
@@ -408,6 +410,16 @@ fn (mut ved Ved) draw() {
 	// query window
 	if ved.mode == .query {
 		ved.draw_query()
+	}
+	// Big error line at the bottom
+	if ved.error_line != '' {
+		ved.gg.draw_rect_filled(0, ved.win_height - ved.line_height, ved.win_width, ved.line_height,
+			ved.cfg.errorbgcolor)
+		ved.gg.draw_text(3, ved.win_height - ved.line_height, ved.error_line, gx.TextCfg{
+			size: ved.cfg.text_size
+			color: gx.white
+			align: gx.align_left
+		})
 	}
 }
 
@@ -1634,6 +1646,7 @@ fn (mut ved Ved) build_app(extra string) {
 // Saves time for user since they don't have to define 'build' for every file
 fn (mut ved Ved) run_file() {
 	mut view := ved.view
+	ved.error_line = ''
 	ved.is_building = true
 	println('start file run')
 	// Save the file before building
@@ -1670,6 +1683,7 @@ fn (mut ved Ved) run_file() {
 }
 
 fn (mut ved Ved) go_to_error(line string) {
+	ved.error_line = line.after('error: ')
 	// panic: volt/twitch.v:88
 	println('go to ERROR $line')
 	// if !line.contains('panic:') {
