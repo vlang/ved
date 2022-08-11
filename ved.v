@@ -659,6 +659,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	}
 	// Reset error line
 	ved.view.error_y = -1
+	ved.error_line = ''
 	match ved.mode {
 		.normal { ved.key_normal(key, mod) }
 		.visual { ved.key_visual(key, super, shift) }
