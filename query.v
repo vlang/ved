@@ -391,6 +391,7 @@ fn (mut ved Ved) ctrlp_open() {
 		}
 	}
 	ved.gg_pos = -1
+	ved.save_session()
 }
 
 // TODO merge with fn above
