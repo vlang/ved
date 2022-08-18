@@ -16,6 +16,7 @@ const (
 	settings_path     = os.join_path(os.home_dir(), '.ved')
 	codeblog_path     = os.join_path(os.home_dir(), 'code', 'blog')
 	session_path      = os.join_path(settings_path, 'session')
+	workspaces_path   = os.join_path(settings_path, 'workspaces')
 	timer_path        = os.join_path(settings_path, 'timer')
 	tasks_path        = os.join_path(settings_path, 'tasks')
 	max_nr_workspaces = 10
@@ -138,31 +139,20 @@ fn main() {
 		nr_splits = 1
 	}
 	// size := gg.Size{5120, 2880}
-	mut ssize := gg.screen_size()
-	if ssize.width == 0 || ssize.height == 0 {
-		ssize = gg.Size{2560, 1480}
+	mut size := gg.screen_size()
+	if size.width == 0 || size.height == 0 {
+		size = gg.Size{2560, 1480}
 		if '-laptop' in args {
-			ssize = gg.Size{1440 * 1, 900 * 1}
+			size = gg.Size{1440 * 1, 900 * 1}
 			nr_splits = 2
 		}
 	}
-	// TODO
-	/*
-	size := if is_window {
-		gg.Size{900, 800}
-	}
-	else {
-		gg.Size{900, 800}
-
-		//glfw.get_monitor_size()
-	}
-	*/
-	if ssize.width < 1500 {
+	if size.width < 1500 {
 		nr_splits = 2
 	}
 	mut ved := &Ved{
-		win_width: ssize.width
-		win_height: ssize.height
+		win_width: size.width
+		win_height: size.height
 		nr_splits: nr_splits
 		splits_per_workspace: nr_splits
 		cur_split: 0
@@ -176,16 +166,16 @@ fn main() {
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
-	println('height=$ssize.height')
-	ved.page_height = ssize.height / ved.line_height - 1
+	println('height=$size.height')
+	ved.page_height = size.height / ved.line_height - 1
 	// TODO V keys only
 	keys := 'case shared defer none match pub struct interface in sizeof assert enum import go ' +
 		'return module fn if for break continue asm unsafe mut is ' +
 		'type const else true else for false use $' + 'if $' + 'else'
 	ved.keys = keys.split(' ')
 	ved.gg = gg.new_context(
-		width: ssize.width
-		height: ssize.height // borderless_window: !is_window
+		width: size.width
+		height: size.height // borderless_window: !is_window
 		fullscreen: !is_window
 		window_title: 'Ved'
 		create_window: true
@@ -215,9 +205,17 @@ fn main() {
 	if cur_dir.ends_with('/ved.app/Contents/Resources') {
 		cur_dir = cur_dir.replace('/ved.app/Contents/Resources', '')
 	}
-	// Open a single text file
 	mut first_launch := false
-	if args.len > 1 && os.is_file(args[args.len - 1]) {
+	if args.len == 1 {
+		// No args, open previous saved workspaces.
+		workspaces := os.read_lines(workspaces_path) or { return }
+		for workspace in workspaces {
+			ved.add_workspace(workspace)
+		}
+		ved.open_workspace(0)
+	}
+	// Open a single text file
+	else if args.len == 2 && os.is_file(args.last()) {
 		path := args[args.len - 1]
 		if !os.exists(path) {
 			println('file "$path" does not exist')
@@ -1432,6 +1430,11 @@ fn (ved &Ved) save_session() {
 		f.writeln(view.path) or { panic(err) }
 	}
 	f.close()
+	mut f_workspace := os.create(workspaces_path) or { panic(err) }
+	for workspace in ved.workspaces {
+		f_workspace.writeln(workspace) or { panic(err) }
+	}
+	f_workspace.close()
 }
 
 // TODO fix vals[0].int()
