@@ -9,7 +9,7 @@
 
 ### Building from source
 
-First you need to [install V](https://github.com/vlang/v#installing-v-from-source). This will take a couple of seconds.
+First you need to [install V](https://github.com/vlang/v#installing-v---from-source-preferred-method). This will take a couple of seconds.
 
 ```
 git clone https://github.com/vlang/ved
