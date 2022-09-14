@@ -32,7 +32,7 @@ mut:
 	page_height          int
 	views                []View
 	cur_split            int
-	view                 &View
+	view                 &View = unsafe { nil }
 	mode                 EditorMode
 	just_switched        bool // for keydown/char events to avoid dup keys
 	prev_key             gg.KeyCode
@@ -40,7 +40,7 @@ mut:
 	prev_insert          string // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files        []string
 	top_tasks            []string
-	gg                   &gg.Context
+	gg                   &gg.Context = unsafe { nil }
 	query                string
 	search_query         string
 	query_type           QueryType
@@ -66,7 +66,7 @@ mut:
 	gg_lines       []string
 	gg_pos         int
 	cfg            Config
-	cb             &clipboard.Clipboard
+	cb             &clipboard.Clipboard = unsafe { nil }
 	open_paths     [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
 	prev_y         int        // for jumping back ('')
 	now            time.Time  // cached value of time.now() to avoid calling it for every frame

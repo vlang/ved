@@ -23,7 +23,7 @@ mut:
 	vend         int // visual borders
 	changed      bool
 	error_y      int
-	ved          &Ved
+	ved          &Ved = unsafe { nil }
 	prev_y       int
 	hash_comment bool
 	hl_on        bool
