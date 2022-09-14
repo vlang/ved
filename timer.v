@@ -20,7 +20,7 @@ const (
 
 struct Timer {
 mut:
-	gg             &gg.Context
+	gg             &gg.Context = unsafe { nil }
 	tasks          []Task
 	date           time.Time // the day being shown
 	pom_start      i64       // unix time
