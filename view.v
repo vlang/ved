@@ -333,7 +333,7 @@ fn (mut view View) shift_b() {
 fn (mut view View) dd() {
 	if view.lines.len != 0 {
 		mut ved := view.ved
-		ved.prev_key = gg.KeyCode(0)
+		ved.prev_key = gg.KeyCode.invalid
 		ved.prev_cmd = 'dd'
 		ved.ylines = []
 		ved.ylines << view.line()
@@ -701,7 +701,7 @@ fn (mut view View) tt() {
 		return
 	}
 	mut ved := view.ved
-	ved.prev_key = gg.KeyCode(0)
+	ved.prev_key = gg.KeyCode.invalid
 	view.open_file(view.prev_path)
 }
 

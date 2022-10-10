@@ -156,7 +156,7 @@ fn main() {
 		nr_splits: nr_splits
 		splits_per_workspace: nr_splits
 		cur_split: 0
-		mode: EditorMode(0)
+		mode: .normal
 		line_height: 20
 		char_width: 8 // font_size: 13
 		view: 0
@@ -691,7 +691,7 @@ fn on_char(code u32, mut ved Ved) {
 			if !ved.just_switched && ved.prev_key == .r {
 				if s != 'r' {
 					ved.view.r(s)
-					ved.prev_key = gg.KeyCode(0)
+					ved.prev_key = gg.KeyCode.invalid
 					ved.prev_cmd = 'r'
 					ved.prev_insert = s.clone()
 				}
@@ -890,7 +890,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.apostrophe {
 			if ved.prev_key == .apostrophe {
-				ved.prev_key = gg.KeyCode(0)
+				ved.prev_key = gg.KeyCode.invalid
 				ved.move_to_line(ved.prev_y)
 				return
 			}
