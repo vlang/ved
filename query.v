@@ -122,12 +122,14 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						}
 					}
 					.search {
-						// History search
-						ved.search_idx++
-						if ved.search_idx >= ved.search_history.len {
-							ved.search_idx = ved.search_history.len - 1
+						if ved.search_history.len > 0 {
+							// History search
+							ved.search_idx++
+							if ved.search_idx >= ved.search_history.len {
+								ved.search_idx = ved.search_history.len - 1
+							}
+							ved.search_query = ved.search_history[ved.search_idx]
 						}
-						ved.search_query = ved.search_history[ved.search_idx]
 					}
 					else {}
 				}
@@ -143,11 +145,13 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						}
 					}
 					.search {
-						ved.search_idx--
-						if ved.search_idx < 0 {
-							ved.search_idx = 0
+						if ved.search_history.len > 0 {
+							ved.search_idx--
+							if ved.search_idx < 0 {
+								ved.search_idx = 0
+							}
+							ved.search_query = ved.search_history[ved.search_idx]
 						}
-						ved.search_query = ved.search_history[ved.search_idx]
 					}
 					else {}
 				}
