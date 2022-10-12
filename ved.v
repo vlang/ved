@@ -187,7 +187,7 @@ fn main() {
 		event_fn: on_event
 		keydown_fn: key_down
 		char_fn: on_char
-		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
+		font_path: fpath
 		ui_mode: true
 	)
 	println('FULL SCREEN=${!is_window}')

@@ -191,14 +191,34 @@ fn (mut ved Ved) char_query(s string) {
 
 fn (mut ved Ved) load_git_tree() {
 	ved.query = ''
-	// Cache all git files
+
 	mut dir := ved.workspace
 	if dir == '' {
 		dir = '.'
 	}
-	s := os.execute('git -C $dir ls-files')
-	if s.exit_code == -1 {
-		return
+	if ved.is_git_tree() {
+		// Cache all git files
+		s := os.execute('git -C $dir ls-files')
+		if s.exit_code == -1 {
+			return
+		}
+		ved.all_git_files = s.output.split_into_lines()
+	} else {
+		// Get all files if not a git repo
+		mut files := []string{}
+		os.walk_with_context(dir, &files, fn (mut fs []string, f string) {
+			if f == '.' || f == '..' {
+				return
+			}
+			if os.is_file(f) {
+				fs << f
+			}
+		})
+
+		ved.all_git_files = []
+		for f in files {
+			ved.all_git_files << f.all_after('$dir/')
+		}
 	}
 	/*
 	ved.all_git_files = []
@@ -207,7 +227,6 @@ fn (mut ved Ved) load_git_tree() {
 	git_files.sort_by_len()
 	ved.all_git_files << git_files
 	*/
-	ved.all_git_files = s.output.split_into_lines()
 	ved.all_git_files.sort_by_len()
 }
 
@@ -220,6 +239,17 @@ fn (ved &Ved) load_all_tasks() {
 	}
 	println(ved.top_tasks)
 	*/
+}
+
+fn (mut ved Ved) is_git_tree() bool {
+	path := if ved.workspace == '' { '.' } else { ved.workspace }
+
+	out := os.execute('git -C "$path" rev-parse --is-inside-work-tree')
+	if out.exit_code != -1 {
+		return out.output == 'true\n'
+	}
+
+	return false
 }
 
 fn (q QueryType) str() string {
@@ -323,7 +353,6 @@ fn (mut ved Ved) draw_open_files(x int, y int) {
 		}
 		mut file := file_.to_lower()
 		file = file.trim_space()
-		println(file)
 		if !file.contains(ved.query.to_lower()) {
 			continue
 		}
