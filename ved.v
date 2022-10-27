@@ -187,7 +187,7 @@ fn main() {
 		event_fn: on_event
 		keydown_fn: key_down
 		char_fn: on_char
-		font_path: os.resource_abs_path('RobotoMono-Regular.ttf')
+		font_path: fpath
 		ui_mode: true
 	)
 	println('FULL SCREEN=${!is_window}')
@@ -1193,7 +1193,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		// otherwise R is triggered when we press C-R
 		ved.prev_key = key
 	}
-	if key == .q && mod == .ctrl {
+	if key == .q && super {
 		ved.cq_in_a_row++
 	} else {
 		ved.cq_in_a_row = 0
