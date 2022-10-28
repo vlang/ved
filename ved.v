@@ -268,6 +268,18 @@ fn main() {
 
 fn on_event(e &gg.Event, mut ved Ved) {
 	ved.refresh = true
+
+	if e.typ == .mouse_scroll {
+		if e.scroll_y < -0.3 {
+			ved.view.j()
+		} else if e.scroll_y > 0.3 {
+			ved.view.k()
+		}
+	}
+
+	if e.typ == .mouse_down {
+		ved.view.y = int((e.mouse_y / ved.line_height - 1) / 2)
+	}
 }
 
 fn (ved &Ved) split_width() int {
@@ -386,6 +398,10 @@ fn (mut ved Ved) draw() {
 	if ved.mode == .insert {
 		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
 	}
+	// Draw "v" in visual mode
+	if ved.mode == .visual {
+		ved.gg.draw_text(5, 1, '-v-', ved.cfg.file_name_cfg)
+	}
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ved.views.len refresh=$ved.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -403,7 +419,16 @@ fn (mut ved Ved) draw() {
 		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
 		cursor_x -= ved.char_width * cursor_tab_off
 	}
-	ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	if ved.mode == .insert {
+		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.line_height, ved.cfg.cursor_color)
+	} else if ved.mode == .visual {
+		// FIXME: This looks terrible.
+		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.line_height, ved.cfg.cursor_color)
+		ved.gg.draw_rect_filled(cursor_x + ved.char_width, y - 1, 1, ved.line_height,
+			ved.cfg.cursor_color)
+	} else {
+		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	}
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
