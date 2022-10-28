@@ -130,7 +130,7 @@ fn main() {
 	if !os.is_dir(settings_path) {
 		os.mkdir(settings_path) or { panic(err) }
 	}
-	mut nr_splits := 3
+	mut nr_splits := 1
 	is_window := '-window' in args
 	if '-two_splits' in args {
 		nr_splits = 2
@@ -144,11 +144,8 @@ fn main() {
 		size = gg.Size{2560, 1480}
 		if '-laptop' in args {
 			size = gg.Size{1440 * 1, 900 * 1}
-			nr_splits = 2
+			nr_splits = 1
 		}
-	}
-	if size.width < 1500 {
-		nr_splits = 2
 	}
 	mut ved := &Ved{
 		win_width: size.width
@@ -166,13 +163,18 @@ fn main() {
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
+	ved.cfg.backspace_go_up = true
 	println('height=$size.height')
 	ved.page_height = size.height / ved.line_height - 1
-	// TODO V keys only
-	keys := 'case shared defer none match pub struct interface in sizeof assert enum import go ' +
+
+	keys_vlang :=
+		'case shared defer none match pub struct interface in sizeof assert enum import go ' +
 		'return module fn if for break continue asm unsafe mut is ' +
 		'type const else true else for false use $' + 'if $' + 'else'
-	ved.keys = keys.split(' ')
+	keys_primary := os.read_file('./v.syntax') or { keys_vlang }
+
+	ved.keys = keys_primary.split(' ')
+
 	ved.gg = gg.new_context(
 		width: size.width
 		height: size.height // borderless_window: !is_window
@@ -270,15 +272,15 @@ fn on_event(e &gg.Event, mut ved Ved) {
 	ved.refresh = true
 
 	if e.typ == .mouse_scroll {
-		if e.scroll_y < -0.3 {
+		if e.scroll_y < -0.1 {
 			ved.view.j()
-		} else if e.scroll_y > 0.3 {
+		} else if e.scroll_y > 0.1 {
 			ved.view.k()
 		}
 	}
 
 	if e.typ == .mouse_down {
-		ved.view.y = int((e.mouse_y / ved.line_height - 1) / 2)
+		// ved.view.y = int((e.mouse_y / ved.line_height - 1) / 2)
 	}
 }
 
@@ -305,6 +307,7 @@ fn frame(mut ved Ved) {
 }
 
 fn (mut ved Ved) draw() {
+	println(ved.nr_splits)
 	view := ved.view
 	split_width := ved.split_width()
 	// Splits from and to
