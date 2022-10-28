@@ -294,7 +294,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		}
 
 		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
-		view.x = int(((e.mouse_x - view.padding_left) / ved.char_width) / 2 - 4 - leading_tabs * 3)
+		view.x = int(((e.mouse_x - view.padding_left) / ved.char_width) / 2 - 3 - leading_tabs * 3)
 	}
 }
 
