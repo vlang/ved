@@ -259,7 +259,7 @@ fn (mut view View) k() {
 		return
 	}
 	view.y--
-	if view.y < view.from && view.y > 0 {
+	if view.y < view.from && view.y >= 0 {
 		view.from--
 	}
 	// Line above is shorter, move to the end of it
@@ -283,7 +283,7 @@ fn (mut view View) move_to_page_bot() {
 
 fn (mut view View) l() {
 	line := view.line()
-	if view.x < line.len - 1 {
+	if view.x < line.len {
 		view.x++
 	}
 }
