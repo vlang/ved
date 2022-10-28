@@ -61,21 +61,20 @@ mut:
 	refresh              bool = true
 	line_height          int
 	char_width           int
-	// font_size        int
-	is_ml_comment  bool
-	gg_lines       []string
-	gg_pos         int
-	cfg            Config
-	cb             &clipboard.Clipboard = unsafe { nil }
-	open_paths     [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y         int        // for jumping back ('')
-	now            time.Time  // cached value of time.now() to avoid calling it for every frame
-	search_history []string
-	search_idx     int
-	cq_in_a_row    int
-	search_dir     string // for cmd+/ search in the entire directory where the current file is located
-	search_dir_idx int    // for looping thru search dir files
-	error_line     string // is displayed at the bottom
+	is_ml_comment        bool
+	gg_lines             []string
+	gg_pos               int
+	cfg                  Config
+	cb                   &clipboard.Clipboard = unsafe { nil }
+	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y               int        // for jumping back ('')
+	now                  time.Time  // cached value of time.now() to avoid calling it for every frame
+	search_history       []string
+	search_idx           int
+	cq_in_a_row          int
+	search_dir           string // for cmd+/ search in the entire directory where the current file is located
+	search_dir_idx       int    // for looping thru search dir files
+	error_line           string // is displayed at the bottom
 }
 
 // For syntax highlighting
@@ -135,20 +134,16 @@ fn main() {
 	if '-two_splits' in args {
 		nr_splits = 2
 	}
-	if is_window {
+	if is_window || '-laptop' in args {
 		nr_splits = 1
 	}
-	// size := gg.Size{5120, 2880}
 	mut size := gg.screen_size()
 	if size.width == 0 || size.height == 0 {
 		size = gg.Size{2560, 1480}
 		if '-laptop' in args {
 			size = gg.Size{1440 * 1, 900 * 1}
-			nr_splits = 2
+			nr_splits = 1
 		}
-	}
-	if size.width < 1500 {
-		nr_splits = 2
 	}
 	mut ved := &Ved{
 		win_width: size.width
@@ -166,13 +161,18 @@ fn main() {
 	}
 	ved.handle_segfault()
 	ved.cfg.init_colors()
+	ved.cfg.backspace_go_up = true
 	println('height=$size.height')
 	ved.page_height = size.height / ved.line_height - 1
-	// TODO V keys only
-	keys := 'case shared defer none match pub struct interface in sizeof assert enum import go ' +
+
+	keys_vlang :=
+		'case shared defer none match pub struct interface in sizeof assert enum import go ' +
 		'return module fn if for break continue asm unsafe mut is ' +
 		'type const else true else for false use $' + 'if $' + 'else'
-	ved.keys = keys.split(' ')
+	keys_primary := os.read_file('./v.syntax') or { keys_vlang }
+
+	ved.keys = keys_primary.split(' ')
+
 	ved.gg = gg.new_context(
 		width: size.width
 		height: size.height // borderless_window: !is_window
@@ -268,6 +268,34 @@ fn main() {
 
 fn on_event(e &gg.Event, mut ved Ved) {
 	ved.refresh = true
+
+	if e.typ == .mouse_scroll {
+		if e.scroll_y < -0.2 {
+			ved.view.j()
+		} else if e.scroll_y > 0.2 {
+			ved.view.k()
+		}
+	}
+
+	// FIXME: The rounding math here cause the Y coord to be off sometimes.
+	if e.typ == .mouse_down {
+		mut view := ved.view
+
+		mut current_line := ''
+		if view.y > 0 && view.y < view.lines.len {
+			current_line = view.lines[view.y]
+		}
+		current_line_split := current_line.split('\t')
+		mut leading_tabs := 0
+		for i := 0; i < current_line_split.len; i++ {
+			if current_line_split[i] == '' {
+				leading_tabs++
+			}
+		}
+
+		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
+		view.x = int(((e.mouse_x - view.padding_left) / ved.char_width) / 2 - 3 - leading_tabs * 3)
+	}
 }
 
 fn (ved &Ved) split_width() int {
@@ -386,6 +414,10 @@ fn (mut ved Ved) draw() {
 	if ved.mode == .insert {
 		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
 	}
+	// Draw "v" in visual mode
+	if ved.mode == .visual {
+		ved.gg.draw_text(5, 1, '-v-', ved.cfg.file_name_cfg)
+	}
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ved.views.len refresh=$ved.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -403,7 +435,16 @@ fn (mut ved Ved) draw() {
 		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
 		cursor_x -= ved.char_width * cursor_tab_off
 	}
-	ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	if ved.mode == .insert {
+		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.line_height, ved.cfg.cursor_color)
+	} else if ved.mode == .visual {
+		// FIXME: This looks terrible.
+		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.line_height, ved.cfg.cursor_color)
+		ved.gg.draw_rect_filled(cursor_x + ved.char_width, y - 1, 1, ved.line_height,
+			ved.cfg.cursor_color)
+	} else {
+		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+	}
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
