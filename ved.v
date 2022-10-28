@@ -61,21 +61,20 @@ mut:
 	refresh              bool = true
 	line_height          int
 	char_width           int
-	// font_size        int
-	is_ml_comment  bool
-	gg_lines       []string
-	gg_pos         int
-	cfg            Config
-	cb             &clipboard.Clipboard = unsafe { nil }
-	open_paths     [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y         int        // for jumping back ('')
-	now            time.Time  // cached value of time.now() to avoid calling it for every frame
-	search_history []string
-	search_idx     int
-	cq_in_a_row    int
-	search_dir     string // for cmd+/ search in the entire directory where the current file is located
-	search_dir_idx int    // for looping thru search dir files
-	error_line     string // is displayed at the bottom
+	is_ml_comment        bool
+	gg_lines             []string
+	gg_pos               int
+	cfg                  Config
+	cb                   &clipboard.Clipboard = unsafe { nil }
+	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y               int        // for jumping back ('')
+	now                  time.Time  // cached value of time.now() to avoid calling it for every frame
+	search_history       []string
+	search_idx           int
+	cq_in_a_row          int
+	search_dir           string // for cmd+/ search in the entire directory where the current file is located
+	search_dir_idx       int    // for looping thru search dir files
+	error_line           string // is displayed at the bottom
 }
 
 // For syntax highlighting
@@ -130,15 +129,14 @@ fn main() {
 	if !os.is_dir(settings_path) {
 		os.mkdir(settings_path) or { panic(err) }
 	}
-	mut nr_splits := 1
+	mut nr_splits := 3
 	is_window := '-window' in args
 	if '-two_splits' in args {
 		nr_splits = 2
 	}
-	if is_window {
+	if is_window || '-laptop' in args {
 		nr_splits = 1
 	}
-	// size := gg.Size{5120, 2880}
 	mut size := gg.screen_size()
 	if size.width == 0 || size.height == 0 {
 		size = gg.Size{2560, 1480}
@@ -272,15 +270,31 @@ fn on_event(e &gg.Event, mut ved Ved) {
 	ved.refresh = true
 
 	if e.typ == .mouse_scroll {
-		if e.scroll_y < -0.1 {
+		if e.scroll_y < -0.2 {
 			ved.view.j()
-		} else if e.scroll_y > 0.1 {
+		} else if e.scroll_y > 0.2 {
 			ved.view.k()
 		}
 	}
 
+	// FIXME: The rounding math here cause the Y coord to be off sometimes.
 	if e.typ == .mouse_down {
-		// ved.view.y = int((e.mouse_y / ved.line_height - 1) / 2)
+		mut view := ved.view
+
+		mut current_line := ''
+		if view.y > 0 && view.y < view.lines.len {
+			current_line = view.lines[view.y]
+		}
+		current_line_split := current_line.split('\t')
+		mut leading_tabs := 0
+		for i := 0; i < current_line_split.len; i++ {
+			if current_line_split[i] == '' {
+				leading_tabs++
+			}
+		}
+
+		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
+		view.x = int(((e.mouse_x - view.padding_left) / ved.char_width) / 2 - 4 - leading_tabs * 3)
 	}
 }
 
@@ -307,7 +321,6 @@ fn frame(mut ved Ved) {
 }
 
 fn (mut ved Ved) draw() {
-	println(ved.nr_splits)
 	view := ved.view
 	split_width := ved.split_width()
 	// Splits from and to
