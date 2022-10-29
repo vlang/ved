@@ -21,17 +21,17 @@ mut:
 	backspace_go_up bool
 	vcolor          gx.Color
 	split_color     gx.Color
-	bgcolor         gx.Color
-	errorbgcolor    gx.Color
+	bgcolor         gx.Color // base00
+	errorbgcolor    gx.Color // base08
 	title_color     gx.Color
-	cursor_color    gx.Color
-	string_color    gx.Color
+	cursor_color    gx.Color // base05
+	string_color    gx.Color // base0B
 	string_cfg      gx.TextCfg
-	key_color       gx.Color
+	key_color       gx.Color // base0E
 	key_cfg         gx.TextCfg
-	text_color      gx.Color
+	text_color      gx.Color // base05
 	txt_cfg         gx.TextCfg
-	comment_color   gx.Color
+	comment_color   gx.Color // base03
 	comment_cfg     gx.TextCfg
 	file_name_color gx.Color
 	file_name_cfg   gx.TextCfg
@@ -39,11 +39,11 @@ mut:
 	plus_cfg        gx.TextCfg
 	minus_color     gx.Color
 	minus_cfg       gx.TextCfg
-	line_nr_color   gx.Color
+	line_nr_color   gx.Color // base01
 	line_nr_cfg     gx.TextCfg
-	green_color     gx.Color
+	green_color     gx.Color // base0B
 	green_cfg       gx.TextCfg
-	red_color       gx.Color
+	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
 }
 
