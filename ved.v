@@ -308,6 +308,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		}
 
 		view.y = int((e.mouse_y / ved.cfg.line_height - 1) / 2) + ved.view.from
+		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
 		// and perhaps even its own function.
