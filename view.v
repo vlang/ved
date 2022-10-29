@@ -400,11 +400,11 @@ fn (mut view View) insert_text(s string) {
 	if line.len == 0 {
 		view.set_line('$s ')
 	} else {
-		if view.x >= line.len {
+		if view.x > line.len {
 			view.x = line.len
 		}
 		uline := line.runes()
-		if view.x >= uline.len {
+		if view.x > uline.len {
 			return
 		}
 		left := uline[..view.x].string()
