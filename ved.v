@@ -277,7 +277,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		}
 	}
 
-	// FIXME: The rounding math here cause the Y coord to be off sometimes.
+	// FIXME: The rounding math here cause the Y coord to be unintuitive sometimes.
 	if e.typ == .mouse_down {
 		mut view := ved.view
 
@@ -294,7 +294,10 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		}
 
 		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
-		view.x = int(((e.mouse_x - view.padding_left) / ved.char_width) / 2 - 3 - leading_tabs * 3)
+		// Wow, that's a lot of math that is probably pretty hard to parse.
+		// In the future I need to separate this into several variables,
+		// and perhaps even its own function.
+		view.x = int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.char_width) / 2 - 3 - leading_tabs * 3)
 	}
 }
 
