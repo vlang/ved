@@ -19,6 +19,7 @@ const (
 	workspaces_path   = os.join_path(settings_path, 'workspaces')
 	timer_path        = os.join_path(settings_path, 'timer')
 	tasks_path        = os.join_path(settings_path, 'tasks')
+	config_path       = os.join_path(settings_path, 'conf.toml')
 	max_nr_workspaces = 10
 )
 
@@ -59,7 +60,6 @@ mut:
 	words                []string
 	file_y_pos           map[string]int // to save current line for each file s
 	refresh              bool = true
-	line_height          int
 	char_width           int
 	is_ml_comment        bool
 	gg_lines             []string
@@ -152,18 +152,20 @@ fn main() {
 		splits_per_workspace: nr_splits
 		cur_split: 0
 		mode: .normal
-		line_height: 20
-		char_width: 8 // font_size: 13
 		view: 0
 		gg: 0
 		cb: clipboard.new()
 		open_paths: [][]string{len: max_nr_workspaces}
 	}
 	ved.handle_segfault()
+
+	ved.cfg.set_settings(config_path)
+
 	ved.cfg.init_colors()
-	ved.cfg.backspace_go_up = true
+	ved.cfg.reload_config()
+
 	println('height=$size.height')
-	ved.page_height = size.height / ved.line_height - 1
+	ved.page_height = size.height / ved.cfg.line_height - 1
 
 	keys_vlang :=
 		'case shared defer none match pub struct interface in sizeof assert enum import go ' +
@@ -305,11 +307,11 @@ fn on_event(e &gg.Event, mut ved Ved) {
 			}
 		}
 
-		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
+		view.y = int((e.mouse_y / ved.cfg.line_height - 1) / 2) + ved.view.from
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
 		// and perhaps even its own function.
-		view.x = int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.char_width) / 2 - 3 - leading_tabs * 3)
+		view.x = int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
 	}
 }
 
@@ -347,10 +349,10 @@ fn (mut ved Ved) draw() {
 		// ved.gg.draw_rect_filled(split_x, 0, split_width - 1, ved.win_height, ved.cfg.bgcolor)
 	}
 	// Coords
-	y := (ved.view.y - ved.view.from) * ved.line_height + ved.line_height
+	y := (ved.view.y - ved.view.from) * ved.cfg.line_height + ved.cfg.line_height
 	// Cur line
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
-	ved.gg.draw_rect_filled(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.line_height,
+	ved.gg.draw_rect_filled(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.cfg.line_height,
 		ved.cfg.vcolor)
 	// V selection
 	mut v_from := ved.view.vstart + 1
@@ -361,8 +363,8 @@ fn (mut ved Ved) draw() {
 		v_to = ved.view.vstart + 1
 	}
 	for yy := v_from; yy <= v_to; yy++ {
-		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.line_height, split_width - ved.view.padding_left,
-			ved.line_height, ved.cfg.vcolor)
+		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height, split_width - ved.view.padding_left,
+			ved.cfg.line_height, ved.cfg.vcolor)
 	}
 	// Tab offset for cursor
 	line := ved.view.line()
@@ -375,9 +377,9 @@ fn (mut ved Ved) draw() {
 		cursor_tab_off++
 	}
 	// Black title background
-	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)
 	// Current split has dark blue title
-	// ved.gg.draw_rect_filled(split_x, 0, split_width, ved.line_height, gx.rgb(47, 11, 105))
+	// ved.gg.draw_rect_filled(split_x, 0, split_width, ved.cfg.line_height, gx.rgb(47, 11, 105))
 	// Title (file paths)
 	for i := to - 1; i >= from; i-- {
 		v := ved.views[i]
@@ -413,7 +415,7 @@ fn (mut ved Ved) draw() {
 	*/
 	if ved.cur_task != '' {
 		// Draw current task
-		task_text_width := ved.cur_task.len * ved.char_width
+		task_text_width := ved.cur_task.len * ved.cfg.char_width
 		task_x := ved.win_width - split_width - task_text_width - 10
 		// ved.timer.gg.draw_text(task_x, 1, ved.timer.cur_task.to_upper(), file_name_cfg)
 		ved.gg.draw_text(task_x, 1, ved.cur_task, ved.cfg.file_name_cfg)
@@ -445,20 +447,20 @@ fn (mut ved Ved) draw() {
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cursor
-	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.char_width
+	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.cfg.char_width
 	if cursor_tab_off > 0 {
 		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
-		cursor_x -= ved.char_width * cursor_tab_off
+		cursor_x -= ved.cfg.char_width * cursor_tab_off
 	}
 	if ved.mode == .insert {
-		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.line_height, ved.cfg.cursor_color)
+		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
 	} else if ved.mode == .visual {
 		// FIXME: This looks terrible.
-		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.line_height, ved.cfg.cursor_color)
-		ved.gg.draw_rect_filled(cursor_x + ved.char_width, y - 1, 1, ved.line_height,
+		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+		ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y - 1, 1, ved.cfg.line_height,
 			ved.cfg.cursor_color)
 	} else {
-		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.char_width, ved.line_height, ved.cfg.cursor_color)
+		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height, ved.cfg.cursor_color)
 	}
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
@@ -467,9 +469,9 @@ fn (mut ved Ved) draw() {
 	}
 	// Big error line at the bottom
 	if ved.error_line != '' {
-		ved.gg.draw_rect_filled(0, ved.win_height - ved.line_height, ved.win_width, ved.line_height,
-			ved.cfg.errorbgcolor)
-		ved.gg.draw_text(3, ved.win_height - ved.line_height, ved.error_line, gx.TextCfg{
+		ved.gg.draw_rect_filled(0, ved.win_height - ved.cfg.line_height, ved.win_width,
+			ved.cfg.line_height, ved.cfg.errorbgcolor)
+		ved.gg.draw_text(3, ved.win_height - ved.cfg.line_height, ved.error_line, gx.TextCfg{
 			size: ved.cfg.text_size
 			color: gx.white
 			align: gx.align_left
@@ -487,7 +489,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	split_width := ved.split_width()
 	split_x := split_width * (i - split_from)
 	// Vertical split line
-	ved.gg.draw_line(split_x, ved.line_height + 1, split_x, ved.win_height, ved.cfg.split_color)
+	ved.gg.draw_line(split_x, ved.cfg.line_height + 1, split_x, ved.win_height, ved.cfg.split_color)
 	// Lines
 	mut line_nr := 1 // relative y
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
@@ -497,11 +499,11 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			continue
 		}
 		x := split_x + view.padding_left
-		y := line_nr * ved.line_height
+		y := line_nr * ved.cfg.line_height
 		// Error bg
 		if view.error_y == j {
 			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10,
-				ved.line_height, ved.cfg.errorbgcolor)
+				ved.cfg.line_height, ved.cfg.errorbgcolor)
 		}
 		// Line number
 		line_number := j + 1
@@ -515,7 +517,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 				break
 			}
 			nr_tabs++
-			line_x += ved.char_width * ved.cfg.tab_size
+			line_x += ved.cfg.char_width * ved.cfg.tab_size
 		}
 		mut s := line[nr_tabs..] // tabs have been skipped, remove them from the string
 		if s == '' {
@@ -523,8 +525,8 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			continue
 		}
 		// Number of chars to display in this view
-		// mut max := (split_width - view.padding_left - ved.char_width * TAB_SIZE *
-		// nr_tabs) / ved.char_width - 1
+		// mut max := (split_width - view.padding_left - ved.cfg.char_width * TAB_SIZE *
+		// nr_tabs) / ved.cfg.char_width - 1
 		max := ved.max_chars(i, nr_tabs)
 		if view.y == j {
 			// Display entire line if its current
@@ -562,8 +564,8 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 }
 
 fn (ved &Ved) max_chars(view_idx int, nr_tabs int) int {
-	width := ved.split_width() - ved.views[view_idx].padding_left - ved.char_width * ved.cfg.tab_size * nr_tabs
-	return width / ved.char_width - 1
+	width := ved.split_width() - ved.views[view_idx].padding_left - ved.cfg.char_width * ved.cfg.tab_size * nr_tabs
+	return width / ved.cfg.char_width - 1
 }
 
 fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
@@ -669,7 +671,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		// since we don't have a seperate chunk for text)
 		if chunk.start > pos {
 			s := line[pos..chunk.start]
-			ved.gg.draw_text(x + pos * ved.char_width, y, s, ved.cfg.txt_cfg)
+			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, s, ved.cfg.txt_cfg)
 		}
 		// Keyword string etc
 		typ := chunk.typ
@@ -679,12 +681,12 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			.a_comment { ved.cfg.comment_cfg }
 		}
 		s := line[chunk.start..chunk.end]
-		ved.gg.draw_text(x + chunk.start * ved.char_width, y, s, cfg)
+		ved.gg.draw_text(x + chunk.start * ved.cfg.char_width, y, s, cfg)
 		pos = chunk.end
 		// Final text chunk
 		if i == ved.chunks.len - 1 && chunk.end < line.len {
 			final := line[chunk.end..line.len]
-			ved.gg.draw_text(x + pos * ved.char_width, y, final, ved.cfg.txt_cfg)
+			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, final, ved.cfg.txt_cfg)
 		}
 	}
 }
@@ -925,15 +927,15 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.f5 {
 			ved.run_file()
-			// ved.char_width -= 1
-			// ved.line_height -= 1
+			// ved.cfg.char_width -= 1
+			// ved.cfg.line_height -= 1
 			// ved.font_size -= 1
-			// ved.page_height = WIN_HEIGHT / ved.line_height - 1
+			// ved.page_height = WIN_HEIGHT / ved.cfg.line_height - 1
 			// case C.GLFW_KEY_F6:
-			// ved.char_width += 1
-			// ved.line_height += 1
+			// ved.cfg.char_width += 1
+			// ved.cfg.line_height += 1
 			// ved.font_size += 1
-			// ved.page_height = WIN_HEIGHT / ved.line_height - 1
+			// ved.page_height = WIN_HEIGHT / ved.cfg.line_height - 1
 			// ved.vg = gg.new_context(WIN_WIDTH, WIN_HEIGHT, ved.font_size)
 		}
 		.minus {
@@ -1853,7 +1855,7 @@ fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	mut ved := &Ved{!}
 	//# ved=g_ved;
 	# ved=arg;
-	println(ved.line_height)
+	println(ved.cfg.line_height)
 	// ved.save_session()
 	// ved.save_timer()
 	ved.save_changed_files()

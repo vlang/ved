@@ -5,13 +5,17 @@ module main
 
 import os
 import gx
+import toml
 
 // Config structure
 // TODO: Load user config from file
 struct Config {
 mut:
+	settings        toml.Doc
 	dark_mode       bool
 	text_size       int
+	line_height     int
+	char_width      int
 	tab_size        int
 	tab             int
 	backspace_go_up bool
@@ -43,14 +47,21 @@ mut:
 	red_cfg         gx.TextCfg
 }
 
+fn (mut config Config) set_settings(path string) {
+	config.settings = toml.parse_file(path) or { toml.parse_text('') or { panic(err) } }
+}
+
 fn (mut config Config) init_colors() {
-	config.dark_mode = '-dark' in os.args
-	config.reload_config()
+	toml_dark_mode := config.settings.value('editor.dark_mode').bool()
+	config.dark_mode = toml_dark_mode || '-dark' in os.args
 }
 
 fn (mut config Config) reload_config() {
-	config.set_textsize()
+	config.set_text_size()
+	config.set_line_height()
+	config.set_char_width()
 	config.set_tab()
+	config.set_backspace_behaviour()
 	config.set_vcolor()
 	config.set_split()
 	config.set_bgcolor()
@@ -69,13 +80,32 @@ fn (mut config Config) reload_config() {
 	config.set_red()
 }
 
-fn (mut config Config) set_textsize() {
-	config.text_size = 18
+fn (mut config Config) set_text_size() {
+	toml_text_size := config.settings.value('editor.text_size').int()
+	config.text_size = if toml_text_size > 0 { toml_text_size } else { 18 }
+}
+
+fn (mut config Config) set_line_height() {
+	toml_line_height := config.settings.value('editor.line_height').int()
+	config.line_height = if toml_line_height > 0 { toml_line_height } else { 20 }
+}
+
+fn (mut config Config) set_char_width() {
+	toml_char_width := config.settings.value('editor.char_width').int()
+	config.char_width = if toml_char_width > 0 { toml_char_width } else { 8 }
 }
 
 fn (mut config Config) set_tab() {
-	config.tab_size = 4
+	toml_tab_size := config.settings.value('editor.tab_size').int()
+	config.tab_size = if toml_tab_size > 0 { toml_tab_size } else { 4 }
+
+	// TODO: read this in from the config file
 	config.tab = int(`\t`)
+}
+
+fn (mut config Config) set_backspace_behaviour() {
+	toml_backspace_behaviour := config.settings.value('editor.backspace_go_up').bool()
+	config.backspace_go_up = toml_backspace_behaviour
 }
 
 fn (mut config Config) set_vcolor() {

@@ -133,7 +133,7 @@ fn (mut view View) open_file(path string) {
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'
-	view.padding_left = s.len * ved.char_width + 8
+	view.padding_left = s.len * ved.cfg.char_width + 8
 	view.ved.save_session()
 	// Go to old y for this file
 	y := view.ved.file_y_pos[view.path]
