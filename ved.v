@@ -293,6 +293,18 @@ fn on_event(e &gg.Event, mut ved Ved) {
 			}
 		}
 
+		// If the mouse is clicked outside of the current split, switch splits before continuing
+		for i := 0; i < ved.nr_splits; i++ {
+			sw := ved.split_width()
+			starting_x := 2 * i * sw
+			ending_x := 2 * (i + 1) * sw
+
+			if e.mouse_x > starting_x && e.mouse_x < ending_x {
+				ved.cur_split = i
+				ved.update_view()
+			}
+		}
+
 		view.y = int((e.mouse_y / ved.line_height - 1) / 2) + ved.view.from
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
