@@ -165,7 +165,6 @@ fn main() {
 	ved.cfg.reload_config()
 
 	println('height=$size.height')
-	ved.page_height = size.height / ved.cfg.line_height - 1
 
 	keys_vlang :=
 		'case shared defer none match pub struct interface in sizeof assert enum import go ' +
@@ -270,6 +269,8 @@ fn main() {
 
 fn on_event(e &gg.Event, mut ved Ved) {
 	ved.refresh = true
+	ved.win_height = gg.window_size().height
+	ved.win_width = gg.window_size().width
 
 	if e.typ == .mouse_scroll {
 		if e.scroll_y < -0.2 {
@@ -307,7 +308,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 			}
 		}
 
-		view.y = int((e.mouse_y / ved.cfg.line_height - 1) / 2) + ved.view.from
+		view.y = int((e.mouse_y / ved.cfg.line_height - 1.5) / 2) + ved.view.from
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
 		// and perhaps even its own function.
@@ -348,8 +349,10 @@ fn frame(mut ved Ved) {
 }
 
 fn (mut ved Ved) draw() {
-	view := ved.view
+	mut view := ved.view
 	split_width := ved.split_width()
+	ved.page_height = ved.win_height / ved.cfg.line_height - 1
+	view.page_height = ved.page_height
 	// Splits from and to
 	from := ved.workspace_idx * ved.splits_per_workspace
 	to := from + ved.splits_per_workspace
@@ -702,19 +705,6 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 	}
 }
 
-// mouse click
-// fn on_click(cwnd *C.GLFWwindow, button, action, mods int) {
-// wnd := glfw.Window {
-// data: cwnd
-// }
-// pos := wnd.get_cursor_pos()
-// println('CLICK $pos.x $pos.y')
-// mut ctx := &Ved(wnd.get_user_ptr())
-// printf("mouse click %p\n", glfw__Window_get_user_ptr(&wnd));
-// Mouse coords to x,y
-// ved.view.y = pos.y / line_height - 1
-// ved.view.x = (pos.x - ved.view.padding_left) / char_width - 1
-// }
 fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	super := mod == .super
 	shift := mod == .shift
