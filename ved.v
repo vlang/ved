@@ -311,7 +311,17 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
 		// and perhaps even its own function.
-		view.x = int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
+		clicked_x := int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
+		if view.lines.len <= 0 {
+			return
+		}
+		if clicked_x > view.lines[view.y].len {
+			view.x = view.lines[view.y].len
+		} else if clicked_x < 0 {
+			view.x = 0
+		} else {
+			view.x = clicked_x
+		}
 	}
 }
 
@@ -460,7 +470,8 @@ fn (mut ved Ved) draw() {
 		ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y - 1, 1, ved.cfg.line_height,
 			ved.cfg.cursor_color)
 	} else {
-		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height, ved.cfg.cursor_color)
+		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
+			ved.cfg.cursor_color)
 	}
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
