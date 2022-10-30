@@ -140,10 +140,6 @@ fn main() {
 	mut size := gg.screen_size()
 	if size.width == 0 || size.height == 0 {
 		size = gg.Size{2560, 1480}
-		if '-laptop' in args {
-			size = gg.Size{1440 * 1, 900 * 1}
-			nr_splits = 1
-		}
 	}
 	mut ved := &Ved{
 		win_width: size.width
