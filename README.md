@@ -4,7 +4,7 @@
 
 [![Workflow-badge](https://github.com/vlang/ved/workflows/CI/badge.svg)](https://github.com/vlang/ved/commits/master)
 
-<img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png"> 
+<img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
 
 
 ### Building from source
@@ -86,7 +86,6 @@ This will be gradually fixed. The goal is to have a stable and highly customizab
 
 - No way to change key bindings, color settings, etc
 - Vim-mode only
-- No mouse support
 - No word wrap (I'm used to 80 character lines)
 - ~Only ASCII and Cyrillic letters are supported right now~
 
