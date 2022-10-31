@@ -156,8 +156,6 @@ fn main() {
 	ved.handle_segfault()
 
 	ved.cfg.set_settings(config_path)
-
-	ved.cfg.init_colors()
 	ved.cfg.reload_config()
 
 	println('height=$size.height')
@@ -918,6 +916,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			if shift {
 				// <
 				ved.view.shift_left()
+			} else if super {
+				ved.cfg.reload_config()
+				ved.update_view()
 			}
 		}
 		.slash {
@@ -1142,10 +1143,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.view.l()
 			}
 		}
-		.f6 {
-			if super {
-			}
-		}
+		.f6 {}
 		.g {
 			// go to end
 			if shift && !super {

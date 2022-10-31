@@ -51,12 +51,9 @@ fn (mut config Config) set_settings(path string) {
 	config.settings = toml.parse_file(path) or { toml.parse_text('') or { panic(err) } }
 }
 
-fn (mut config Config) init_colors() {
-	toml_dark_mode := config.settings.value('editor.dark_mode').bool()
-	config.dark_mode = toml_dark_mode || '-dark' in os.args
-}
-
 fn (mut config Config) reload_config() {
+	config.init_colors()
+
 	config.set_text_size()
 	config.set_line_height()
 	config.set_char_width()
@@ -78,6 +75,11 @@ fn (mut config Config) reload_config() {
 	config.set_line_nr()
 	config.set_green()
 	config.set_red()
+}
+
+fn (mut config Config) init_colors() {
+	toml_dark_mode := config.settings.value('editor.dark_mode').bool()
+	config.dark_mode = toml_dark_mode || '-dark' in os.args
 }
 
 fn (mut config Config) set_text_size() {
