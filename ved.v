@@ -305,7 +305,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		}
 
 		clicked_y := int((e.mouse_y / ved.cfg.line_height - 1.5) / 2) + ved.view.from
-		if clicked_y > view.lines.len {
+		if clicked_y >= view.lines.len {
 			if view.lines.len == 0 {
 				view.y = 0
 			} else {
@@ -316,8 +316,6 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		} else {
 			view.y = clicked_y
 		}
-
-		println('$clicked_y  ==>  $view.y')
 
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
