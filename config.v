@@ -7,12 +7,20 @@ import os
 import gx
 import toml
 
+// The different kinds of cursors
+enum Cursor {
+	block
+	beam
+	variable
+}
+
 // Config structure
 // TODO: Load user config from file
 struct Config {
 mut:
 	settings        toml.Doc
 	dark_mode       bool
+	cursor_style    Cursor
 	text_size       int
 	line_height     int
 	char_width      int
@@ -54,6 +62,7 @@ fn (mut config Config) set_settings(path string) {
 fn (mut config Config) reload_config() {
 	config.init_colors()
 
+	config.set_cursor_style()
 	config.set_text_size()
 	config.set_line_height()
 	config.set_char_width()
@@ -80,6 +89,20 @@ fn (mut config Config) reload_config() {
 fn (mut config Config) init_colors() {
 	toml_dark_mode := config.settings.value('editor.dark_mode').bool()
 	config.dark_mode = toml_dark_mode || '-dark' in os.args
+}
+
+fn (mut config Config) set_cursor_style() {
+	toml_cursor_style := config.settings.value('editor.cursor').string()
+	if toml_cursor_style != 'toml.Any(toml.Null{})' {
+		match toml_cursor_style {
+			'block' { config.cursor_style = .block }
+			'beam' { config.cursor_style = .beam }
+			'variable' { config.cursor_style = .variable }
+			else { config.cursor_style = .variable }
+		}
+		return
+	}
+	config.cursor_style = .variable
 }
 
 fn (mut config Config) set_text_size() {

@@ -354,6 +354,32 @@ fn frame(mut ved Ved) {
 	ved.refresh = false
 }
 
+fn (ved &Ved) draw_cursor(cursor_x int, y int) {
+	cursor_style := ved.cfg.cursor_style
+	match cursor_style {
+		.block {
+			ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
+				ved.cfg.cursor_color)
+		}
+		.beam {
+			ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+		}
+		.variable {
+			if ved.mode == .insert {
+				ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+			} else if ved.mode == .visual {
+				// FIXME: This looks terrible.
+				ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+				ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y - 1, 1, ved.cfg.line_height,
+					ved.cfg.cursor_color)
+			} else {
+				ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
+					ved.cfg.cursor_color)
+			}
+		}
+	}
+}
+
 fn (mut ved Ved) draw() {
 	mut view := ved.view
 	split_width := ved.split_width()
@@ -471,17 +497,9 @@ fn (mut ved Ved) draw() {
 		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
 		cursor_x -= ved.cfg.char_width * cursor_tab_off
 	}
-	if ved.mode == .insert {
-		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-	} else if ved.mode == .visual {
-		// FIXME: This looks terrible.
-		ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-		ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y - 1, 1, ved.cfg.line_height,
-			ved.cfg.cursor_color)
-	} else {
-		ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
-			ved.cfg.cursor_color)
-	}
+
+	ved.draw_cursor(cursor_x, y)
+
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
