@@ -5,29 +5,33 @@ module main
 
 import os
 import gx
+import toml
 
 // Config structure
 // TODO: Load user config from file
 struct Config {
 mut:
+	settings        toml.Doc
 	dark_mode       bool
 	text_size       int
+	line_height     int
+	char_width      int
 	tab_size        int
 	tab             int
 	backspace_go_up bool
 	vcolor          gx.Color
 	split_color     gx.Color
-	bgcolor         gx.Color
-	errorbgcolor    gx.Color
-	title_color     gx.Color
-	cursor_color    gx.Color
-	string_color    gx.Color
+	bgcolor         gx.Color // base00
+	errorbgcolor    gx.Color // base08
+	title_color     gx.Color // base04
+	cursor_color    gx.Color // base05
+	string_color    gx.Color // base0B
 	string_cfg      gx.TextCfg
-	key_color       gx.Color
+	key_color       gx.Color // base0E
 	key_cfg         gx.TextCfg
-	text_color      gx.Color
+	text_color      gx.Color // base05
 	txt_cfg         gx.TextCfg
-	comment_color   gx.Color
+	comment_color   gx.Color // base03
 	comment_cfg     gx.TextCfg
 	file_name_color gx.Color
 	file_name_cfg   gx.TextCfg
@@ -35,22 +39,26 @@ mut:
 	plus_cfg        gx.TextCfg
 	minus_color     gx.Color
 	minus_cfg       gx.TextCfg
-	line_nr_color   gx.Color
+	line_nr_color   gx.Color // base01
 	line_nr_cfg     gx.TextCfg
-	green_color     gx.Color
+	green_color     gx.Color // base0B
 	green_cfg       gx.TextCfg
-	red_color       gx.Color
+	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
 }
 
-fn (mut config Config) init_colors() {
-	config.dark_mode = '-dark' in os.args
-	config.reload_config()
+fn (mut config Config) set_settings(path string) {
+	config.settings = toml.parse_file(path) or { toml.parse_text('') or { panic(err) } }
 }
 
 fn (mut config Config) reload_config() {
-	config.set_textsize()
+	config.init_colors()
+
+	config.set_text_size()
+	config.set_line_height()
+	config.set_char_width()
 	config.set_tab()
+	config.set_backspace_behaviour()
 	config.set_vcolor()
 	config.set_split()
 	config.set_bgcolor()
@@ -69,13 +77,51 @@ fn (mut config Config) reload_config() {
 	config.set_red()
 }
 
-fn (mut config Config) set_textsize() {
-	config.text_size = 18
+fn (mut config Config) init_colors() {
+	toml_dark_mode := config.settings.value('editor.dark_mode').bool()
+	config.dark_mode = toml_dark_mode || '-dark' in os.args
+}
+
+fn (mut config Config) set_text_size() {
+	toml_text_size := config.settings.value('editor.text_size').int()
+	config.text_size = if toml_text_size > 0 { toml_text_size } else { 18 }
+}
+
+fn (mut config Config) set_line_height() {
+	toml_line_height := config.settings.value('editor.line_height').int()
+	config.line_height = if toml_line_height > 0 { toml_line_height } else { 20 }
+}
+
+fn (mut config Config) set_char_width() {
+	toml_char_width := config.settings.value('editor.char_width').int()
+	config.char_width = if toml_char_width > 0 { toml_char_width } else { 8 }
 }
 
 fn (mut config Config) set_tab() {
-	config.tab_size = 4
+	toml_tab_size := config.settings.value('editor.tab_size').int()
+	config.tab_size = if toml_tab_size > 0 { toml_tab_size } else { 4 }
+
+	// TODO: read this in from the config file
 	config.tab = int(`\t`)
+}
+
+fn (mut config Config) set_backspace_behaviour() {
+	toml_backspace_behaviour := config.settings.value('editor.backspace_go_up').bool()
+	config.backspace_go_up = toml_backspace_behaviour
+}
+
+// Convert a toml key color (in hex) to a gx.Color type
+fn (config Config) get_toml_color(base string) !gx.Color {
+	toml_hex := config.settings.value('colors.base$base').string()
+	if toml_hex != 'toml.Any(toml.Null{})' {
+		toml_red := ('0x' + toml_hex[0..2]).u8()
+		toml_green := ('0x' + toml_hex[2..4]).u8()
+		toml_blue := ('0x' + toml_hex[4..6]).u8()
+
+		return gx.rgb(toml_red, toml_green, toml_blue)
+	}
+
+	return error('Couldn\'t read base$base from the settings file')
 }
 
 fn (mut config Config) set_vcolor() {
@@ -94,76 +140,78 @@ fn (mut config Config) set_split() {
 	}
 }
 
+// base 00
 fn (mut config Config) set_bgcolor() {
-	if !config.dark_mode {
-		config.bgcolor = gx.rgb(245, 245, 245)
-	} else {
-		config.bgcolor = gx.rgb(30, 30, 30)
+	config.bgcolor = config.get_toml_color('00') or {
+		if config.dark_mode {
+			gx.rgb(30, 30, 30)
+		} else {
+			gx.rgb(245, 245, 245)
+		}
 	}
 }
 
+// base 01
 fn (mut config Config) set_errorbgcolor() {
-	if !config.dark_mode {
-		config.errorbgcolor = gx.rgb(240, 0, 0)
-	} else {
-		config.errorbgcolor = gx.rgb(240, 0, 0)
-	}
+	config.errorbgcolor = config.get_toml_color('01') or { gx.rgb(240, 0, 0) }
 }
 
+// base 0B
 fn (mut config Config) set_string() {
-	if !config.dark_mode {
-		config.string_color = gx.rgb(179, 58, 44)
-	} else {
-		config.string_color = gx.rgb(179, 58, 44)
-	}
+	config.string_color = config.get_toml_color('0B') or { gx.rgb(179, 58, 44) }
+
 	config.string_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.string_color
 	}
 }
 
+// base 0E
 fn (mut config Config) set_key() {
-	if !config.dark_mode {
-		config.key_color = gx.rgb(74, 103, 154)
-	} else {
-		config.key_color = gx.rgb(74, 103, 154)
-	}
+	config.key_color = config.get_toml_color('0E') or { gx.rgb(74, 103, 154) }
+
 	config.key_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.key_color
 	}
 }
 
+// base 04
 fn (mut config Config) set_title() {
-	if !config.dark_mode {
-		config.title_color = gx.rgb(40, 40, 40)
-	} else {
-		config.title_color = gx.rgb(40, 40, 40)
-	}
+	config.title_color = config.get_toml_color('04') or { gx.rgb(40, 40, 40) }
 }
 
+// base 05
 fn (mut config Config) set_cursor() {
-	if !config.dark_mode {
-		config.cursor_color = gx.black
-	} else {
-		config.cursor_color = gx.white
+	config.cursor_color = config.get_toml_color('05') or {
+		if !config.dark_mode {
+			gx.black
+		} else {
+			gx.white
+		}
 	}
 }
 
+// base 05 (again)
 fn (mut config Config) set_txt() {
-	if !config.dark_mode {
-		config.text_color = gx.black
-	} else {
-		config.text_color = gx.rgb(212, 212, 212)
+	config.text_color = config.get_toml_color('05') or {
+		if !config.dark_mode {
+			gx.black
+		} else {
+			gx.rgb(212, 212, 212)
+		}
 	}
+
 	config.txt_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.text_color
 	}
 }
 
+// base 03
 fn (mut config Config) set_comment() {
-	config.comment_color = gx.dark_gray
+	config.comment_color = config.get_toml_color('03') or { gx.dark_gray }
+
 	config.comment_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.comment_color
@@ -194,8 +242,10 @@ fn (mut config Config) set_minus() {
 	}
 }
 
+// base 01
 fn (mut config Config) set_line_nr() {
-	config.line_nr_color = gx.dark_gray
+	config.line_nr_color = config.get_toml_color('01') or { gx.dark_gray }
+
 	config.line_nr_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.line_nr_color
@@ -203,8 +253,10 @@ fn (mut config Config) set_line_nr() {
 	}
 }
 
+// base 0B
 fn (mut config Config) set_green() {
-	config.green_color = gx.green
+	config.green_color = config.get_toml_color('0B') or { gx.green }
+
 	config.green_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.green_color
@@ -212,7 +264,7 @@ fn (mut config Config) set_green() {
 }
 
 fn (mut config Config) set_red() {
-	config.red_color = gx.red
+	config.red_color = config.get_toml_color('08') or { gx.red }
 	config.red_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.red_color

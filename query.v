@@ -292,10 +292,10 @@ fn (mut ved Ved) draw_query() {
 	y := (ved.win_height - height) / 2
 	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
 	// query window title
-	ved.gg.draw_rect_filled(x, y, width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
 	// query background
-	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.line_height, ved.cfg.title_color)
+	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)
 	query_to_draw := if ved.query_type in [.search, .search_in_folder, .grep] {
 		ved.search_query
 	} else {

@@ -133,7 +133,7 @@ fn (mut view View) open_file(path string) {
 	// Calc padding_left
 	nr_lines := view.lines.len
 	s := '$nr_lines'
-	view.padding_left = s.len * ved.char_width + 8
+	view.padding_left = s.len * ved.cfg.char_width + 8
 	view.ved.save_session()
 	// Go to old y for this file
 	y := view.ved.file_y_pos[view.path]
@@ -400,11 +400,11 @@ fn (mut view View) insert_text(s string) {
 	if line.len == 0 {
 		view.set_line('$s ')
 	} else {
-		if view.x >= line.len {
+		if view.x > line.len {
 			view.x = line.len
 		}
 		uline := line.runes()
-		if view.x >= uline.len {
+		if view.x > uline.len {
 			return
 		}
 		left := uline[..view.x].string()
