@@ -1,15 +1,23 @@
-# Ved - small and fast text editor written in V
+<h1 align="center">Ved</h1>
+<h3 align="center">A small and fast text editor written in V</h3>
 
-[![Patreon-badge](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/vlang)
+<img src="https://user-images.githubusercontent.com/47652746/199333211-ee78f600-039c-4d96-85ec-e5580fca6736.jpg" alt="Screenshot of the editor">
 
-[![Workflow-badge](https://github.com/vlang/ved/workflows/CI/badge.svg)](https://github.com/vlang/ved/commits/master)
+[![Patreon-badge](https://img.shields.io/badge/Patreon-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/vlang)
+![GitHub Workflow Status (event)](https://img.shields.io/github/workflow/status/vlang/ved/CI)
 
-<img width="640" src="https://user-images.githubusercontent.com/687996/63223411-807a7700-c1bd-11e9-82fc-e2362907024a.png">
+### This is pre-alpha software.
 
+I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018).
+
+It may not work for everyone. There are currently limitations that must be worked around.
+We are working on slowly improving the ved stability and user experience.
+
+To configure the editor, please see the [configuration](#configuration) section.
 
 ### Building from source
 
-First you need to [install V](https://github.com/vlang/v#installing-v-from-source). This will take a couple of seconds.
+First you need to [install V](https://github.com/vlang/v#installing-v---from-source-preferred-method). This will take a couple of seconds.
 
 ```
 git clone https://github.com/vlang/ved
@@ -20,13 +28,13 @@ v .
 
 Ved should build in under a second.
 
-By default V's built-in font rendering is used, but there's an option to use freetype, which arguably provides better rendering:
+By default V's built-in font rendering is used, but there's an option to use freetype, which may provide better rendering for some users:
 
 ```
 v -gc boehm -d use_freetype .
 ```
 
-To use freetype, its files need to be installed:
+To use freetype, it must first be installed on your system. Follow the steps for your platform below.
 
 Ubuntu:
 ```
@@ -55,43 +63,77 @@ v setup-freetype
 
 ### Communities:
 
-Discord (primary community): https://discord.gg/n7c74HM. Join the #ved channel.
-
-### This is pre-alpha software.
-
-I've been using Ved as my main editor since June 2017 (it was re-written in V in June 2018).
-I've set it up to my liking, I know its limitations and how to bypass them.
-
-For everyone else it's going to be unstable and unconfigurable at this stage.
-
-This will be gradually fixed. The goal is to have a stable and highly customizable editor.
+Discord (primary community): https://discord.gg/vlang. Join the `#ved` channel.
 
 ### Main features
 
 - Small size (~ 1 MB binary, builds in <1s)
 - Hardware accelerated text rendering
 - High performance (scrolling through 300k lines with syntax highlighting without any lag)
-- Vim mode
+- WIP Vim mode
 - Easy integration with any compiler/build system
-- Go to definition, ctrlp (fuzzy file finder)
-- Very fast search in all project files
+- Go to definition
+- Fuzzy file finder
+- Fast search
 - Integration with git
 - Built-in time management system (based on Pomodoro)
-- Global shortcuts (bring to front etc)
+- Global bring-to-front key
 - Split view
 - Workspaces
-- Cross-platform (Windows, macOS, Linux)
+- Cross-platform (Windows, macOS, GNU/Linux)
 
-### Known issues
+### Planned features
 
-- No way to change key bindings, color settings, etc
-- Vim-mode only
-- No word wrap (I'm used to 80 character lines)
-- ~Only ASCII and Cyrillic letters are supported right now~
+- True vim mode (current implementation only implements a small subset of vim's features)
+- Emacs keybindings
+- Nano keybindings
+- Word wrap
+- Better syntax highlighting
 
-Most of these are relatively easy to fix.
+### Configuration
 
-### Instructions
+Ved creates a settings directory in `$HOME/.ved` where it stores workspaces, sessions, tasks, and the configuration file. The configuration file is simply a [TOML](https://toml.io/) file called `conf.toml`. It provides a way to change some basic settings and the editor colors. 
+
+If you don't want to touch the config file, you never have to! Ved does not create it by itself and it provides sensible defaults to get you started. If you are more adventurous, here is an example configuration file that contains all of the possible settings:
+
+```toml
+# To get started, create a file called "conf.toml" in $HOME/.ved
+# Most of the settings are contained inside this "editor" table.
+[editor]
+dark_mode = false       # Ved comes with a light and dark mode built-in.
+cursor = 'variable'     # Ved has three variants: Variable, block, and beam. You are probably used to "variable" or "beam".
+text_size = 18          # ┌───────────────────────────────────────────────────┐
+line_height = 20        # │ These *can* be edited, but you probably shouldn't │
+char_width = 8          # └───────────────────────────────────────────────────┘
+tab_size = 4            # Ved uses tab characters (\t). This settings changes how many spaces a tab should be displayed as
+backspace_go_up = true  # If set to true, hitting the backspace doesn't do anything when you reach the beginning of the line
+
+# If you do not like ved's default colorscheme, or you just want
+# something new, edit the "colors" table. Ved uses a form of base16
+# to control syntax and editor highlighting. Please note that due
+# to ved's very minimal highlighting, base16 themes copied off of
+# the internet are not going to look like very much like their
+# screenshots.
+[colors]
+base00 = "efecf4"
+base01 = "e2dfe7"
+base02 = "8b8792"
+base03 = "7e7887"
+base04 = "655f6d"
+base05 = "585260"
+base06 = "26232a"
+base07 = "19171c"
+base08 = "be4678"
+base09 = "aa573c"
+base0A = "a06e3b"
+base0B = "2a9292"
+base0C = "398bc6"
+base0D = "576ddb"
+base0E = "955ae7"
+base0F = "bf40bf"
+```
+
+### Basic usage
 
 Ved works best with workspaces (directories with code).
 You can have multiple workspaces and quickly switch between them with `C [` and `C ]`.
@@ -105,7 +147,7 @@ Key bindings:
 `C` is `⌘` on macOS, `Ctrl` on all other systems.
 
 ```
-C q    exit the editor (type it twice in a row)
+C q q  exit the editor
 C o    open a file
 C s    save
 C r    reload current file
@@ -134,7 +176,7 @@ C t    show the Timer/Pomodoro window
 
 ```
 
-Supported vi bindings:
+Supported vim bindings:
 ```
 j k h l
 C-F C-B
@@ -155,13 +197,4 @@ x r
 C-n (autocomplete)
 ```
 
-Many bindings are missing, and the design is not scalable.
-Most of them are hard-coded, so there needs to be extra logic for handling `db`, `cb` etc.
-This has to be improved.
-
-<!-- Links -->
-[workflow-badge]: https://github.com/vlang/ved/workflows/CI/badge.svg
-[patreon-badge]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dvlang%26type%3Dpledges
-
-[workflow-url]: https://github.com/vlang/ved/commits/master
-[patreon-url]: https://patreon.com/vlang
+The current vim system is hardcoded, which does not allow for any scalability. Fixing this is high on the the list of things to do.
