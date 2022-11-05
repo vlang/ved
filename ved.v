@@ -1790,7 +1790,7 @@ fn (mut ved Ved) go_to_error(line string) {
 	println('path=$path filename=$filename linenr=$line_nr col=$col')
 	for i := 0; i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
-		if !view.path.contains(filename) {
+		if !view.path.contains(os.path_separator + filename) && view.path != filename {
 			continue
 		}
 		view.error_y = line_nr - 1
