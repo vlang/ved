@@ -170,7 +170,7 @@ fn (mut view View) save_file() {
 		file.writeln(line.trim_right(' \t')) or { panic(err) }
 	}
 	file.close()
-	go view.format_file()
+	spawn view.format_file()
 	// If another split has the same file open, update it
 	for mut v in view.ved.views {
 		if v.path == view.path {

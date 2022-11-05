@@ -53,7 +53,7 @@ mut:
 	green_cfg       gx.TextCfg
 	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
-	disable_mouse bool
+	disable_mouse   bool
 }
 
 fn (mut config Config) set_settings(path string) {

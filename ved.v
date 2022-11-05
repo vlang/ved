@@ -256,7 +256,7 @@ fn main() {
 		ved_exe_dir := os.dir(os.executable())
 		ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
 	}
-	go ved.loop()
+	spawn ved.loop()
 	ved.refresh = true
 	ved.gg.run()
 }
@@ -1113,7 +1113,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.query_type = .alert
 				ved.query = 'Running git pull...'
 				ved.just_switched = true
-				go ved.git_pull()
+				spawn ved.git_pull()
 				return
 			} else if super {
 				ved.mode = .query
@@ -1234,7 +1234,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.view.yy()
 			}
 			if super {
-				go ved.build_app2()
+				spawn ved.build_app2()
 			}
 		}
 		.z {
@@ -1844,7 +1844,7 @@ fn (mut ved Ved) key_u() {
 		ved.run_file()
 	} else {
 		ved.refresh = true
-		go ved.build_app1()
+		spawn ved.build_app1()
 	}
 }
 
