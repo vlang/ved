@@ -161,7 +161,7 @@ fn main() {
 	println('height=$size.height')
 
 	keys_vlang :=
-		'case shared defer none match pub struct interface in sizeof assert enum import go ' +
+		'case shared defer none match pub struct interface in sizeof assert enum import go spawn ' +
 		'return module fn if for break continue asm unsafe mut is ' +
 		'type const else true else for false use $' + 'if $' + 'else'
 	keys_primary := os.read_file('./v.syntax') or { keys_vlang }
