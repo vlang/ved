@@ -276,6 +276,10 @@ fn on_event(e &gg.Event, mut ved Ved) {
 
 	// FIXME: The rounding math here cause the Y coord to be unintuitive sometimes.
 	if e.typ == .mouse_down {
+		if ved.cfg.disable_mouse {
+			return
+		}
+
 		mut view := ved.view
 
 		mut current_line := ''

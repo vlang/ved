@@ -53,6 +53,7 @@ mut:
 	green_cfg       gx.TextCfg
 	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
+	disable_mouse bool
 }
 
 fn (mut config Config) set_settings(path string) {
@@ -68,6 +69,7 @@ fn (mut config Config) reload_config() {
 	config.set_char_width()
 	config.set_tab()
 	config.set_backspace_behaviour()
+	config.set_disable_mouse()
 	config.set_vcolor()
 	config.set_split()
 	config.set_bgcolor()
@@ -131,6 +133,10 @@ fn (mut config Config) set_tab() {
 fn (mut config Config) set_backspace_behaviour() {
 	toml_backspace_behaviour := config.settings.value('editor.backspace_go_up').bool()
 	config.backspace_go_up = toml_backspace_behaviour
+}
+
+fn (mut config Config) set_disable_mouse() {
+	config.disable_mouse = config.settings.value('editor.disable_mouse').bool()
 }
 
 // Convert a toml key color (in hex) to a gx.Color type
