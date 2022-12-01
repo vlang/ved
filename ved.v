@@ -1722,6 +1722,10 @@ fn (mut ved Ved) build_app(extra string) {
 	// ved.refresh = true
 	// time.sleep(4) // delay is_building to prevent flickering in the right split
 	ved.is_building = false
+	// Move to the first line of the output in the last view, so that it's
+	// always visible
+	last_view.from = 0
+	last_view.y = 0
 	/*
 	// Reopen files (they were formatted)
 	for _view in ved.views {
