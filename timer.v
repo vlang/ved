@@ -159,7 +159,7 @@ fn (mut t Timer) draw() {
 	// Draw total time
 	h := total / 60
 	m := total % 60
-	t.gg.draw_text(window_x + window_width - 100, 100, '$h:${m:02d}', gx.TextCfg{
+	t.gg.draw_text(window_x + window_width - 100, 100, '${h}:${m:02d}', gx.TextCfg{
 		color: color_productive
 	})
 }
