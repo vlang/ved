@@ -158,7 +158,7 @@ fn main() {
 	ved.cfg.set_settings(config_path)
 	ved.cfg.reload_config()
 
-	println('height=$size.height')
+	println('height=${size.height}')
 
 	keys_vlang :=
 		'case shared defer none match pub struct interface in sizeof assert enum import go spawn ' +
@@ -213,10 +213,10 @@ fn main() {
 	else if args.len == 2 && os.is_file(args.last()) {
 		path := args[args.len - 1]
 		if !os.exists(path) {
-			println('file "$path" does not exist')
+			println('file "${path}" does not exist')
 			exit(1)
 		}
-		println('PATH="$path" cur_dir="$cur_dir"')
+		println('PATH="${path}" cur_dir="${cur_dir}"')
 		if !os.is_dir(path) && !path.starts_with('-') {
 			mut workspace := os.dir(path)
 			ved.add_workspace(workspace)
@@ -251,7 +251,7 @@ fn main() {
 	}
 	ved.load_session()
 	ved.load_timer()
-	println('first_launch=$first_launch')
+	println('first_launch=${first_launch}')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
 		ved_exe_dir := os.dir(os.executable())
 		ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
@@ -434,7 +434,7 @@ fn (mut ved Ved) draw() {
 		v := ved.views[i]
 		mut name := v.short_path
 		if v.changed && !v.path.ends_with('/out') {
-			name = '$name [+]'
+			name = '${name} [+]'
 		}
 		ved.gg.draw_text(ved.split_x(i - from) + v.padding_left + 10, 1, name, ved.cfg.file_name_cfg)
 	}
@@ -449,8 +449,8 @@ fn (mut ved Ved) draw() {
 	nr_spaces := ved.workspaces.len
 	cur_space := ved.workspace_idx + 1
 	space_name := short_space(ved.workspace)
-	ved.gg.draw_text(ved.win_width - 220, 1, '[$space_name]', ved.cfg.file_name_cfg)
-	ved.gg.draw_text(ved.win_width - 100, 1, '$cur_space/$nr_spaces', ved.cfg.file_name_cfg)
+	ved.gg.draw_text(ved.win_width - 220, 1, '[${space_name}]', ved.cfg.file_name_cfg)
+	ved.gg.draw_text(ved.win_width - 100, 1, '${cur_space}/${nr_spaces}', ved.cfg.file_name_cfg)
 	// Time
 	ved.gg.draw_text(ved.win_width - 50, 1, ved.now.hhmm(), ved.cfg.file_name_cfg)
 	// ved.gg.draw_text(ved.win_width - 550, 1, now.hhmmss(), file_name_cfg)
@@ -537,7 +537,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
 		line := view.lines[j]
 		if line.len > 5000 {
-			println('line len too big! views[$i].lines[$j] ($line.len) path=$ved.view.path')
+			println('line len too big! views[${i}].lines[${j}] (${line.len}) path=${ved.view.path}')
 			continue
 		}
 		x := split_x + view.padding_left
@@ -549,7 +549,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 		// Line number
 		line_number := j + 1
-		ved.gg.draw_text(x + 3, y, '$line_number', ved.cfg.line_nr_cfg)
+		ved.gg.draw_text(x + 3, y, '${line_number}', ved.cfg.line_nr_cfg)
 		// Tab offset
 		mut line_x := x + 10
 		mut nr_tabs := 0
@@ -796,7 +796,7 @@ fn (ved &Ved) is_in_blog() bool {
 fn (ved &Ved) git_commit() {
 	text := ved.query
 	dir := ved.workspace
-	os.system('git -C $dir commit -am "$text"')
+	os.system('git -C ${dir} commit -am "${text}"')
 	// os.system('gitter $dir')
 }
 
@@ -804,7 +804,7 @@ fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
 	os.chdir(dir) or { return }
-	res := os.execute('zsh -ic "source ~/.zshrc; $text" > $dir/out')
+	res := os.execute('zsh -ic "source ~/.zshrc; ${text}" > ${dir}/out')
 	if res.exit_code == -1 {
 	}
 	// TODO copypasted some code from build_app()
@@ -812,7 +812,7 @@ fn (ved &Ved) run_zsh() {
 	// f2.writeln(out.output) or { panic(err) }
 	// f2.close()
 	mut last_view := ved.get_last_view()
-	last_view.open_file('$dir/out')
+	last_view.open_file('${dir}/out')
 }
 
 fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
@@ -1373,7 +1373,7 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 
 fn (mut ved Ved) update_view() {
 	$if debug {
-		println('update view len=$ved.views.len')
+		println('update view len=${ved.views.len}')
 	}
 	unsafe {
 		ved.view = &ved.views[ved.cur_split]
@@ -1450,7 +1450,7 @@ fn (mut ved Ved) prev_split() {
 
 fn (mut ved Ved) open_workspace(idx int) {
 	//$if debug {
-	println('open workspace($idx)')
+	println('open workspace(${idx})')
 	//}
 	if idx >= ved.workspaces.len {
 		ved.open_workspace(0)
@@ -1472,7 +1472,7 @@ fn (mut ved Ved) open_workspace(idx int) {
 
 fn (mut ved Ved) add_workspace(path string) {
 	//$if debug {
-	println('add_workspace("$path")')
+	println('add_workspace("${path}")')
 	//}
 	// if ! os.exists(path) {
 	// ui.alert('"$path" doesnt exist')
@@ -1507,7 +1507,7 @@ fn (ved &Ved) save_session() {
 	println('saving session...')
 	mut f := os.create(session_path) or { panic('fail') }
 	for i, view in ved.views {
-		println('saving view #$i $view.path')
+		println('saving view #${i} ${view.path}')
 		// if view.path == '' {
 		// continue
 		// }
@@ -1531,8 +1531,8 @@ fn toi(s string) i64 {
 
 fn (ved &Ved) save_timer() {
 	mut f := os.create(timer_path) or { return }
-	f.writeln('task=$ved.cur_task') or { panic(err) }
-	f.writeln('task_start=$ved.task_start_unix') or { panic(err) }
+	f.writeln('task=${ved.cur_task}') or { panic(err) }
+	f.writeln('task_start=${ved.task_start_unix}') or { panic(err) }
 	// f.writeln('timer_typ=$ved.timer.cur_type') or { panic(err) }
 	/*
 	if ved.timer.started {
@@ -1576,7 +1576,7 @@ fn (mut ved Ved) load_timer() {
 }
 
 fn (mut ved Ved) load_session() {
-	println('load session "$session_path"')
+	println('load session "${session_path}"')
 	paths := os.read_lines(session_path) or { return }
 	println(paths)
 	ved.load_views(paths)
@@ -1623,15 +1623,15 @@ fn (ved &Ved) get_git_diff() {
 
 fn (ved &Ved) get_git_diff_full() string {
 	dir := ved.workspace
-	os.system('git -C $dir diff > $dir/out')
+	os.system('git -C ${dir} diff > ${dir}/out')
 	mut last_view := ved.get_last_view()
-	last_view.open_file('$dir/out')
+	last_view.open_file('${dir}/out')
 	// nothing commited (diff = 0), shot git log)
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
-		os.system('git -C $dir log -n 40 --pretty=format:"%ad %s" ' +
-			'--simplify-merges --date=format:"%Y-%m-%d %H:%M  "> $dir/out')
-		last_view.open_file('$dir/out')
+		os.system('git -C ${dir} log -n 40 --pretty=format:"%ad %s" ' +
+			'--simplify-merges --date=format:"%Y-%m-%d %H:%M  "> ${dir}/out')
+		last_view.open_file('${dir}/out')
 	}
 	last_view.gg()
 	return 's'
@@ -1639,9 +1639,9 @@ fn (ved &Ved) get_git_diff_full() string {
 
 fn (ved &Ved) open_blog() {
 	now := time.now()
-	path := os.join_path(codeblog_path, '$now.year', '${now.month:02d}', '${now.day:02d}')
+	path := os.join_path(codeblog_path, '${now.year}', '${now.month:02d}', '${now.day:02d}')
 	if !os.exists(path) {
-		os.system('touch $path')
+		os.system('touch ${path}')
 	}
 	mut last_view := ved.get_last_view()
 	last_view.open_file(path)
@@ -1688,16 +1688,16 @@ fn (mut ved Ved) build_app(extra string) {
 	// panic('ff')
 	// return
 	// }
-	os.write_file('$dir/out', 'Building...') or { panic(err) }
-	last_view.open_file('$dir/out')
-	out := os.execute('sh $dir/build$extra')
+	os.write_file('${dir}/out', 'Building...') or { panic(err) }
+	last_view.open_file('${dir}/out')
+	out := os.execute('sh ${dir}/build${extra}')
 	if out.exit_code == -1 {
 		return
 	}
-	mut f2 := os.create('$dir/out') or { panic('fail') }
+	mut f2 := os.create('${dir}/out') or { panic('fail') }
 	f2.writeln(filter_ascii_colors(out.output)) or { panic(err) }
 	f2.close()
-	last_view.open_file('$dir/out')
+	last_view.open_file('${dir}/out')
 	last_view.shift_g()
 	// error line
 	alines := out.output.split_into_lines()
@@ -1754,16 +1754,16 @@ fn (mut ved Ved) run_file() {
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
 	os.chdir(dir) or {}
-	out := os.execute('v $view.path')
+	out := os.execute('v ${view.path}')
 	if out.exit_code == -1 {
 		return
 	}
-	mut f := os.create('$dir/out') or { panic('foo') }
+	mut f := os.create('${dir}/out') or { panic('foo') }
 	f.writeln(out.output) or { panic(err) }
 	f.close()
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
-	last_view.open_file('$dir/out')
+	last_view.open_file('${dir}/out')
 	last_view.shift_g()
 	ved.is_building = false
 	// error line
@@ -1780,7 +1780,7 @@ fn (mut ved Ved) run_file() {
 fn (mut ved Ved) go_to_error(line string) {
 	ved.error_line = line.after('error: ')
 	// panic: volt/twitch.v:88
-	println('go to ERROR $line')
+	println('go to ERROR ${line}')
 	// if !line.contains('panic:') {
 	// return
 	// }
@@ -1795,14 +1795,14 @@ fn (mut ved Ved) go_to_error(line string) {
 	println(vals)
 	line_nr := vals[0].int()
 	col := vals[1].int()
-	println('path=$path filename=$filename linenr=$line_nr col=$col')
+	println('path=${path} filename=${filename} linenr=${line_nr} col=${col}')
 	for i := 0; i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
 		if !view.path.contains(os.path_separator + filename) && view.path != filename {
 			continue
 		}
 		view.error_y = line_nr - 1
-		println('error_y=$view.error_y')
+		println('error_y=${view.error_y}')
 		view.move_to_line(view.error_y)
 		if col > 0 {
 			view.x = col - 1
@@ -1812,7 +1812,7 @@ fn (mut ved Ved) go_to_error(line string) {
 		return
 	}
 	// File with the error is not open right now, do it
-	s := os.execute('git -C $ved.workspace ls-files')
+	s := os.execute('git -C ${ved.workspace} ls-files')
 	if s.exit_code == -1 {
 		return
 	}
@@ -1854,7 +1854,7 @@ fn (mut ved Ved) key_u() {
 
 fn (mut ved Ved) go_to_def() {
 	word := ved.word_under_cursor()
-	query := ') $word'
+	query := ') ${word}'
 	mut view := ved.view
 	for i, line in view.lines {
 		if line.contains(query) {
@@ -1869,7 +1869,7 @@ fn (mut ved Ved) go_to_def() {
 		if !file.ends_with('.v') {
 			continue
 		}
-		file = '$ved.workspace/$file'
+		file = '${ved.workspace}/${file}'
 		lines := os.read_lines(file) or { continue }
 		// println('trying file $file with $lines.len lines')
 		for j, line in lines {
@@ -1946,7 +1946,7 @@ fn (ved &Ved) insert_task() ! {
 	now := time.now()
 	if start_time.day == now.day && start_time.month == now.month {
 		// Single day entry
-		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() + ' | ' +
+		f.writeln('| ${task_name} | ${mins} ${mins_pad} | ' + start_time.format() + ' | ' +
 			time.now().hhmm() + ' |')!
 	} else {
 		// Two day entry (separated by 00:00)
@@ -1965,10 +1965,10 @@ fn (ved &Ved) insert_task() ! {
 			minute: 0
 		}
 
-		f.writeln('| $task_name | $mins $mins_pad | ' + start_time.format() + ' | ' +
+		f.writeln('| ${task_name} | ${mins} ${mins_pad} | ' + start_time.format() + ' | ' +
 			midnight.hhmm() + ' |')!
 		f.writeln(separator)!
-		f.writeln('| $task_name | $mins $mins_pad | ' + day_start.format() + ' | ' +
+		f.writeln('| ${task_name} | ${mins} ${mins_pad} | ' + day_start.format() + ' | ' +
 			time.now().hhmm() + ' |')!
 	}
 	f.writeln(separator)!
@@ -1976,7 +1976,7 @@ fn (ved &Ved) insert_task() ! {
 }
 
 fn (mut ved Ved) git_pull() {
-	os.system('git -C "$ved.workspace" pull --rebase')
+	os.system('git -C "${ved.workspace}" pull --rebase')
 	ved.mode = .normal
 	ved.gg.refresh_ui()
 }

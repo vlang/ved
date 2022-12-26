@@ -141,7 +141,7 @@ fn (mut config Config) set_disable_mouse() {
 
 // Convert a toml key color (in hex) to a gx.Color type
 fn (config Config) get_toml_color(base string) !gx.Color {
-	toml_hex := config.settings.value('colors.base$base').string()
+	toml_hex := config.settings.value('colors.base${base}').string()
 	if toml_hex != 'toml.Any(toml.Null{})' {
 		toml_red := ('0x' + toml_hex[0..2]).u8()
 		toml_green := ('0x' + toml_hex[2..4]).u8()
@@ -150,7 +150,7 @@ fn (config Config) get_toml_color(base string) !gx.Color {
 		return gx.rgb(toml_red, toml_green, toml_blue)
 	}
 
-	return error('Couldn\'t read base$base from the settings file')
+	return error('Couldn\'t read base${base} from the settings file')
 }
 
 fn (mut config Config) set_vcolor() {

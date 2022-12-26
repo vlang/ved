@@ -71,7 +71,7 @@ fn get_clean_words(line string) []string {
 }
 
 fn (mut view View) open_file(path string) {
-	println('open file "$path"')
+	println('open file "${path}"')
 	if path == '' {
 		return
 	}
@@ -132,7 +132,7 @@ fn (mut view View) open_file(path string) {
 	// view.short_path = path.replace(view.ved.workspace, '')
 	// Calc padding_left
 	nr_lines := view.lines.len
-	s := '$nr_lines'
+	s := '${nr_lines}'
 	view.padding_left = s.len * ved.cfg.char_width + 8
 	view.ved.save_session()
 	// Go to old y for this file
@@ -161,8 +161,8 @@ fn (mut view View) save_file() {
 	}
 	path := view.path
 	view.ved.file_y_pos[view.path] = view.y
-	println('saving file "$path"')
-	println('lines.len=$view.lines.len')
+	println('saving file "${path}"')
+	println('lines.len=${view.lines.len}')
 	// line0 := view.lines[0]
 	// println('line[0].len=$line0.len')
 	mut file := os.create(path) or { panic('fail') }
@@ -184,12 +184,12 @@ fn (mut view View) format_file() {
 	// Run formatters
 	if path.ends_with('.go') {
 		println('running goimports')
-		os.system('goimports -w "$path"')
+		os.system('goimports -w "${path}"')
 	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
-		os.system('sassc "$path" > "$css"')
+		os.system('sassc "${path}" > "${css}"')
 	} else if path.ends_with('.v') || path.ends_with('.vsh') {
-		os.system('v fmt -w $path')
+		os.system('v fmt -w ${path}')
 	}
 	view.reopen()
 	// update git diff
@@ -298,7 +298,7 @@ fn (mut view View) shift_g() {
 
 fn (mut view View) shift_a() {
 	line := view.line()
-	view.set_line('$line ')
+	view.set_line('${line} ')
 	view.x = view.uline().len - 1
 }
 
@@ -345,12 +345,12 @@ fn (mut view View) dd() {
 fn (mut view View) shift_right() {
 	// No selection, shift current line
 	if view.vstart == -1 {
-		view.set_line('\t$view.line()')
+		view.set_line('\t${view.line()}')
 		return
 	}
 	for i := view.vstart; i <= view.vend; i++ {
 		line := view.lines[i]
-		view.lines[i] = '\t$line'
+		view.lines[i] = '\t${line}'
 	}
 }
 
@@ -390,7 +390,7 @@ fn (mut view View) shift_c() string {
 	line := view.line()
 	s := line[..view.x]
 	deleted := line[view.x..]
-	view.set_line('$s ')
+	view.set_line('${s} ')
 	view.x = s.len
 	return deleted
 }
@@ -398,7 +398,7 @@ fn (mut view View) shift_c() string {
 fn (mut view View) insert_text(s string) {
 	line := view.line()
 	if line.len == 0 {
-		view.set_line('$s ')
+		view.set_line('${s} ')
 	} else {
 		if view.x > line.len {
 			view.x = line.len
@@ -410,7 +410,7 @@ fn (mut view View) insert_text(s string) {
 		left := uline[..view.x].string()
 		right := uline[view.x..uline.len].string()
 		// Insert chat in the middle
-		res := '$left$s$right'
+		res := '${left}${s}${right}'
 		view.set_line(res)
 	}
 	view.x += s.runes().len
@@ -436,7 +436,7 @@ fn (mut view View) backspace() {
 	if view.x < uline.len {
 		right = uline[view.x..].string()
 	}
-	view.set_line('$left$right')
+	view.set_line('${left}${right}')
 	view.x--
 	if view.ved.prev_insert.len > 0 {
 		view.ved.prev_insert = view.ved.prev_insert[..view.ved.prev_insert.len - 1] // TODO runes

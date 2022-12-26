@@ -179,11 +179,11 @@ fn (mut ved Ved) char_query(s string) {
 		return
 	}
 	mut q := ved.query
-	println('char q($s) $ved.query_type')
+	println('char q(${s}) ${ved.query_type}')
 	if ved.query_type in [.search, .search_in_folder, .grep] {
 		q = ved.search_query
 		ved.search_query = q + s
-		println('new sq=$ved.search_query')
+		println('new sq=${ved.search_query}')
 	} else {
 		ved.query = q + s
 	}
@@ -198,7 +198,7 @@ fn (mut ved Ved) load_git_tree() {
 	}
 	if ved.is_git_tree() {
 		// Cache all git files
-		s := os.execute('git -C $dir ls-files')
+		s := os.execute('git -C ${dir} ls-files')
 		if s.exit_code == -1 {
 			return
 		}
@@ -217,7 +217,7 @@ fn (mut ved Ved) load_git_tree() {
 
 		ved.all_git_files = []
 		for f in files {
-			ved.all_git_files << f.all_after('$dir/')
+			ved.all_git_files << f.all_after('${dir}/')
 		}
 	}
 	/*
@@ -244,7 +244,7 @@ fn (ved &Ved) load_all_tasks() {
 fn (mut ved Ved) is_git_tree() bool {
 	path := if ved.workspace == '' { '.' } else { ved.workspace }
 
-	out := os.execute('git -C "$path" rev-parse --is-inside-work-tree')
+	out := os.execute('git -C "${path}" rev-parse --is-inside-work-tree')
 	if out.exit_code != -1 {
 		return out.output == 'true\n'
 	}
@@ -395,7 +395,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 			ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 		}
 		line_nr := line[pos + 1..pos2]
-		ved.gg.draw_text(x + 10, yy, path.limit(40) + ':$line_nr', txt_cfg)
+		ved.gg.draw_text(x + 10, yy, path.limit(40) + ':${line_nr}', txt_cfg)
 		ved.gg.draw_text(x + 400, yy, text, txt_cfg)
 	}
 }
@@ -416,7 +416,7 @@ fn (mut ved Ved) ctrlp_open() {
 				if space == '' {
 					space = '.'
 				}
-				path = '$space/$path'
+				path = '${space}/${path}'
 				ved.view.open_file(path)
 				break
 			}
@@ -436,7 +436,7 @@ fn (mut ved Ved) ctrlj_open() {
 			if space == '' {
 				space = '.'
 			}
-			path = '$space/$path'
+			path = '${space}/${path}'
 			ved.view.open_file(path)
 			break
 		}
@@ -447,7 +447,7 @@ fn (mut ved Ved) git_grep() {
 	ved.gg_pos = 0 // select the first result for faster switching to the right file =
 	// (especially if there's only one result)
 	query := ved.search_query.replace('$', '\\\$')
-	s := os.execute('git -C "$ved.workspace" grep -F -n "$query"')
+	s := os.execute('git -C "${ved.workspace}" grep -F -n "${query}"')
 	if s.exit_code == -1 {
 		return
 	}
@@ -470,7 +470,7 @@ enum SearchType {
 }
 
 fn (mut ved Ved) search(search_type SearchType) {
-	println('search() query=$ved.search_query')
+	println('search() query=${ved.search_query}')
 	if ved.search_query == '' {
 		return
 	}
