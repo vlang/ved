@@ -85,6 +85,7 @@ fn (mut view View) open_file(path string) {
 		view.short_path = path
 	}
 	mut ved := view.ved
+	ved.set_current_syntax_idx(os.file_ext(path))
 	// if os.exists(view.short_path) &&
 	if view.short_path !in ['out', ''] && view.short_path !in ved.open_paths[ved.workspace_idx] {
 		if ved.open_paths[ved.workspace_idx].len == 0 {
@@ -182,14 +183,16 @@ fn (mut view View) save_file() {
 fn (mut view View) format_file() {
 	path := view.path
 	// Run formatters
+	fmt_cmd := view.ved.syntaxes[view.ved.current_syntax_idx].fmt_cmd.replace('<PATH>',
+		os.quoted_path(path))
 	if path.ends_with('.go') {
 		println('running goimports')
 		os.system('goimports -w "${path}"')
 	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "${path}" > "${css}"')
-	} else if path.ends_with('.v') || path.ends_with('.vsh') {
-		os.system('v fmt -w ${path}')
+	} else if fmt_cmd != '' {
+		os.system(fmt_cmd)
 	}
 	view.reopen()
 	// update git diff
