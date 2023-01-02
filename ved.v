@@ -11,10 +11,12 @@ import uiold
 import strings
 import clipboard
 
-// import darwin
 const (
-	settings_path     = os.join_path(os.home_dir(), '.ved')
-	codeblog_path     = os.join_path(os.home_dir(), 'code', 'blog')
+	exe_dir           = os.dir(os.executable())
+	syntax_dir        = os.join_path(exe_dir, 'syntax')
+	home_dir          = os.home_dir()
+	settings_path     = os.join_path(home_dir, '.ved')
+	codeblog_path     = os.join_path(home_dir, 'code', 'blog')
 	session_path      = os.join_path(settings_path, 'session')
 	workspaces_path   = os.join_path(settings_path, 'workspaces')
 	timer_path        = os.join_path(settings_path, 'timer')
@@ -51,7 +53,8 @@ mut:
 	ylines               []string // for y, yy
 	git_diff_plus        string   // short git diff stat top right
 	git_diff_minus       string
-	keys                 []string
+	syntaxes             []Syntax
+	current_syntax_idx   int
 	chunks               []Chunk
 	is_building          bool
 	timer                Timer
@@ -139,7 +142,7 @@ fn main() {
 	}
 	mut size := gg.screen_size()
 	if size.width == 0 || size.height == 0 {
-		size = gg.Size{2560, 1480}
+		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1480} }
 	}
 	mut ved := &Ved{
 		win_width: size.width
@@ -160,13 +163,7 @@ fn main() {
 
 	println('height=${size.height}')
 
-	keys_vlang :=
-		'case shared defer none match pub struct interface in sizeof assert enum import go spawn ' +
-		'return module fn if for break continue asm unsafe mut is ' +
-		'type const else true else for false use $' + 'if $' + 'else'
-	keys_primary := os.read_file('./v.syntax') or { keys_vlang }
-
-	ved.keys = keys_primary.split(' ')
+	ved.load_syntaxes()
 
 	ved.gg = gg.new_context(
 		width: size.width
@@ -687,7 +684,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		}
 		word := line[start..i]
 		// println('word="$word"')
-		if word in ved.keys {
+		if word in ved.syntaxes[ved.current_syntax_idx].keywords {
 			// println('$word is key')
 			ved.add_chunk(.a_key, start, i)
 			// println('adding key. len=$ved.chunks.len')
