@@ -85,6 +85,7 @@ enum ChunkKind {
 	a_string = 1
 	a_comment = 2
 	a_key = 3
+	a_lit = 4
 }
 
 enum EditorMode {
@@ -629,7 +630,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 	*/
 	// } else if line[0] == `-` {
 	ved.chunks = []
-	// ved.chunks.len = 0 // TODO V should not allow this
+	cur_syntax := ved.syntaxes[ved.current_syntax_idx]
 	for i := 0; i < line.len; i++ {
 		start := i
 		// Comment // #
@@ -684,7 +685,11 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		}
 		word := line[start..i]
 		// println('word="$word"')
-		if word in ved.syntaxes[ved.current_syntax_idx].keywords {
+		if word in cur_syntax.literals {
+			// println('$word is key')
+			ved.add_chunk(.a_lit, start, i)
+			// println('adding key. len=$ved.chunks.len')
+		} else if word in cur_syntax.keywords {
 			// println('$word is key')
 			ved.add_chunk(.a_key, start, i)
 			// println('adding key. len=$ved.chunks.len')
@@ -712,10 +717,11 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 			s := line[pos..chunk.start]
 			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, s, ved.cfg.txt_cfg)
 		}
-		// Keyword string etc
+		// Keyword, literal, string etc
 		typ := chunk.typ
 		cfg := match typ {
 			.a_key { ved.cfg.key_cfg }
+			.a_lit { ved.cfg.lit_cfg }
 			.a_string { ved.cfg.string_cfg }
 			.a_comment { ved.cfg.comment_cfg }
 		}

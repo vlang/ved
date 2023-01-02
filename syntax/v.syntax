@@ -14,7 +14,6 @@
         "else",
         "$else",
         "enum",
-        "false",
         "fn",
         "for",
         "go",
@@ -30,7 +29,6 @@
         "match",
         "module",
         "mut",
-        "none",
         "or",
         "pub",
         "return",
@@ -40,12 +38,12 @@
         "sizeof",
         "static",
         "struct",
-        "true",
         "type",
         "typeof",
         "union",
         "unsafe",
         "volatile",
         "__offsetof"
-    ]
+    ],
+    "literals": ["none", "nil", "true", "false"]
 }

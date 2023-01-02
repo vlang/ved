@@ -37,6 +37,8 @@ mut:
 	string_cfg      gx.TextCfg
 	key_color       gx.Color // base0E
 	key_cfg         gx.TextCfg
+	lit_color       gx.Color // base0E
+	lit_cfg         gx.TextCfg
 	text_color      gx.Color // base05
 	txt_cfg         gx.TextCfg
 	comment_color   gx.Color // base03
@@ -76,6 +78,7 @@ fn (mut config Config) reload_config() {
 	config.set_errorbgcolor()
 	config.set_string()
 	config.set_key()
+	config.set_lit()
 	config.set_title()
 	config.set_cursor()
 	config.set_txt()
@@ -202,6 +205,16 @@ fn (mut config Config) set_key() {
 	config.key_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.key_color
+	}
+}
+
+// base 0F
+fn (mut config Config) set_lit() {
+	config.lit_color = config.get_toml_color('0F') or { gx.rgb(7, 103, 154) }
+
+	config.lit_cfg = gx.TextCfg{
+		size: config.text_size
+		color: config.lit_color
 	}
 }
 

@@ -11,6 +11,7 @@ struct Syntax {
 	extensions []string
 	fmt_cmd    string
 	keywords   []string
+	literals   []string
 }
 
 fn (mut ved Ved) load_syntaxes() {
