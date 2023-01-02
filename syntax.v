@@ -18,13 +18,15 @@ fn (mut ved Ved) load_syntaxes() {
 	println('loading syntax files...')
 	files := os.walk_ext(syntax_dir, '.syntax')
 	for file in files {
-		ved.syntaxes << json.decode(Syntax, os.read_file(file) or {
+		fcontent := os.read_file(file) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'
-		}) or {
+		}
+		syntax := json.decode(Syntax, fcontent) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			Syntax{}
 		}
+		ved.syntaxes << syntax
 	}
 	println('${files.len} syntax files loaded')
 }
