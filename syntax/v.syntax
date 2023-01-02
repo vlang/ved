@@ -1,7 +1,7 @@
 {
     "name": "V",
-    "extensions": [".v", ".vsh"],
-    "fmt_cmd": "v fmt -w ${path}",
+    "extensions": [".v", ".vv", ".vsh"],
+    "fmt_cmd": "v fmt -w <PATH>",
     "keywords": [
         "as",
         "asm",

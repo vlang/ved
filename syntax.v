@@ -13,22 +13,15 @@ struct Syntax {
 	keywords   []string
 }
 
-// used by View.open_file
-fn extension(path string) string {
-	filename := os.base(path)
-	index := filename.last_index('.') or { return path[path.len..] }
-	return if index == 0 { path[path.len..] } else { filename[index..] }
-}
-
 fn (mut ved Ved) load_syntaxes() {
 	println('loading syntax files...')
 	files := os.walk_ext(syntax_dir, '.syntax')
 	for file in files {
 		ved.syntaxes << json.decode(Syntax, os.read_file(file) or {
-			println('    error: cannot load syntax file ${file}: ${err.msg()}')
+			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'
 		}) or {
-			println('    error: cannot load syntax file ${file}: ${err.msg()}')
+			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			Syntax{}
 		}
 	}
