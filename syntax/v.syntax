@@ -38,6 +38,7 @@
         "sizeof",
         "static",
         "struct",
+        "spawn",
         "type",
         "typeof",
         "union",
