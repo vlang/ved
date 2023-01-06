@@ -6,6 +6,8 @@ module main
 import os
 import json
 
+const builtin_v_syntax_file_content = $embed_file('syntax/v.syntax').to_string()
+
 struct Syntax {
 	name       string
 	extensions []string
@@ -16,8 +18,16 @@ struct Syntax {
 
 fn (mut ved Ved) load_syntaxes() {
 	println('loading syntax files...')
+	vsyntax := json.decode(Syntax, builtin_v_syntax_file_content) or {
+		panic('the builtin syntax file can not be decoded')
+	}
+	ved.syntaxes << vsyntax
 	files := os.walk_ext(syntax_dir, '.syntax')
 	for file in files {
+		if file.ends_with('v.syntax') {
+			// skip the builtin syntax, since it is already embedded into the executable
+			continue
+		}
 		fcontent := os.read_file(file) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'
@@ -28,7 +38,7 @@ fn (mut ved Ved) load_syntaxes() {
 		}
 		ved.syntaxes << syntax
 	}
-	println('${files.len} syntax files loaded')
+	println('${files.len} syntax files loaded + the compile time builtin syntax for .v')
 }
 
 fn (mut ved Ved) set_current_syntax_idx(ext string) {
