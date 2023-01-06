@@ -630,7 +630,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 	*/
 	// } else if line[0] == `-` {
 	ved.chunks = []
-	cur_syntax := ved.syntaxes[ved.current_syntax_idx]
+	cur_syntax := ved.syntaxes[ved.current_syntax_idx] or { Syntax{} }
 	for i := 0; i < line.len; i++ {
 		start := i
 		// Comment // #
