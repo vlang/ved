@@ -24,10 +24,6 @@ fn (mut ved Ved) load_syntaxes() {
 	ved.syntaxes << vsyntax
 	files := os.walk_ext(syntax_dir, '.syntax')
 	for file in files {
-		if file.ends_with('v.syntax') {
-			// skip the builtin syntax, since it is already embedded into the executable
-			continue
-		}
 		fcontent := os.read_file(file) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'
@@ -35,6 +31,11 @@ fn (mut ved Ved) load_syntaxes() {
 		syntax := json.decode(Syntax, fcontent) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			Syntax{}
+		}
+		if file.ends_with('v.syntax') {
+			// allow overriding the builtin embedded syntax at runtime:
+			ved.syntaxes[0] = syntax
+			continue
 		}
 		ved.syntaxes << syntax
 	}
