@@ -13,7 +13,7 @@ import clipboard
 
 const (
 	exe_dir           = os.dir(os.executable())
-	syntax_dir        = os.join_path(exe_dir, 'syntax')
+	syntax_dir        = os.join_path(settings_path, 'syntax')
 	home_dir          = os.home_dir()
 	settings_path     = os.join_path(home_dir, '.ved')
 	codeblog_path     = os.join_path(home_dir, 'code', 'blog')
