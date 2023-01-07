@@ -13,15 +13,15 @@ import clipboard
 
 const (
 	exe_dir           = os.dir(os.executable())
-	syntax_dir        = os.join_path(settings_path, 'syntax')
 	home_dir          = os.home_dir()
-	settings_path     = os.join_path(home_dir, '.ved')
+	settings_dir      = os.join_path(home_dir, '.ved')
 	codeblog_path     = os.join_path(home_dir, 'code', 'blog')
-	session_path      = os.join_path(settings_path, 'session')
-	workspaces_path   = os.join_path(settings_path, 'workspaces')
-	timer_path        = os.join_path(settings_path, 'timer')
-	tasks_path        = os.join_path(settings_path, 'tasks')
-	config_path       = os.join_path(settings_path, 'conf.toml')
+	syntax_dir        = os.join_path(settings_dir, 'syntax')
+	session_path      = os.join_path(settings_dir, 'session')
+	workspaces_path   = os.join_path(settings_dir, 'workspaces')
+	timer_path        = os.join_path(settings_dir, 'timer')
+	tasks_path        = os.join_path(settings_dir, 'tasks')
+	config_path       = os.join_path(settings_dir, 'conf.toml')
 	max_nr_workspaces = 10
 )
 
@@ -130,8 +130,8 @@ fn main() {
 		println(help_text)
 		return
 	}
-	if !os.is_dir(settings_path) {
-		os.mkdir(settings_path) or { panic(err) }
+	if !os.is_dir(settings_dir) {
+		os.mkdir(settings_dir) or { panic(err) }
 	}
 	mut nr_splits := 3
 	is_window := '-window' in args
