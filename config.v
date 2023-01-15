@@ -62,6 +62,7 @@ fn (mut config Config) set_settings(path string) {
 	config.settings = toml.parse_file(path) or { toml.parse_text('') or { panic(err) } }
 }
 
+// reload_config reloads the config from config.toml file
 fn (mut config Config) reload_config() {
 	config.init_colors()
 

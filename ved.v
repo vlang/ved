@@ -360,6 +360,7 @@ fn (ved &Ved) draw_cursor(cursor_x int, y int) {
 	cursor_style := ved.cfg.cursor_style
 	match cursor_style {
 		.block {
+			// println('CURSOR WIDTH=${ved.cfg.char_width}')
 			ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
 				ved.cfg.cursor_color)
 		}
@@ -908,6 +909,7 @@ fn (mut ved Ved) ctrl_n() {
 fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	super := mod == .super || mod == .ctrl
 	shift := mod == .shift
+	// println('mod=')
 	// println(int(mod))
 	shift_and_super := int(mod) == 9
 	mut view := ved.view
@@ -974,12 +976,20 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			// ved.vg = gg.new_context(WIN_WIDTH, WIN_HEIGHT, ved.font_size)
 		}
 		.minus {
-			if super {
+			if shift_and_super {
+				println('FONT DECREASE')
+				ved.increase_font(-1)
+			} else if super {
 				ved.get_git_diff_full()
 			}
 		}
 		.equal {
-			ved.open_blog()
+			if shift_and_super {
+				ved.increase_font(1)
+				println('FONT INCREASE')
+			} else {
+				ved.open_blog()
+			}
 		}
 		.apostrophe {
 			if ved.prev_key == .apostrophe {
@@ -1982,6 +1992,41 @@ fn (mut ved Ved) git_pull() {
 	os.system('git -C "${ved.workspace}" pull --rebase')
 	ved.mode = .normal
 	ved.gg.refresh_ui()
+}
+
+const text_scale = 1.2
+
+fn (mut ved Ved) increase_font(delta int) {
+	// ved.cfg.text_size = int(f64(ved.cfg.text_size) * text_scale)
+	// ved.cfg.char_width = int(f64(ved.cfg.char_width) * text_scale)
+	// ved.cfg.line_height = int(f64(ved.cfg.line_height) * text_scale)
+	ved.cfg.text_size += delta * 2
+	ved.cfg.char_width += delta
+	// ved.cfg.char_width = ved.cfg.text_size - 10
+	ved.cfg.line_height = ved.cfg.text_size + 2
+	// x := ved.cfg.txt_cfg
+	ved.cfg.txt_cfg = gx.TextCfg{
+		...ved.cfg.txt_cfg
+		size: ved.cfg.text_size
+	}
+	ved.cfg.comment_cfg = gx.TextCfg{
+		...ved.cfg.comment_cfg
+		size: ved.cfg.text_size
+	}
+	ved.cfg.key_cfg = gx.TextCfg{
+		...ved.cfg.key_cfg
+		size: ved.cfg.text_size
+	}
+	ved.cfg.line_nr_cfg = gx.TextCfg{
+		...ved.cfg.line_nr_cfg
+		size: ved.cfg.text_size
+	}
+	ved.cfg.string_cfg = gx.TextCfg{
+		...ved.cfg.string_cfg
+		size: ved.cfg.text_size
+	}
+	// println('NEW  CONFIG')
+	// println(ved.cfg)
 }
 
 fn filter_ascii_colors(s string) string {
