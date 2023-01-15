@@ -2003,6 +2003,9 @@ fn (mut ved Ved) increase_font(delta int) {
 	// ved.cfg.char_width = int(f64(ved.cfg.char_width) * text_scale)
 	// ved.cfg.line_height = int(f64(ved.cfg.line_height) * text_scale)
 	ved.cfg.text_size += delta * 2
+	if ved.cfg.text_size > 24 {
+		return
+	}
 	ved.cfg.char_width += delta
 	// ved.cfg.char_width = ved.cfg.text_size - 10
 	ved.cfg.line_height = ved.cfg.text_size + 2
