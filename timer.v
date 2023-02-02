@@ -59,9 +59,9 @@ fn (mut t Timer) load_tasks() {
 		if words.len != 4 {
 			continue
 		}
-		time := words[2].trim_space()
+		time_ := words[2].trim_space()
 		// println('time=$time')
-		a := time.split(' ')
+		a := time_.split(' ')
 		// println('a=') println(a)
 		if a.len < 2 {
 			continue
