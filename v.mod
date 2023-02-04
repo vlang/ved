@@ -6,5 +6,5 @@ Module {
         vcs: 'git'
         tags: ['']
         description: ''
-        license: 'MIT'
+        license: 'GPL3'
 }
