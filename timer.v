@@ -103,9 +103,9 @@ fn (mut t Timer) load_tasks() {
 	t.tasks = tasks
 }
 
-fn new_timer(gg &gg.Context) Timer {
+fn new_timer(gg_ &gg.Context) Timer {
 	mut timer := Timer{
-		gg: gg
+		gg: gg_
 		date: time.now()
 	}
 	timer.load_tasks()
