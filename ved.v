@@ -1665,7 +1665,7 @@ fn (ved &Ved) open_blog() {
 
 fn (ved &Ved) get_last_view() &View {
 	pos := (ved.workspace_idx + 1) * ved.splits_per_workspace - 1
-	eprintln('> ${@METHOD} pos: $pos')
+	eprintln('> ${@METHOD} pos: ${pos}')
 	unsafe {
 		return &ved.views[pos]
 	}
@@ -1693,7 +1693,7 @@ fn (mut ved Ved) save_changed_files() {
 }
 
 fn (mut ved Ved) build_app(extra string) {
-	eprintln('build_app: $extra')
+	eprintln('build_app: ${extra}')
 	ved.is_building = true
 	// Save each open file before building
 	ved.save_changed_files()
@@ -1701,21 +1701,21 @@ fn (mut ved Ved) build_app(extra string) {
 	dir := ved.workspace
 	out_file := os.join_path(dir, 'out')
 	building_cmd := 'sh ${dir}/build${extra}'
-	eprintln('building with `$building_cmd` ...')
-	
+	eprintln('building with `${building_cmd}` ...')
+
 	mut last_view := ved.get_last_view()
-	
+
 	os.write_file(out_file, 'Building...') or { panic(err) }
 	last_view.open_file(out_file)
-	
+
 	out := os.execute(building_cmd)
 	if out.exit_code == -1 {
 		return
 	}
-	
-	os.write_file(out_file, filter_ascii_colors(out.output)) or { panic(err) }	
+
+	os.write_file(out_file, filter_ascii_colors(out.output)) or { panic(err) }
 	last_view.open_file(out_file)
-	
+
 	last_view.shift_g()
 	// error line
 	alines := out.output.split_into_lines()
