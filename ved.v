@@ -201,9 +201,12 @@ fn main() {
 	mut first_launch := false
 	if args.len == 1 {
 		// No args, open previous saved workspaces.
-		workspaces := os.read_lines(workspaces_path) or { return }
-		for workspace in workspaces {
-			ved.add_workspace(workspace)
+		if workspaces := os.read_lines(workspaces_path) {
+			for workspace in workspaces {
+				ved.add_workspace(workspace)
+			}
+		} else {
+			ved.add_workspace('.')
 		}
 		ved.open_workspace(0)
 	}
@@ -251,8 +254,7 @@ fn main() {
 	ved.load_timer()
 	println('first_launch=${first_launch}')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
-		ved_exe_dir := os.dir(os.executable())
-		ved.view.open_file(os.join_path(ved_exe_dir, 'welcome.txt'))
+		ved.view.open_file(os.join_path(exe_dir, 'welcome.txt'))
 	}
 	spawn ved.loop()
 	ved.refresh = true
@@ -1663,6 +1665,7 @@ fn (ved &Ved) open_blog() {
 
 fn (ved &Ved) get_last_view() &View {
 	pos := (ved.workspace_idx + 1) * ved.splits_per_workspace - 1
+	eprintln('> ${@METHOD} pos: $pos')
 	unsafe {
 		return &ved.views[pos]
 	}
@@ -1690,27 +1693,29 @@ fn (mut ved Ved) save_changed_files() {
 }
 
 fn (mut ved Ved) build_app(extra string) {
+	eprintln('build_app: $extra')
 	ved.is_building = true
-	println('building...')
 	// Save each open file before building
 	ved.save_changed_files()
 	os.chdir(ved.workspace) or {}
 	dir := ved.workspace
+	out_file := os.join_path(dir, 'out')
+	building_cmd := 'sh ${dir}/build${extra}'
+	eprintln('building with `$building_cmd` ...')
+	
 	mut last_view := ved.get_last_view()
-	// mut f := os.create('$dir/out') or {
-	// panic('ff')
-	// return
-	// }
-	os.write_file('${dir}/out', 'Building...') or { panic(err) }
-	last_view.open_file('${dir}/out')
-	out := os.execute('sh ${dir}/build${extra}')
+	
+	os.write_file(out_file, 'Building...') or { panic(err) }
+	last_view.open_file(out_file)
+	
+	out := os.execute(building_cmd)
 	if out.exit_code == -1 {
 		return
 	}
-	mut f2 := os.create('${dir}/out') or { panic('fail') }
-	f2.writeln(filter_ascii_colors(out.output)) or { panic(err) }
-	f2.close()
-	last_view.open_file('${dir}/out')
+	
+	os.write_file(out_file, filter_ascii_colors(out.output)) or { panic(err) }	
+	last_view.open_file(out_file)
+	
 	last_view.shift_g()
 	// error line
 	alines := out.output.split_into_lines()
@@ -1731,6 +1736,7 @@ fn (mut ved Ved) build_app(extra string) {
 			break
 		}
 	}
+	ved.refresh = true
 	ved.gg.refresh_ui()
 	// ved.refresh = true
 	// time.sleep(4) // delay is_building to prevent flickering in the right split
@@ -1767,13 +1773,8 @@ fn (mut ved Ved) run_file() {
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
 	os.chdir(dir) or {}
-	out := os.execute('v ${view.path}')
-	if out.exit_code == -1 {
-		return
-	}
-	mut f := os.create('${dir}/out') or { panic('foo') }
-	f.writeln(out.output) or { panic(err) }
-	f.close()
+	out := os.execute('v run ${view.path}')
+	os.write_file('${dir}/out', out.output) or { panic(err) }
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
 	last_view.open_file('${dir}/out')
@@ -1788,6 +1789,7 @@ fn (mut ved Ved) run_file() {
 		}
 	}
 	ved.refresh = true
+	ved.gg.refresh_ui()
 }
 
 fn (mut ved Ved) go_to_error(line string) {
