@@ -31,7 +31,7 @@ Ved should build in under a second.
 By default V's built-in font rendering is used, but there's an option to use freetype, which may provide better rendering for some users:
 
 ```
-v -gc boehm -d use_freetype .
+v -d use_freetype .
 ```
 
 To use freetype, it must first be installed on your system. Follow the steps for your platform below.
