@@ -334,15 +334,19 @@ fn (mut view View) shift_b() {
 }
 
 fn (mut view View) dd() {
-	if view.lines.len != 0 {
-		mut ved := view.ved
-		ved.prev_key = gg.KeyCode.invalid
-		ved.prev_cmd = 'dd'
-		ved.ylines = []
-		ved.ylines << view.line()
-		view.lines.delete(view.y)
-		view.changed = true
+	if view.lines.len == 0 {
+		return
 	}
+	mut ved := view.ved
+	ved.prev_key = gg.KeyCode.invalid
+	ved.prev_cmd = 'dd'
+	ved.ylines = []
+	ved.ylines << view.line()
+	view.lines.delete(view.y)
+	if view.y == view.lines.len {
+		view.k()
+	}
+	view.changed = true
 }
 
 fn (mut view View) shift_right() {
@@ -549,7 +553,8 @@ fn (mut view View) join() {
 
 fn (mut v View) y_visual() {
 	mut ylines := []string{}
-	for i := v.vstart; i <= v.vend; i++ {
+	vtop, vbot := if v.vstart < v.vend { v.vstart, v.vend } else { v.vend, v.vstart }
+	for i := vtop; i <= vbot; i++ {
 		ylines << v.lines[i]
 	}
 	mut ved := v.ved
@@ -561,10 +566,18 @@ fn (mut v View) y_visual() {
 }
 
 fn (mut view View) d_visual() {
+	vtop := if view.vstart < view.vend { view.vstart } else { view.vend }
 	view.y_visual()
 	for i := 0; i < view.ved.ylines.len; i++ {
-		view.lines.delete(view.y)
+		view.lines.delete(vtop)
 	}
+	// Move cursor to a valid position using k
+	if view.y >= view.lines.len {
+		view.y = view.lines.len
+	} else {
+		view.y += 1
+	}
+	view.k()
 }
 
 fn (mut view View) cw() {

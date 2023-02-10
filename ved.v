@@ -1351,7 +1351,9 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 			}
 		}
 		.k {
-			view.vend--
+			if view.vend > 0 {
+				view.vend--
+			}
 		}
 		.y {
 			view.y_visual()
