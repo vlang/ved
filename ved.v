@@ -2030,6 +2030,9 @@ fn (mut ved Ved) increase_font(delta int) {
 		...ved.cfg.string_cfg
 		size: ved.cfg.text_size
 	}
+	if ved.cfg.text_size > 20 && ved.nr_splits > 2 {
+		ved.nr_splits = 2
+	}
 	// println('NEW  CONFIG')
 	// println(ved.cfg)
 }
