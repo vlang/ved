@@ -4,7 +4,7 @@
 <img src="https://user-images.githubusercontent.com/47652746/199333211-ee78f600-039c-4d96-85ec-e5580fca6736.jpg" alt="Screenshot of the editor">
 
 [![Patreon-badge](https://img.shields.io/badge/Patreon-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/vlang)
-![GitHub Workflow Status (event)](https://img.shields.io/github/workflow/status/vlang/ved/CI)
+![GitHub Workflow Status (event)](https://img.shields.io/github/actions/workflow/status/vlang/ved/ci.yml?branch=master)
 
 ### This is pre-alpha software.
 
