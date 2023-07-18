@@ -1719,7 +1719,7 @@ fn (mut ved Ved) build_app(extra string) {
 	last_view.shift_g()
 	// error line
 	alines := out.output.split_into_lines()
-	lines := alines.filter(it.contains('.v:'))
+	lines := alines.filter(it.contains('.v:') || it.contains('.go:'))
 	mut no_errors := true // !out.output.contains('error:')
 	for line in lines {
 		// no "warning:" in a line means it's an error
@@ -1762,7 +1762,7 @@ fn (mut ved Ved) run_file() {
 	mut view := ved.view
 	ved.error_line = ''
 	ved.is_building = true
-	println('start file run')
+	// println('start file run')
 	// Save the file before building
 	if view.changed {
 		view.save_file()
@@ -1783,7 +1783,7 @@ fn (mut ved Ved) run_file() {
 	// error line
 	lines := out.output.split_into_lines()
 	for line in lines {
-		if line.contains('.v:') {
+		if line.contains('.v:') || line.contains('.go:') {
 			ved.go_to_error(line)
 			break
 		}
@@ -1800,16 +1800,24 @@ fn (mut ved Ved) go_to_error(line string) {
 	// return
 	// }
 	// line = line.replace('panic: ', '')
-	pos := line.index('.v:') or {
+	vals := line.split(':')
+	println('vals=${vals}')
+	if vals.len < 4 {
+		return
+	}
+	mut filename := vals[0]
+	if filename.starts_with('./') {
+		filename = filename[2..]
+	}
+	ext := os.file_ext(filename)
+	println('ext="${ext}"')
+	pos := line.index(ext + ':') or {
 		println('no 2 :')
 		return
 	}
 	path := line[..pos]
-	filename := path.all_after('/') + '.v'
-	vals := line[pos + 3..].split(':')
-	println(vals)
-	line_nr := vals[0].int()
-	col := vals[1].int()
+	line_nr := vals[1].int()
+	col := vals[2].int()
 	println('path=${path} filename=${filename} linenr=${line_nr} col=${col}')
 	for i := 0; i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
