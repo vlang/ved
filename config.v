@@ -104,11 +104,11 @@ fn (mut config Config) set_cursor_style() {
 			'block' { config.cursor_style = .block }
 			'beam' { config.cursor_style = .beam }
 			'variable' { config.cursor_style = .variable }
-			else { config.cursor_style = .variable }
+			else { config.cursor_style = .block }
 		}
 		return
 	}
-	config.cursor_style = .variable
+	config.cursor_style = .block
 }
 
 fn (mut config Config) set_text_size() {
@@ -141,6 +141,7 @@ fn (mut config Config) set_backspace_behaviour() {
 
 fn (mut config Config) set_disable_mouse() {
 	config.disable_mouse = config.settings.value('editor.disable_mouse').bool()
+	config.disable_mouse = true // TODO remove once mouse bugs are fixed
 }
 
 // Convert a toml key color (in hex) to a gx.Color type

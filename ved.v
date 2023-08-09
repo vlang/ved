@@ -1133,7 +1133,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			} else if super {
 				ved.mode = .query
 				ved.query_type = .ctrlp
-				ved.load_git_tree()
+				ved.load_git_tree() // TODO only run if files change
 				ved.query = ''
 				ved.just_switched = true
 				return
@@ -1877,29 +1877,38 @@ fn (mut ved Ved) key_u() {
 
 fn (mut ved Ved) go_to_def() {
 	word := ved.word_under_cursor()
-	query := ') ${word}'
+	// println('GD "$word"')
+	queries := [') ${word}', 'fn ${word}']
 	mut view := ved.view
-	for i, line in view.lines {
-		if line.contains(query) {
-			ved.move_to_line(i)
-			return
+	for query in queries {
+		for i, line in view.lines {
+			if line.contains(query) {
+				ved.move_to_line(i)
+				return
+			}
 		}
 	}
 	// Not found in current file, try all files in the git tree
-	for file_ in ved.all_git_files {
-		mut file := file_.to_lower()
-		file = file.trim_space()
-		if !file.ends_with('.v') {
-			continue
-		}
-		file = '${ved.workspace}/${file}'
-		lines := os.read_lines(file) or { continue }
-		// println('trying file $file with $lines.len lines')
-		for j, line in lines {
-			if line.contains(query) {
-				view.open_file(file)
-				ved.move_to_line(j)
-				break
+	if ved.all_git_files.len == 0 {
+		// ctrl p not pressed, force to generate all git files list
+		ved.load_git_tree()
+	}
+	for query in queries {
+		for file_ in ved.all_git_files {
+			mut file := file_.to_lower()
+			file = file.trim_space()
+			if !file.ends_with('.v') {
+				continue
+			}
+			file = '${ved.workspace}/${file}'
+			lines := os.read_lines(file) or { continue }
+			// println('trying file $file with $lines.len lines')
+			for j, line in lines {
+				if line.contains(query) {
+					view.open_file(file)
+					ved.move_to_line(j)
+					return
+				}
 			}
 		}
 	}

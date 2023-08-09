@@ -144,6 +144,11 @@ fn (mut view View) open_file(path string) {
 			view.zz()
 		}
 	}
+	// Call zz() if it's out of bounds
+	if view.from > view.y || view.from + view.ved.page_height < view.y {
+		// view.zz()
+	}
+
 	view.hash_comment = !view.path.ends_with('.v')
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt') && view.path.contains('.')
 	view.changed = false
