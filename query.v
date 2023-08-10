@@ -384,7 +384,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 			break
 		}
 		pos := line.index(':') or { continue }
-		path := line[..pos].limit(40)
+		path := line[..pos].limit(50)
 		pos2 := line.index_after(':', pos + 1)
 		if pos2 == -1 || pos2 >= line.len - 1 {
 			continue
@@ -395,8 +395,8 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 			ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 		}
 		line_nr := line[pos + 1..pos2]
-		ved.gg.draw_text(x + 10, yy, path.limit(40) + ':${line_nr}', txt_cfg)
-		ved.gg.draw_text(x + 400, yy, text, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', txt_cfg)
+		ved.gg.draw_text(x + 450, yy, text, txt_cfg)
 	}
 }
 
