@@ -359,30 +359,28 @@ fn frame(mut ved Ved) {
 }
 
 fn (ved &Ved) draw_cursor(cursor_x int, y int) {
-	cursor_style := ved.cfg.cursor_style
-	match cursor_style {
+	mut width := ved.cfg.char_width
+	// println('CURSOR WIDTH=${ved.cfg.char_width}')
+	match ved.cfg.cursor_style {
 		.block {
-			// println('CURSOR WIDTH=${ved.cfg.char_width}')
-			ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
-				ved.cfg.cursor_color)
+			width = ved.cfg.char_width
 		}
 		.beam {
-			ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+			width = 1
 		}
 		.variable {
 			if ved.mode == .insert {
-				ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+				width = 1
 			} else if ved.mode == .visual {
 				// FIXME: This looks terrible.
-				ved.gg.draw_rect_filled(cursor_x, y - 1, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-				ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y - 1, 1, ved.cfg.line_height,
-					ved.cfg.cursor_color)
+				//ved.gg.draw_rect_filled(cursor_x, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+				//ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
 			} else {
-				ved.gg.draw_rect_empty(cursor_x, y - 1, ved.cfg.char_width, ved.cfg.line_height,
-					ved.cfg.cursor_color)
+				width = ved.cfg.char_width
 			}
 		}
 	}
+	ved.gg.draw_rect_empty(cursor_x, y, width, ved.cfg.line_height, ved.cfg.cursor_color)
 }
 
 fn (mut ved Ved) draw() {
@@ -402,8 +400,8 @@ fn (mut ved Ved) draw() {
 	y := (ved.view.y - ved.view.from) * ved.cfg.line_height + ved.cfg.line_height
 	// Cur line
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
-	ved.gg.draw_rect_filled(line_x, y - 1, split_width - ved.view.padding_left - 10, ved.cfg.line_height,
-		ved.cfg.vcolor)
+	line_width :=  split_width - ved.view.padding_left - 10
+	ved.gg.draw_rect_filled(line_x, y, line_width, ved.cfg.line_height, ved.cfg.vcolor)
 	// V selection
 	mut v_from := ved.view.vstart + 1
 	mut v_to := ved.view.vend + 1
@@ -413,7 +411,7 @@ fn (mut ved Ved) draw() {
 		v_to = ved.view.vstart + 1
 	}
 	for yy := v_from; yy <= v_to; yy++ {
-		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height, split_width - ved.view.padding_left,
+		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height, line_width,
 			ved.cfg.line_height, ved.cfg.vcolor)
 	}
 	// Tab offset for cursor
