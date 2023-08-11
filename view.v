@@ -150,7 +150,8 @@ fn (mut view View) open_file(path string) {
 	}
 
 	view.hash_comment = !view.path.ends_with('.v')
-	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt') && view.path.contains('.')
+	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
+		&& view.path.contains('.')
 	view.changed = false
 	view.ved.gg.refresh_ui()
 	// go view.ved.write_changes_in_file_every_5s()
@@ -417,12 +418,18 @@ fn (mut view View) insert_text(s string) {
 		}
 		left := uline[..view.x].string()
 		right := uline[view.x..uline.len].string()
-		// Insert chat in the middle
+		// Insert char in the middle
 		res := '${left}${s}${right}'
 		view.set_line(res)
 	}
 	view.x += s.runes().len
 	view.changed = true
+	// Show autocomplete window on `.`
+	if s == '.' {
+		println('DOOOT, SHOW WINDOW')
+		view.ved.mode = .autocomplete
+		view.ved.get_line_info()
+	}
 }
 
 fn (mut view View) backspace() {
@@ -610,6 +617,40 @@ fn (mut view View) dw(del_whitespace bool) { // string {
 		}
 	}
 	ved.prev_cmd = 'dw'
+}
+
+// returns the removed word
+fn (mut view View) db(del_whitespace bool) { // string {
+	mut ved := view.ved
+	typ := is_alpha(u8(view.char()))
+	// While cur char has the same type - delete it
+	for {
+		line := view.line()
+		if view.x < 0 || view.x >= line.len - 1 {
+			break
+		}
+		view.x--
+		if typ == is_alpha_underscore(u8(view.char())) {
+			// println('del x=$view.x len=$line.len')
+			view.delete_char()
+		} else {
+			break
+		}
+	}
+	view.x++
+	// Delete whitespace after the deleted word
+	/*
+	if del_whitespace {
+		for is_whitespace(u8(view.char())) {
+			line := view.line()
+			if view.x < 0 || view.x >= line.len {
+				break
+			}
+			view.delete_char()
+		}
+	}
+	*/
+	ved.prev_cmd = 'db'
 }
 
 // TODO COPY PASTA

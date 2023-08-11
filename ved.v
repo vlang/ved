@@ -78,6 +78,7 @@ mut:
 	search_dir           string // for cmd+/ search in the entire directory where the current file is located
 	search_dir_idx       int    // for looping thru search dir files
 	error_line           string // is displayed at the bottom
+	autocomplete_info    AutocompleteInfo
 }
 
 // For syntax highlighting
@@ -94,6 +95,7 @@ enum EditorMode {
 	query = 2
 	visual = 3
 	timer = 4
+	autocomplete = 5
 }
 
 struct Chunk {
@@ -373,14 +375,41 @@ fn (ved &Ved) draw_cursor(cursor_x int, y int) {
 				width = 1
 			} else if ved.mode == .visual {
 				// FIXME: This looks terrible.
-				//ved.gg.draw_rect_filled(cursor_x, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-				//ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+				// ved.gg.draw_rect_filled(cursor_x, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+				// ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
 			} else {
 				width = ved.cfg.char_width
 			}
 		}
 	}
 	ved.gg.draw_rect_empty(cursor_x, y, width, ved.cfg.line_height, ved.cfg.cursor_color)
+}
+
+fn (ved &Ved) calc_cursor_x() int {
+	line := ved.view.line()
+	// Tab offset for cursor
+	mut cursor_tab_off := 0
+	for i := 0; i < line.len && i < ved.view.x; i++ {
+		// if rune != '\t' {
+		if int(line[i]) != ved.cfg.tab {
+			break
+		}
+		cursor_tab_off++
+	}
+	from := ved.workspace_idx * ved.splits_per_workspace
+	split_width := ved.split_width()
+	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
+	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.cfg.char_width
+	if cursor_tab_off > 0 {
+		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
+		cursor_x -= ved.cfg.char_width * cursor_tab_off
+	}
+	return cursor_x
+}
+
+fn (ved &Ved) calc_cursor_y() int {
+	y := (ved.view.y - ved.view.from) * ved.cfg.line_height + ved.cfg.line_height
+	return y
 }
 
 fn (mut ved Ved) draw() {
@@ -397,10 +426,10 @@ fn (mut ved Ved) draw() {
 		// ved.gg.draw_rect_filled(split_x, 0, split_width - 1, ved.win_height, ved.cfg.bgcolor)
 	}
 	// Coords
-	y := (ved.view.y - ved.view.from) * ved.cfg.line_height + ved.cfg.line_height
+	y := ved.calc_cursor_y()
 	// Cur line
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
-	line_width :=  split_width - ved.view.padding_left - 10
+	line_width := split_width - ved.view.padding_left - 10
 	ved.gg.draw_rect_filled(line_x, y, line_width, ved.cfg.line_height, ved.cfg.vcolor)
 	// V selection
 	mut v_from := ved.view.vstart + 1
@@ -413,16 +442,6 @@ fn (mut ved Ved) draw() {
 	for yy := v_from; yy <= v_to; yy++ {
 		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height, line_width,
 			ved.cfg.line_height, ved.cfg.vcolor)
-	}
-	// Tab offset for cursor
-	line := ved.view.line()
-	mut cursor_tab_off := 0
-	for i := 0; i < line.len && i < ved.view.x; i++ {
-		// if rune != '\t' {
-		if int(line[i]) != ved.cfg.tab {
-			break
-		}
-		cursor_tab_off++
 	}
 	// Black title background
 	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)
@@ -495,18 +514,15 @@ fn (mut ved Ved) draw() {
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cursor
-	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.cfg.char_width
-	if cursor_tab_off > 0 {
-		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
-		cursor_x -= ved.cfg.char_width * cursor_tab_off
-	}
-
+	mut cursor_x := ved.calc_cursor_x()
 	ved.draw_cursor(cursor_x, y)
 
 	// ved.gg.draw_text_def(cursor_x + 500, y - 1, 'tab=$cursor_tab_off x=$cursor_x view_x=$ved.view.x')
 	// query window
 	if ved.mode == .query {
 		ved.draw_query()
+	} else if ved.mode == .autocomplete {
+		ved.draw_autocomplete_window()
 	}
 	// Big error line at the bottom
 	if ved.error_line != '' {
@@ -755,6 +771,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 		.insert { ved.key_insert(key, mod) }
 		.query { ved.key_query(key, super) }
 		.timer { ved.timer.key_down(key, super) }
+		.autocomplete { ved.key_insert(key, mod) }
 	}
 	ved.gg.refresh_ui()
 }
@@ -770,7 +787,7 @@ fn on_char(code u32, mut ved Ved) {
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
-		.insert {
+		.insert, .autocomplete {
 			ved.char_insert(s)
 		}
 		.query {
@@ -828,7 +845,12 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 			ved.view.backspace()
 		}
 		.enter {
-			ved.view.enter()
+			if ved.mode == .autocomplete {
+				// Pressed enter in autocomplete mode, insert text from selected suggested field
+				ved.insert_suggested_field()
+			} else {
+				ved.view.enter()
+			}
 		}
 		.escape {
 			ved.mode = .normal
@@ -1217,7 +1239,11 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				// # void*a = 0; int b = *(int*)a;
 				ved.view.shift_b()
 			} else {
-				ved.view.b()
+				if ved.prev_key == .d {
+					view.db(true)
+				} else {
+					ved.view.b()
+				}
 			}
 		}
 		.u {
@@ -1308,6 +1334,9 @@ fn (ved &Ved) word_under_cursor() string {
 	line := ved.view.line()
 	// First go left
 	mut start := ved.view.x
+	if start > 0 && line.len > 0 && !is_alpha_underscore(int(line[start - 1])) {
+		return ''
+	}
 	for start > 0 && is_alpha_underscore(int(line[start])) {
 		start--
 	}
@@ -1317,6 +1346,22 @@ fn (ved &Ved) word_under_cursor() string {
 		end++
 	}
 	mut word := line[start + 1..end]
+	word = word.trim_space()
+	return word
+}
+
+// used only when pressing dot in insert mode and showing the autocomplete window
+fn (ved &Ved) word_under_cursor_no_right() string {
+	line := ved.view.line()
+	mut start := ved.view.x - 1
+	// println('\n\n1line="${line}" linelen=${line.len} start=${start} s="${line[start..]}"')
+	// println("C='${line[start]}'")
+	for start > 0 && is_alpha_underscore(int(line[start])) {
+		// println('minus')
+		start--
+	}
+	// println('new start=${start}')
+	mut word := line[start + 1..line.len]
 	word = word.trim_space()
 	return word
 }
