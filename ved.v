@@ -810,9 +810,11 @@ fn on_char(code u32, mut ved Ved) {
 	}
 }
 
+/*
 fn (ved &Ved) is_in_blog() bool {
-	return ved.view.path.contains('/blog/') && ved.view.path.contains('2020')
+	return ved.view.path.contains('/blog/') && ved.view.path.contains('20')
 }
+*/
 
 fn (ved &Ved) git_commit() {
 	text := ved.query
@@ -1735,15 +1737,32 @@ fn (mut ved Ved) save_changed_files() {
 	}
 }
 
+fn (mut ved Ved) get_build_file_location() ?string {
+	dir := ved.workspace
+	mut build_file := '${dir}/build'
+	if !os.exists(build_file) {
+		build_file = '${dir}/.ved/build'
+		if !os.exists(build_file) {
+			return none
+		}
+	}
+	return build_file
+}
+
 fn (mut ved Ved) build_app(extra string) {
 	eprintln('build_app: ${extra}')
 	ved.is_building = true
 	// Save each open file before building
 	ved.save_changed_files()
-	os.chdir(ved.workspace) or {}
+	os.chdir(ved.workspace) or { return }
 	dir := ved.workspace
+	mut build_file := ved.get_build_file_location() or { return }
+	if extra != '' {
+		build_file += extra
+	}
+
 	out_file := os.join_path(dir, 'out')
-	building_cmd := 'sh ${dir}/build${extra}'
+	building_cmd := 'sh ${build_file}'
 	eprintln('building with `${building_cmd}` ...')
 
 	mut last_view := ved.get_last_view()
