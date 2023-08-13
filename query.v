@@ -58,7 +58,7 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 					ved.git_commit()
 				}
 				.open {
-					ved.view.open_file(ved.query)
+					ved.view.open_file(ved.query, 0)
 				}
 				.task {
 					ved.insert_task() or {}
@@ -83,8 +83,8 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						pos2 := line.index_after(':', pos + 1)
 						// line_nr := line[path.len + 1..].int() - 1
 						line_nr := line[pos + 1..pos2].int() - 1
-						ved.view.open_file(ved.workspace + '/' + path)
-						ved.view.move_to_line(line_nr)
+						ved.view.open_file(ved.workspace + '/' + path, line_nr)
+						// ved.view.move_to_line(line_nr)
 						ved.view.zz()
 						ved.mode = .normal
 					} else {
@@ -417,7 +417,7 @@ fn (mut ved Ved) ctrlp_open() {
 					space = '.'
 				}
 				path = '${space}/${path}'
-				ved.view.open_file(path)
+				ved.view.open_file(path, 0)
 				break
 			}
 			i++
@@ -437,7 +437,7 @@ fn (mut ved Ved) ctrlj_open() {
 				space = '.'
 			}
 			path = '${space}/${path}'
-			ved.view.open_file(path)
+			ved.view.open_file(path, 0)
 			break
 		}
 	}
@@ -524,7 +524,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 				for ved.search_dir_idx < files.len {
 					text := os.read_file(files[ved.search_dir_idx]) or { panic(err) }
 					if text.contains(ved.search_query) {
-						ved.view.open_file(files[ved.search_dir_idx])
+						ved.view.open_file(files[ved.search_dir_idx], 0)
 						ved.view.gg()
 						ved.search_dir_idx++
 						ved.search(search_type)

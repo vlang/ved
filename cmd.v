@@ -39,7 +39,7 @@ fn (mut ved Ved) build_app(extra string) {
 	mut last_view := ved.get_last_view()
 
 	os.write_file(out_file, 'Building...') or { panic(err) }
-	last_view.open_file(out_file)
+	last_view.open_file(out_file, 0)
 
 	out := os.execute(building_cmd)
 	if out.exit_code == -1 {
@@ -47,7 +47,7 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 
 	os.write_file(out_file, filter_ascii_colors(out.output)) or { panic(err) }
-	last_view.open_file(out_file)
+	last_view.open_file(out_file, 0)
 
 	last_view.shift_g()
 	// error line
@@ -110,7 +110,7 @@ fn (mut ved Ved) run_file() {
 	os.write_file('${dir}/out', out.output) or { panic(err) }
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
-	last_view.open_file('${dir}/out')
+	last_view.open_file('${dir}/out', 0)
 	last_view.shift_g()
 	ved.is_building = false
 	// error line
@@ -137,5 +137,5 @@ fn (ved &Ved) run_zsh() {
 	// f2.writeln(out.output) or { panic(err) }
 	// f2.close()
 	mut last_view := ved.get_last_view()
-	last_view.open_file('${dir}/out')
+	last_view.open_file('${dir}/out', 0)
 }

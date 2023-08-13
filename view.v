@@ -70,7 +70,7 @@ fn get_clean_words(line string) []string {
 	return res
 }
 
-fn (mut view View) open_file(path string) {
+fn (mut view View) open_file(path string, line_nr int) {
 	println('open file "${path}"')
 	if path == '' {
 		return
@@ -149,6 +149,10 @@ fn (mut view View) open_file(path string) {
 		// view.zz()
 	}
 
+	if line_nr != 0 {
+		view.move_to_line(line_nr)
+	}
+
 	view.hash_comment = !view.path.ends_with('.v')
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
 		&& view.path.contains('.')
@@ -158,7 +162,7 @@ fn (mut view View) open_file(path string) {
 }
 
 fn (mut view View) reopen() {
-	view.open_file(view.path)
+	view.open_file(view.path, 0)
 	view.changed = false
 }
 
@@ -428,7 +432,9 @@ fn (mut view View) insert_text(s string) {
 	if s == '.' {
 		println('DOOOT, SHOW WINDOW')
 		view.ved.mode = .autocomplete
-		view.ved.get_line_info()
+		view.ved.refresh = true
+		view.ved.gg.refresh_ui()
+		go view.ved.get_line_info()
 	}
 }
 
@@ -751,7 +757,7 @@ fn (mut view View) tt() {
 	}
 	mut ved := view.ved
 	ved.prev_key = gg.KeyCode.invalid
-	view.open_file(view.prev_path)
+	view.open_file(view.prev_path, 0)
 }
 
 fn (mut view View) move_to_line(line int) {

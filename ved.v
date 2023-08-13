@@ -79,6 +79,8 @@ mut:
 	search_dir_idx       int    // for looping thru search dir files
 	error_line           string // is displayed at the bottom
 	autocomplete_info    AutocompleteInfo
+	autocomplete_cache   map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
+	debug_info           string
 }
 
 // For syntax highlighting
@@ -224,7 +226,7 @@ fn main() {
 			mut workspace := os.dir(path)
 			ved.add_workspace(workspace)
 			ved.open_workspace(0)
-			ved.view.open_file(path)
+			ved.view.open_file(path, 0)
 		}
 	}
 	// Open multiple workspaces
@@ -256,7 +258,7 @@ fn main() {
 	ved.load_timer()
 	println('first_launch=${first_launch}')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
-		ved.view.open_file(os.join_path(exe_dir, 'welcome.txt'))
+		ved.view.open_file(os.join_path(exe_dir, 'welcome.txt'), 0)
 	}
 	spawn ved.loop()
 	ved.refresh = true
@@ -1559,7 +1561,7 @@ fn (ved &Ved) save_session() {
 		if view.path == 'out' {
 			continue
 		}
-		f.writeln(view.path) or { panic(err) }
+		f.writeln('${view.path}:${view.y}') or { panic(err) }
 	}
 	f.close()
 	mut f_workspace := os.create(workspaces_path) or { panic(err) }
@@ -1632,12 +1634,20 @@ fn (mut ved Ved) load_views(paths []string) {
 		// println('loading path')
 		// println(paths[i])
 		// mut view := &ved.views[i]
-		path := paths[i]
+		mut path := paths[i]
+		mut line_nr := 0
 		if path == '' || path.contains('=') {
 			continue
 		}
+		if path.contains(':') {
+			// myfile.v:23
+			// can contain line numbers from the previous session, parse them and go to them
+			vals := path.split(':')
+			path = vals[0]
+			line_nr = vals[1].int()
+		}
 		// view.open_file(path)
-		ved.views[i].open_file(path)
+		ved.views[i].open_file(path, line_nr)
 	}
 }
 
@@ -1670,13 +1680,13 @@ fn (ved &Ved) get_git_diff_full() string {
 	dir := ved.workspace
 	os.system('git -C ${dir} diff > ${dir}/out')
 	mut last_view := ved.get_last_view()
-	last_view.open_file('${dir}/out')
+	last_view.open_file('${dir}/out', 0)
 	// nothing commited (diff = 0), shot git log)
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
 		os.system('git -C ${dir} log -n 40 --pretty=format:"%ad %s" ' +
 			'--simplify-merges --date=format:"%Y-%m-%d %H:%M  "> ${dir}/out')
-		last_view.open_file('${dir}/out')
+		last_view.open_file('${dir}/out', 0)
 	}
 	last_view.gg()
 	return 's'
@@ -1689,7 +1699,7 @@ fn (ved &Ved) open_blog() {
 		os.system('touch ${path}')
 	}
 	mut last_view := ved.get_last_view()
-	last_view.open_file(path)
+	last_view.open_file(path, 0)
 	last_view.shift_g()
 }
 
@@ -1772,9 +1782,9 @@ fn (mut ved Ved) go_to_error(line string) {
 	lines.sort_by_len()
 	for git_file in lines {
 		if git_file.contains(filename) {
-			ved.view.open_file(git_file) // ved.workspace + '/' + line)
+			ved.view.open_file(git_file, ved.view.error_y) // ved.workspace + '/' + line)
 			ved.view.error_y = line_nr - 1
-			ved.view.move_to_line(ved.view.error_y)
+			// ved.view.move_to_line(ved.view.error_y)
 			return
 		}
 	}
@@ -1834,8 +1844,8 @@ fn (mut ved Ved) go_to_def() {
 			// println('trying file $file with $lines.len lines')
 			for j, line in lines {
 				if line.contains(query) {
-					view.open_file(file)
-					ved.move_to_line(j)
+					view.open_file(file, j)
+					// ved.move_to_line(j)
 					return
 				}
 			}
