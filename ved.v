@@ -210,6 +210,7 @@ fn main() {
 				ved.add_workspace(workspace)
 			}
 		} else {
+			first_launch = true
 			ved.add_workspace('.')
 		}
 		ved.open_workspace(0)
