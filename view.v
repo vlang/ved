@@ -390,7 +390,7 @@ fn (mut v View) delete_char() {
 	if u.len < 1 || v.x >= u.len {
 		return
 	}
-	mut new_line := u[..v.x]
+	mut new_line := unsafe { u[..v.x] }
 	right := u[v.x + 1..]
 	new_line << right
 	v.set_line(new_line.string())
