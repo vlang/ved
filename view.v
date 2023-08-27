@@ -794,6 +794,26 @@ fn (mut view View) gq() {
 	*/
 }
 
+// ctrl+a - increase number by one
+fn (mut view View) super_a(diff int) {
+	line := view.line()
+	mut num_start_pos := -1
+	for i, r in line {
+		if r >= `0` && r <= `9` {
+			num_start_pos = i
+			break
+		}
+	}
+	if num_start_pos == -1 {
+		return
+	}
+	s := line[num_start_pos..]
+	vals := s.fields()
+	number := vals[0].int()
+	new_line := line.replace_once(number.str(), (number + diff).str())
+	view.set_line(new_line)
+}
+
 fn is_alpha(r u8) bool {
 	return (r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || (r >= `0` && r <= `9`)
 }

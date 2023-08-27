@@ -1033,6 +1033,10 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.view.shift_a()
 				ved.prev_cmd = 'A'
 				ved.set_insert()
+			} else if super {
+				// ctrl+a - increase number
+				ved.view.super_a(1)
+				ved.prev_cmd = 'a'
 			}
 		}
 		.c {
@@ -1256,7 +1260,13 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 		}
 		.x {
-			ved.view.delete_char()
+			if super {
+				// ctrl+x - decrease number
+				ved.view.super_a(-1)
+				ved.prev_cmd = 'x'
+			} else {
+				ved.view.delete_char()
+			}
 		}
 		.y {
 			if ved.prev_key == .y {
@@ -1693,15 +1703,28 @@ fn (ved &Ved) get_git_diff_full() string {
 	return 's'
 }
 
-fn (ved &Ved) open_blog() {
+fn (mut ved Ved) open_blog() {
 	now := time.now()
 	path := os.join_path(codeblog_path, '${now.year}', '${now.month:02d}', '${now.day:02d}')
+	parent_dir := os.dir(path)
+	if !os.exists(parent_dir) {
+		os.mkdir(parent_dir) or { panic(err) }
+		// os.system('mkdir ${parent_dir}')
+	}
 	if !os.exists(path) {
 		os.system('touch ${path}')
 	}
 	mut last_view := ved.get_last_view()
 	last_view.open_file(path, 0)
-	last_view.shift_g()
+	last_view.gg()
+	// last_view.shift_g()
+	// Go to the opened blog (TODO must be an easier way)
+	for i := 0; i < 5; i++ {
+		if ved.view.path == path {
+			break
+		}
+		ved.next_split()
+	}
 }
 
 fn (ved &Ved) get_last_view() &View {
