@@ -43,11 +43,10 @@ fn (ved &Ved) draw_autocomplete_window() {
 		return
 	}
 
-	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
-
 	if ved.autocomplete_info.vars.len == 0 {
 		return
 	}
+	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
 	// ved.gg.draw_text(x + 10, y + 30, 'AUTOCOMPLETE', txt_cfg)
 
 	// for i, var in ved.autocomplete_info.vars {

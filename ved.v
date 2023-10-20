@@ -84,18 +84,18 @@ mut:
 
 // For syntax highlighting
 enum ChunkKind {
-	a_string = 1
+	a_string  = 1
 	a_comment = 2
-	a_key = 3
-	a_lit = 4
+	a_key     = 3
+	a_lit     = 4
 }
 
 enum EditorMode {
-	normal = 0
-	insert = 1
-	query = 2
-	visual = 3
-	timer = 4
+	normal       = 0
+	insert       = 1
+	query        = 2
+	visual       = 3
+	timer        = 4
 	autocomplete = 5
 }
 
@@ -123,12 +123,13 @@ Options:
 )
 
 const (
-	fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
+	fpath     = os.resource_abs_path('RobotoMono-Regular.ttf')
+	args      = os.args.clone()
+	is_window = '-window' in args
 )
 
 [console]
 fn main() {
-	args := os.args.clone()
 	if '-h' in args || '--help' in args {
 		println(help_text)
 		return
@@ -136,23 +137,16 @@ fn main() {
 	if !os.is_dir(settings_dir) {
 		os.mkdir(settings_dir) or { panic(err) }
 	}
-	mut nr_splits := 3
-	is_window := '-window' in args
-	if '-two_splits' in args {
-		nr_splits = 2
-	}
-	if is_window || '-laptop' in args {
-		nr_splits = 1
-	}
 	mut size := gg.screen_size()
 	if size.width == 0 || size.height == 0 {
-		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1480} }
+		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
 	}
+	println('size=${size}')
 	mut ved := &Ved{
 		win_width: size.width
 		win_height: size.height
-		nr_splits: nr_splits
-		splits_per_workspace: nr_splits
+		// nr_splits: nr_splits
+		// splits_per_workspace: nr_splits
 		cur_split: 0
 		mode: .normal
 		view: 0
@@ -164,6 +158,10 @@ fn main() {
 
 	ved.cfg.set_settings(config_path)
 	ved.cfg.reload_config()
+
+	nr_splits := ved.get_nr_splits_from_screen_size(size.width, size.height)
+	ved.nr_splits = nr_splits
+	ved.splits_per_workspace = nr_splits
 
 	println('height=${size.height}')
 
@@ -186,7 +184,7 @@ fn main() {
 		font_path: fpath
 		ui_mode: true
 	)
-	println('FULL SCREEN=${!is_window}')
+	println('1FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.gg)
 	ved.load_all_tasks()
 	// TODO linux and windows
@@ -637,6 +635,7 @@ fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 }
 
 fn (mut ved Ved) draw_text_line(x int, y int, line string) {
+	mcomment := get_mcomment_by_ext(os.file_ext(ved.view.path))
 	// Red/green test hack
 	/*
 	if line.contains('[32m') && line.contains('PASS') {
@@ -663,15 +662,15 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string) {
 		}
 		// Comment   /*
 		// (unless it's /* line */ which is a single line)
-		if i > 0 && line[i - 1] == `/` && line[i] == `*` && !(line[line.len - 2] == `*`
-			&& line[line.len - 1] == `/`) {
+		if i > 0 && line[i - 1] == mcomment.start1 && line[i] == mcomment.start2
+			&& !(line[line.len - 2] == mcomment.end1 && line[line.len - 1] == mcomment.end2) {
 			// All after /* is  a comment
 			ved.add_chunk(.a_comment, start, line.len)
 			ved.is_ml_comment = true
 			break
 		}
 		// End of /**/
-		if i > 0 && line[i - 1] == `*` && line[i] == `/` {
+		if i > 0 && line[i - 1] == mcomment.end1 && line[i] == mcomment.end2 {
 			// All before */ is still a comment
 			ved.add_chunk(.a_comment, 0, start + 1)
 			ved.is_ml_comment = false
@@ -1974,4 +1973,20 @@ fn (mut ved Ved) increase_font(delta int) {
 
 fn filter_ascii_colors(s string) string {
 	return s.replace_each(['[22m', '', '[35m', '', '[39m', '', '[1m', '', '[31m', ''])
+}
+
+fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
+	mut nr_splits := 3
+	if '-two_splits' in args {
+		nr_splits = 2
+	}
+	if is_window || '-laptop' in args {
+		nr_splits = 1
+	}
+	max_split_width := ved.cfg.char_width * 110
+	println('MAX=${max_split_width}')
+	if false {
+		exit(1)
+	}
+	return nr_splits
 }

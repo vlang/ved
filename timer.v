@@ -186,7 +186,7 @@ fn (mut timer Timer) key_down(key gg.KeyCode, super bool) {
 
 fn lock_screen() {
 	$if macos {
-		os.system('pmset displaysleepnow')
+		// os.system('pmset displaysleepnow')
 	}
 }
 
@@ -207,10 +207,15 @@ fn (ved &Ved) insert_task() ! {
 	mut f := os.open_append(tasks_path)!
 	task_name := ved.cur_task.limit(max_task_len) +
 		strings.repeat(` `, max_task_len - ved.cur_task.len)
-	mins := ved.task_minutes().str() + 'm'
+	mut mins := ved.task_minutes().str() + 'm'
+	too_long := ved.task_minutes() > 60 * 8
+	if too_long {
+		// More than 8 hours, probably forgot to end, insert only one hour
+		mins = '60m'
+	}
 	mins_pad := strings.repeat(` `, 4 - mins.len)
 	now := time.now()
-	if start_time.day == now.day && start_time.month == now.month {
+	if (start_time.day == now.day && start_time.month == now.month) || too_long {
 		// Single day entry
 		f.writeln('| ${task_name} | ${mins} ${mins_pad} | ' + start_time.format() + ' | ' +
 			time.now().hhmm() + ' |')!
