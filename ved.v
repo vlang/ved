@@ -609,7 +609,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 		if view.hl_on {
 			// println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
-			ved.draw_text_line(line_x, y, s)
+			ved.draw_text_line(line_x, y, s, os.file_ext(view.path))
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
@@ -634,8 +634,9 @@ fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 	ved.chunks << chunk
 }
 
-fn (mut ved Ved) draw_text_line(x int, y int, line string) {
-	mcomment := get_mcomment_by_ext(os.file_ext(ved.view.path))
+fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
+	// mcomment := get_mcomment_by_ext(os.file_ext(ved.view.path))
+	mcomment := get_mcomment_by_ext(ext)
 	// Red/green test hack
 	/*
 	if line.contains('[32m') && line.contains('PASS') {
