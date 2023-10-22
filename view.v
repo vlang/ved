@@ -153,6 +153,9 @@ fn (mut view View) open_file(path string, line_nr int) {
 		view.move_to_line(line_nr)
 	}
 
+	view.l()
+	view.h() // so that cursor pos is correct and doesn't point to no longer existing text
+
 	view.hash_comment = !view.path.ends_with('.v')
 	view.hl_on = !view.path.ends_with('.md') && !view.path.ends_with('.txt')
 		&& view.path.contains('.')
@@ -298,6 +301,17 @@ fn (mut view View) l() {
 	line := view.line()
 	if view.x < line.len {
 		view.x++
+	}
+}
+
+fn (mut view View) h() {
+	if view.x > 0 {
+		view.x--
+	}
+	line := view.line()
+	// Cursor is outside the line, move it to the end of it
+	if view.x > line.len {
+		view.x = line.len
 	}
 }
 

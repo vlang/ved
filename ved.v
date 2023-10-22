@@ -1179,8 +1179,8 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		.h {
 			if shift {
 				ved.view.shift_h()
-			} else if ved.view.x > 0 {
-				ved.view.x--
+			} else {
+				ved.view.h()
 			}
 		}
 		.l {
