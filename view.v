@@ -230,7 +230,7 @@ fn (view &View) uline() []rune {
 
 fn (view &View) char() int {
 	line := view.line()
-	if line.len > 0 {
+	if line.len > 0 && view.x < line.len {
 		return int(line[view.x])
 	}
 	return 0
@@ -249,6 +249,7 @@ fn (mut view View) j() {
 	if view.lines.len == 0 {
 		return
 	}
+	prev_line := view.line()
 	view.y++
 	// Reached end
 	if view.y >= view.lines.len {
@@ -259,8 +260,15 @@ fn (mut view View) j() {
 	if view.y >= view.from + view.page_height {
 		view.from++
 	}
-	// Line below is shorter, move to the end of it
+	// Correct x if there are tabs on the next line
+	_, nr_tabs1 := nr_spaces_and_tabs_in_line(prev_line)
 	line := view.line()
+	_, nr_tabs2 := nr_spaces_and_tabs_in_line(line)
+	if nr_tabs2 > nr_tabs1 {
+		// view.x -= (nr_tabs2 - nr_tabs1) * view.ved.cfg.tab_size
+	}
+
+	// Line below is shorter, move to the end of it
 	if view.x > line.len - 1 {
 		view.prev_x = view.x
 		view.x = line.len - 1
@@ -501,18 +509,7 @@ fn (mut view View) o_generic(delta int) {
 	view.y += delta
 	// Insert the same amount of spaces/tabs as in prev line
 	prev_line := if view.lines.len == 0 || view.y == 0 { '' } else { view.lines[view.y - 1] }
-	mut nr_spaces := 0
-	mut nr_tabs := 0
-	mut i := 0
-	for i < prev_line.len && (prev_line[i] == ` ` || prev_line[i] == `\t`) {
-		if prev_line[i] == ` ` {
-			nr_spaces++
-		}
-		if prev_line[i] == `\t` {
-			nr_tabs++
-		}
-		i++
-	}
+	nr_spaces, nr_tabs := nr_spaces_and_tabs_in_line(prev_line)
 	mut new_line := strings.repeat(`\t`, nr_tabs) + strings.repeat(` `, nr_spaces)
 	if prev_line.ends_with('{') || prev_line.ends_with('{ ') {
 		new_line += '\t '
