@@ -249,7 +249,7 @@ fn (mut view View) j() {
 	if view.lines.len == 0 {
 		return
 	}
-	prev_line := view.line()
+	line0 := view.line()
 	view.y++
 	// Reached end
 	if view.y >= view.lines.len {
@@ -261,13 +261,17 @@ fn (mut view View) j() {
 		view.from++
 	}
 	// Correct x if there are tabs on the next line
-	_, nr_tabs1 := nr_spaces_and_tabs_in_line(prev_line)
+	_, nr_tabs1 := nr_spaces_and_tabs_in_line(line0)
 	line := view.line()
 	_, nr_tabs2 := nr_spaces_and_tabs_in_line(line)
+	println('tabs1,2=${nr_tabs1},${nr_tabs2}')
+	println(view.ved.cfg.tab_size)
 	if nr_tabs2 > nr_tabs1 {
-		// view.x -= (nr_tabs2 - nr_tabs1) * view.ved.cfg.tab_size
+		view.x -= (nr_tabs2 - nr_tabs1) * view.ved.cfg.tab_size - 1
+		if view.x < 0 {
+			view.x = 0
+		}
 	}
-
 	// Line below is shorter, move to the end of it
 	if view.x > line.len - 1 {
 		view.prev_x = view.x
@@ -282,12 +286,25 @@ fn (mut view View) k() {
 	if view.y <= 0 {
 		return
 	}
+	line0 := view.line()
 	view.y--
+	// Scroll
 	if view.y < view.from && view.y >= 0 {
 		view.from--
 	}
-	// Line above is shorter, move to the end of it
+	// Correct x if there are tabs on the prev line
+	_, nr_tabs1 := nr_spaces_and_tabs_in_line(line0)
 	line := view.line()
+	_, nr_tabs2 := nr_spaces_and_tabs_in_line(line)
+	println('tabs1,2=${nr_tabs1},${nr_tabs2}')
+	println(view.ved.cfg.tab_size)
+	if nr_tabs2 < nr_tabs1 {
+		view.x -= (nr_tabs1 - nr_tabs2) * view.ved.cfg.tab_size - 1
+		if view.x < 0 {
+			view.x = 0
+		}
+	}
+	// Line above is shorter, move to the end of it
 	if view.x > line.len - 1 {
 		view.prev_x = view.x
 		view.x = line.len - 1
