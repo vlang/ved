@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Alexander Medvednikov. All rights reserved.
+// Copyright (c) 2019-2023 Alexander Medvednikov. All rights reserved.
 // Use of this source code is governed by a GPL license
 // that can be found in the LICENSE file.
 module main
@@ -80,6 +80,8 @@ mut:
 	autocomplete_info    AutocompleteInfo
 	autocomplete_cache   map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
 	debug_info           string
+	debugger             Debugger
+	// debugger_output      DebuggerOutput
 }
 
 // For syntax highlighting
@@ -97,6 +99,7 @@ enum EditorMode {
 	visual       = 3
 	timer        = 4
 	autocomplete = 5
+	debugger     = 6
 }
 
 struct Chunk {
@@ -418,8 +421,7 @@ fn (mut ved Ved) draw() {
 	ved.page_height = ved.win_height / ved.cfg.line_height - 1
 	view.page_height = ved.page_height
 	// Splits from and to
-	from := ved.workspace_idx * ved.splits_per_workspace
-	to := from + ved.splits_per_workspace
+	from, to := ved.get_splits_from_to()
 	// Not a full refresh? Means we need to refresh only current split.
 	if !ved.refresh {
 		// split_x := split_width * (ved.cur_split - from)
@@ -513,6 +515,10 @@ fn (mut ved Ved) draw() {
 		ved.draw_split(i, from)
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
+	// Debugger variables
+	if ved.mode == .debugger && ved.debugger.output.vars.len > 0 {
+		ved.draw_debugger_variables()
+	}
 	// Cursor
 	mut cursor_x := ved.calc_cursor_x()
 	ved.draw_cursor(cursor_x, y)
@@ -561,6 +567,17 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		if view.error_y == j {
 			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10,
 				ved.cfg.line_height, ved.cfg.errorbgcolor)
+		}
+		// Breakpoint red circle
+		if view.breakpoints.contains(j) {
+			ved.gg.draw_circle_filled(split_x + 3, y + ved.cfg.line_height / 2 - 1, 5,
+				gx.red)
+		}
+		// Breakpoint yellow line
+		if ved.mode == .debugger && ved.cur_split == i && ved.debugger.output.line_nr != 0
+			&& ved.debugger.output.line_nr == j + 1 {
+			line_width := split_width - view.padding_left - 10
+			ved.gg.draw_rect_filled(x + 10, y, line_width, ved.cfg.line_height, breakpoint_color)
 		}
 		// Line number
 		line_number := j + 1
@@ -774,6 +791,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 		.query { ved.key_query(key, super) }
 		.timer { ved.timer.key_down(key, super) }
 		.autocomplete { ved.key_insert(key, mod) }
+		.debugger { ved.key_normal(key, mod) }
 	}
 	ved.gg.refresh_ui()
 }
@@ -1109,7 +1127,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			// }
 		}
 		.n {
-			if shift {
+			if ved.mode == .debugger {
+				ved.debugger.step_over()
+			} else if shift {
 				// backwards search
 				ved.search(.backward)
 			} else {
@@ -1227,7 +1247,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			ved.view.shift_b()
 		}
 		.b {
-			if super {
+			if shift_and_super {
+				ved.view.add_breakpoint(ved.view.y)
+			} else if super {
 				// force crash
 				// # void*a = 0; int b = *(int*)a;
 				ved.view.shift_b()
@@ -1240,7 +1262,10 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 		}
 		.u {
-			if super {
+			if shift_and_super {
+				ved.mode = .debugger
+				ved.run_debugger(ved.view.breakpoints)
+			} else if super {
 				ved.key_u()
 			}
 		}
@@ -1990,4 +2015,10 @@ fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 		exit(1)
 	}
 	return nr_splits
+}
+
+fn (ved &Ved) get_splits_from_to() (int, int) {
+	from := ved.workspace_idx * ved.splits_per_workspace
+	to := from + ved.splits_per_workspace
+	return from, to
 }
