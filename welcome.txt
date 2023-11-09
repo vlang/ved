@@ -42,13 +42,13 @@ C t    show the Timer/Pomodoro window
 
 Supported Vim bindings:
 
-j k h l
-C-F C-B
-L H
-w b
-dw de cw ce ci
-di ci
-A I
+j k h l         down, up, left, right (moves cursor)
+C-F C-B         page down, page up
+L H             go to top/bottom of the page
+w b             next/previous word
+dw de cw ce     delete word
+di ci           smart delete
+A I             go to start/end of line, insert mode
 o O
 v
 zz
