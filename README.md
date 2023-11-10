@@ -185,15 +185,15 @@ w b             next/previous word
 dw de cw ce     delete word
 di ci           smart delete
 A I             go to start/end of line, insert mode
-o O
-v
-zz
-y d p J
-.
-< >
-/ * n
-gg G
-x r
-C-n (autocomplete)
+o O             new line below/above, insert mode
+v               selection mode
+zz              center current line
+y d p J         yank, delete, paste, join lines
+.               repeat last action
+< >             indent right/left
+/ * n           search, search for word under cursor, next occurence
+gg G            go to the beginning/end of the file
+x r             delete/replace character under cursor
+C-n             autocomplete
 ```
 
