@@ -49,10 +49,10 @@ w b             next/previous word
 dw de cw ce     delete word
 di ci           smart delete
 A I             go to start/end of line, insert mode
-o O
-v
-zz
-y d p J
+o O             new line below/above, insert mode
+v               selection mode
+zz              center current line
+y d p J         yank, delete, paste
 .
 < >
 / * n

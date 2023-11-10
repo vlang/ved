@@ -92,7 +92,7 @@ Discord (primary community): https://discord.gg/vlang. Join the `#ved` channel.
 
 ### Configuration
 
-Ved creates a settings directory in `$HOME/.ved` where it stores workspaces, sessions, tasks, and the configuration file. The configuration file is simply a [TOML](https://toml.io/) file called `conf.toml`. It provides a way to change some basic settings and the editor colors. 
+Ved creates a settings directory in `$HOME/.ved` where it stores workspaces, sessions, tasks, and the configuration file. The configuration file is simply a [TOML](https://toml.io/) file called `conf.toml`. It provides a way to change some basic settings and the editor colors.
 
 If you don't want to touch the config file, you never have to! Ved does not create it by itself and it provides sensible defaults to get you started. If you are more adventurous, here is an example configuration file that contains all of the possible settings:
 
@@ -178,13 +178,13 @@ C t    show the Timer/Pomodoro window
 
 Supported vim bindings:
 ```
-j k h l
-C-F C-B
-L H
-w b
-dw de cw ce ci
-di ci
-A I
+j k h l         down, up, left, right (moves cursor)
+C-F C-B         page down, page up
+L H             go to top/bottom of the page
+w b             next/previous word
+dw de cw ce     delete word
+di ci           smart delete
+A I             go to start/end of line, insert mode
 o O
 v
 zz
@@ -197,4 +197,3 @@ x r
 C-n (autocomplete)
 ```
 
-The current vim system is hardcoded, which does not allow for any scalability. Fixing this is high on the the list of things to do.
