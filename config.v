@@ -6,6 +6,7 @@ module main
 import os
 import gx
 import toml
+import json
 
 // The different kinds of cursors
 enum Cursor {
@@ -56,6 +57,7 @@ mut:
 	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
 	disable_mouse   bool
+	disable_fmt     bool
 }
 
 fn (mut config Config) set_settings(path string) {
@@ -312,5 +314,15 @@ fn (mut config Config) set_red() {
 	config.red_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.red_color
+	}
+}
+
+fn (mut ved Ved) load_config2() {
+	if os.exists(config_path2) {
+		if conf2 := json.decode(Config, os.read_file(config_path2) or { return })  {
+			ved.cfg.disable_fmt = conf2.disable_fmt
+		} else {
+			println(err)
+		}
 	}
 }

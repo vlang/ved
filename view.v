@@ -195,6 +195,10 @@ fn (mut view View) save_file() {
 }
 
 fn (mut view View) format_file() {
+	view.ved.load_config2()
+	if view.ved.cfg.disable_fmt {
+		return
+	}
 	path := view.path
 	// Run formatters
 	fmt_cmd := view.ved.syntaxes[view.ved.current_syntax_idx].fmt_cmd.replace('<PATH>',

@@ -21,6 +21,7 @@ const (
 	timer_path        = os.join_path(settings_dir, 'timer')
 	tasks_path        = os.join_path(settings_dir, 'tasks')
 	config_path       = os.join_path(settings_dir, 'conf.toml')
+	config_path2      = os.join_path(settings_dir, 'config.json')
 	max_nr_workspaces = 10
 )
 
@@ -159,6 +160,8 @@ fn main() {
 	}
 	ved.handle_segfault()
 
+	ved.load_config2()
+
 	ved.cfg.set_settings(config_path)
 	ved.cfg.reload_config()
 
@@ -187,7 +190,7 @@ fn main() {
 		font_path: fpath
 		ui_mode: true
 	)
-	println('1FULL SCREEN=${!is_window}')
+	println('full screen=${!is_window}')
 	ved.timer = new_timer(ved.gg)
 	ved.load_all_tasks()
 	// TODO linux and windows
