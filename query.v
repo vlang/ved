@@ -8,23 +8,21 @@ import gx
 import time
 import gg
 
-const (
-	txt_cfg = gx.TextCfg{
-		size: 18
-	}
-)
+const txt_cfg = gx.TextCfg{
+	size: 18
+}
 
 enum QueryType {
-	ctrlp = 0
-	search = 1
-	cam = 2
-	open = 3
-	ctrlj = 4
-	task = 5
-	grep = 6
-	open_workspace = 7
-	run = 8
-	alert = 9 // e.g. "running git pull..."
+	ctrlp            = 0
+	search           = 1
+	cam              = 2
+	open             = 3
+	ctrlj            = 4
+	task             = 5
+	grep             = 6
+	open_workspace   = 7
+	run              = 8
+	alert            = 9 // e.g. "running git pull..."
 	search_in_folder = 10
 }
 
@@ -268,11 +266,10 @@ fn (q QueryType) str() string {
 	}
 }
 
-const (
-	small_queries  = [QueryType.search, .cam, .open, .run, .alert] //.grep
-	max_grep_lines = 20
-	query_width    = 400
-)
+const small_queries = [QueryType.search, .cam, .open, .run, .alert] //.grep
+
+const max_grep_lines = 20
+const query_width = 400
 
 // Search, commit, open, ctrl p
 fn (mut ved Ved) draw_query() {
