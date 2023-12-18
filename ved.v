@@ -25,7 +25,7 @@ const (
 	max_nr_workspaces = 10
 )
 
-[heap]
+@[heap]
 struct Ved {
 mut:
 	win_width            int
@@ -132,7 +132,7 @@ const (
 	is_window = '-window' in args
 )
 
-[console]
+@[console]
 fn main() {
 	if '-h' in args || '--help' in args {
 		println(help_text)
@@ -151,10 +151,7 @@ fn main() {
 		win_height: size.height
 		// nr_splits: nr_splits
 		// splits_per_workspace: nr_splits
-		cur_split: 0
 		mode: .normal
-		view: 0
-		gg: 0
 		cb: clipboard.new()
 		open_paths: [][]string{len: max_nr_workspaces}
 	}
@@ -799,7 +796,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	ved.gg.refresh_ui()
 }
 
-[manualfree]
+@[manualfree]
 fn on_char(code u32, mut ved Ved) {
 	if ved.just_switched {
 		ved.just_switched = false
@@ -1578,7 +1575,7 @@ fn (mut ved Ved) add_workspace(path string) {
 }
 
 fn short_space(workspace string) string {
-	pos := workspace.last_index('/') or { return workspace }
+	pos := workspace.index_last('/') or { return workspace }
 	return workspace[pos + 1..].limit(10)
 }
 
