@@ -8,23 +8,22 @@ import gx
 import time
 import gg
 
-const (
-	txt_cfg = gx.TextCfg{
-		size: 18
-	}
-)
+const txt_cfg = gx.TextCfg{
+	size: 18
+}
 
 enum QueryType {
-	ctrlp = 0
-	search = 1
-	cam = 2
-	open = 3
-	ctrlj = 4
-	task = 5
-	grep = 6
-	open_workspace = 7
-	run = 8
-	alert = 9 // e.g. "running git pull..."
+	ctrlp            = 0
+	search           = 1
+	cam              = 2
+	open             = 3
+	ctrlj            = 4
+	task             = 5
+	grep             = 6
+	open_workspace   = 7
+	run              = 8
+	alert            = 9
+	// e.g. "running git pull..."
 	search_in_folder = 10
 }
 
@@ -81,9 +80,11 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						path := line.all_before(':')
 						pos := line.index(':') or { 0 }
 						pos2 := line.index_after(':', pos + 1)
+
 						// line_nr := line[path.len + 1..].int() - 1
 						line_nr := line[pos + 1..pos2].int() - 1
 						ved.view.open_file(ved.workspace + '/' + path, line_nr)
+
 						// ved.view.move_to_line(line_nr)
 						ved.view.zz()
 						ved.mode = .normal
@@ -268,11 +269,10 @@ fn (q QueryType) str() string {
 	}
 }
 
-const (
-	small_queries  = [QueryType.search, .cam, .open, .run, .alert] //.grep
-	max_grep_lines = 20
-	query_width    = 400
-)
+const small_queries = [QueryType.search, .cam, .open, .run, .alert]
+//.grep
+const max_grep_lines = 20
+const query_width = 400
 
 // Search, commit, open, ctrl p
 fn (mut ved Ved) draw_query() {
@@ -291,9 +291,11 @@ fn (mut ved Ved) draw_query() {
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
 	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
+
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
+
 	// query background
 	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)
 	query_to_draw := if ved.query_type in [.search, .search_in_folder, .grep] {
@@ -342,6 +344,7 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 // TODO merge with ctrlp_files
 fn (mut ved Ved) draw_open_files(x int, y int) {
 	mut j := 0
+
 	// println('draw open_files len=$ved.open_paths.len')
 	for file_ in ved.open_paths[ved.workspace_idx] {
 		if j == 15 {
@@ -372,6 +375,7 @@ fn (mut ved Ved) draw_top_tasks(x int, y int) {
 		if !task.contains(q) {
 			continue
 		}
+
 		// println('DOES CONTAIN "$file" $j')
 		ved.gg.draw_text(x + 10, y + 60 + 30 * j, task, txt_cfg)
 		j++
@@ -502,6 +506,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 			if pos == view.x && i == view.y {
 				continue
 			}
+
 			// Found in current screen, dont move it
 			if i >= view.from && i <= view.from + ved.page_height {
 				ved.prev_y = view.y
@@ -512,6 +517,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 			view.x = pos
 			break
 		}
+
 		// Haven't found it, try from the top
 		if !goback && !passed && i == view.lines.len - 1 {
 			if ved.search_dir == '' {
@@ -532,6 +538,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 					}
 					ved.search_dir_idx++
 				}
+
 				// println('ffffff $files')
 			}
 		}
@@ -544,6 +551,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 		*/
 	}
 	ved.search_history << ved.search_query
+
 	// ved.search_idx++
 	ved.search_idx = ved.search_history.len
 }

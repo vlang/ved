@@ -9,10 +9,10 @@ import time
 import gx
 import strings
 
-const breakpoint_color = gx.rgb(136, 136, 97) // yellow
-
-const debugger_name_color = gx.rgb(197, 134, 192) // pink
-
+const breakpoint_color = gx.rgb(136, 136, 97)
+// yellow
+const debugger_name_color = gx.rgb(197, 134, 192)
+// pink
 struct Debugger {
 mut:
 	p      os.Process
@@ -23,7 +23,8 @@ struct DebuggerOutput {
 mut:
 	vars []DebuggerVariable
 
-	line_nr int // line at which "->" points
+	line_nr int
+	// line at which "->" points
 }
 
 struct DebuggerVariable {
@@ -44,6 +45,7 @@ fn (mut ved Ved) run_debugger(breakpoints []int) {
 
 	for breakpoint in breakpoints {
 		_ = breakpoint
+
 		// view.debugger.send_cmd('b main__foo')
 	}
 	ved.debugger.send_cmd('b main__foo')
@@ -55,6 +57,7 @@ fn (mut ved Ved) run_debugger(breakpoints []int) {
 	for {
 		resp := ved.debugger.wait_for(' stop reason') or { break }
 		time.sleep(100 * time.millisecond)
+
 		// println('<<<<<<<<<<<<<<<<')
 		// println(resp)
 		// println('>>>>>>>>>>>>>>>>')
@@ -75,14 +78,17 @@ fn (mut d Debugger) send_cmd(cmd string) {
 fn (mut d Debugger) wait_for(what string) !string {
 	mut sb := strings.new_builder(100)
 	eprintln(term.bright_blue('> waiting for: ${what}'))
+
 	// now := time.now()
 	for d.p.is_alive() {
 		line := d.p.stdout_read()
+
 		// d.p.stderr_read()
 		sb.write_string(line)
 		eprint('line len: ${line.len:5} | ${line}')
 		if line.contains(what) {
 			return sb.str()
+
 			// break
 		}
 		if line.contains('exited with status') {
@@ -126,6 +132,7 @@ fn (mut d Debugger) add_output(new_output DebuggerOutput) {
 				continue loop1
 			}
 		}
+
 		// Add a new var to the end
 		d.output.vars << new_var
 	}
@@ -150,6 +157,7 @@ fn (mut d Debugger) parse_vars(s string, is_struct bool) DebuggerOutput {
 			res.line_nr = vals[1].int()
 		}
 	}
+
 	// println('parse_vars res=')
 	// println(res)
 	return res
@@ -162,6 +170,7 @@ fn (mut d Debugger) parse_var(line string, s string, is_struct bool) DebuggerVar
 	typ := if is_struct { '' } else { line[1..par_pos] }
 	eq_pos := line.index(' = ') or { 0 }
 	name := line[par_pos + 2..eq_pos]
+
 	// Skip the var if it's no valid yet (not present in the code before the current line)
 	backtrace := s.before('->').after('stop reason = ')
 	println('BACKTRACE:')
@@ -172,6 +181,7 @@ fn (mut d Debugger) parse_var(line string, s string, is_struct bool) DebuggerVar
 		return DebuggerVariable{}
 	}
 	mut value := line[eq_pos + 3..]
+
 	// Get correct string value
 	if typ == 'string' || (is_struct && value.contains('(str =')) {
 		if value.contains('str = 0x0000000000000000') {
@@ -181,6 +191,7 @@ fn (mut d Debugger) parse_var(line string, s string, is_struct bool) DebuggerVar
 			end := value.index(',') or { 0 }
 			value = value[start + 6..end]
 		}
+
 		// Get array contents by callign Array_xxx_str() in lldb
 	} else if typ.starts_with('Array_') {
 		elem_type := typ.replace('Array_', '')
@@ -211,6 +222,7 @@ fn (mut d Debugger) parse_var(line string, s string, is_struct bool) DebuggerVar
 		println('STRUCT code:')
 		println(struct_code)
 		println('============')
+
 		// Sum types
 		if struct_code.contains('_string =') {
 			// value = 'sum t:${typ}'
@@ -245,10 +257,12 @@ fn (mut debugger Debugger) step_over() {
 	for {
 		resp := debugger.wait_for(' stop reason') or { break }
 		time.sleep(100 * time.millisecond)
+
 		// println('2<<<<<<<<<<<<<<<<')
 		// println(resp)
 		// println('2>>>>>>>>>>>>>>>>')
 		debugger.parse_output(resp)
+
 		// d.send_cmd('next')
 		return
 	}
@@ -257,8 +271,10 @@ fn (mut debugger Debugger) step_over() {
 fn (mut ved Ved) draw_debugger_variables() {
 	split_from, split_to := ved.get_splits_from_to()
 	split_width := ved.split_width()
+
 	// We draw debugger variables in the last split (the one with the output)
 	last_split_x := split_width * (split_to - 1 - split_from)
+
 	// println('split_width=${split_width}, last_split_x=${last_split_x}')
 	// println('DRAW D VARS x=${last_split_x} splitw=${split_width}, to=${split_to}, from=${split_from}')
 	ved.gg.draw_rect_filled(last_split_x, ved.cfg.line_height, split_width, 500, ved.cfg.title_color)
@@ -266,6 +282,7 @@ fn (mut ved Ved) draw_debugger_variables() {
 		return
 	}
 	x := last_split_x + 3
+
 	// Calc first col width
 	max_name_len := 20
 	max_value_len := 45
@@ -278,9 +295,11 @@ fn (mut ved Ved) draw_debugger_variables() {
 	}
 	*/
 	col_width := (max_name_len + 1) * ved.cfg.char_width
+
 	// Draw the table
 	for i, var in ved.debugger.output.vars {
 		y := (i + 1) * ved.cfg.line_height + 3
+
 		// col_width := 80
 		ved.gg.draw_text(x, y, var.name.limit(max_name_len),
 			color: debugger_name_color

@@ -9,6 +9,7 @@ import os
 
 fn (mut ved Ved) build_app1() {
 	ved.build_app('')
+
 	// ved.next_split()
 	// glfw.post_empty_event()
 	// ved.prev_split()
@@ -23,6 +24,7 @@ fn (mut ved Ved) build_app2() {
 fn (mut ved Ved) build_app(extra string) {
 	eprintln('build_app: ${extra}')
 	ved.is_building = true
+
 	// Save each open file before building
 	ved.save_changed_files()
 	os.chdir(ved.workspace) or { return }
@@ -50,6 +52,7 @@ fn (mut ved Ved) build_app(extra string) {
 	last_view.open_file(out_file, 0)
 
 	last_view.shift_g()
+
 	// error line
 	alines := out.output.split_into_lines()
 	lines := alines.filter(it.contains('.v:') || it.contains('.go:'))
@@ -62,6 +65,7 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 	for line in lines {
 		is_warning := line.contains('warning:')
+
 		// Go to the next warning only if there are no errors.
 		// This makes Ved go to errors before warnings.
 		if !is_warning || (is_warning && no_errors) {
@@ -71,9 +75,11 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 	ved.refresh = true
 	ved.gg.refresh_ui()
+
 	// ved.refresh = true
 	// time.sleep(4) // delay is_building to prevent flickering in the right split
 	ved.is_building = false
+
 	// Move to the first line of the output in the last view, so that it's
 	// always visible
 	last_view.from = 0
@@ -95,11 +101,13 @@ fn (mut ved Ved) run_file() {
 	mut view := ved.view
 	ved.error_line = ''
 	ved.is_building = true
+
 	// println('start file run')
 	// Save the file before building
 	if view.changed {
 		view.save_file()
 	}
+
 	// go run /a/b/c.go
 	// dir is "/a/b/"
 	// cd to /a/b/
@@ -108,11 +116,13 @@ fn (mut ved Ved) run_file() {
 	os.chdir(dir) or {}
 	out := os.execute('v run ${view.path}')
 	os.write_file('${dir}/out', out.output) or { panic(err) }
+
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
 	last_view.open_file('${dir}/out', 0)
 	last_view.shift_g()
 	ved.is_building = false
+
 	// error line
 	lines := out.output.split_into_lines()
 	for line in lines {
@@ -132,6 +142,7 @@ fn (ved &Ved) run_zsh() {
 	res := os.execute('zsh -ic "source ~/.zshrc; ${text}" > ${dir}/out')
 	if res.exit_code == -1 {
 	}
+
 	// TODO copypasted some code from build_app()
 	// mut f2 := os.create('$dir/out') or { panic('fail') }
 	// f2.writeln(out.output) or { panic(err) }

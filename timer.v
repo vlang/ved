@@ -6,25 +6,24 @@ import gx
 import os
 import strings
 
-const (
-	time_cfg = gx.TextCfg{
-		color: gx.gray
-		size: 14
-	}
-)
+const time_cfg = gx.TextCfg{
+	color: gx.gray
+	size: 14
+}
 
-const (
-	color_distracting = gx.rgb(255, 111, 130)
-	color_productive  = gx.rgb(50, 90, 110) // gx.rgb(167,236,82)
-	color_neutral     = gx.rgb(39, 195, 221)
-)
+const color_distracting = gx.rgb(255, 111, 130)
+const color_productive = gx.rgb(50, 90, 110)
+// gx.rgb(167,236,82)
+const color_neutral = gx.rgb(39, 195, 221)
 
 struct Timer {
 mut:
 	gg             &gg.Context = unsafe { nil }
 	tasks          []Task
-	date           time.Time // the day being shown
-	pom_start      i64       // unix time
+	date           time.Time
+	// the day being shown
+	pom_start      i64
+	// unix time
 	pom_is_started bool
 }
 
@@ -41,9 +40,11 @@ struct Task {
 fn (mut t Timer) load_tasks() {
 	// println('timer.load_tasks()')
 	lines := os.read_lines(tasks_path) or { return }
+
 	// println(lines)
 	mut tasks := []Task{}
 	today := t.date.ymmdd()
+
 	// println('day=$today')
 	for line in lines {
 		// println(line)
@@ -55,19 +56,23 @@ fn (mut t Timer) load_tasks() {
 		}
 		words_ := line.split('|')
 		words := words_.filter(it != '')
+
 		// println('wordss:')
 		// println(words)
 		if words.len != 4 {
 			continue
 		}
 		time_ := words[2].trim_space()
+
 		// println('time=$time')
 		a := time_.split(' ')
+
 		// println('a=') println(a)
 		if a.len < 2 {
 			continue
 		}
 		b := a[1].split(':')
+
 		// println('b=') println(b)
 		if b.len < 2 {
 			continue
@@ -82,6 +87,7 @@ fn (mut t Timer) load_tasks() {
 		duration := words[1].trim_space()
 		productive := !name.starts_with('@')
 		color := if productive { color_productive } else { color_distracting }
+
 		// TODO autofree bug remove clone()
 		name2 := if productive { name.clone() } else { name[1..] }
 		task := Task{
@@ -93,6 +99,7 @@ fn (mut t Timer) load_tasks() {
 			color: color
 			productive: productive
 		}
+
 		// println('task:')
 		// println(task)
 		if task.end < task.start {
@@ -100,6 +107,7 @@ fn (mut t Timer) load_tasks() {
 		}
 		tasks << task
 	}
+
 	// println('tasks.len=$tasks.len')
 	t.tasks = tasks
 }
@@ -149,14 +157,18 @@ fn (mut t Timer) draw() {
 		}
 		t.gg.draw_line(hour_x, hour_y, hour_x + hour_width, hour_y, gx.gray)
 	}
+
 	// Large left vertical line
 	t.gg.draw_line(window_x + 30, window_y + 10, window_x + 30, window_y + 10 + 24 * hour_width,
 		gx.gray)
+
 	// Large right vertical line
 	t.gg.draw_line(window_x + 30 + hour_width, window_y + 10, window_x + 30 + hour_width,
 		window_y + 10 + 24 * hour_width, gx.gray)
+
 	// Draw the date in the top right corner
 	t.gg.draw_text_def(window_x + window_width - 100, 20, t.date.ymmdd())
+
 	// Draw total time
 	h := total / 60
 	m := total % 60
@@ -194,10 +206,8 @@ fn (ved &Ved) pomodoro_minutes() int {
 	return int((ved.now.unix - ved.timer.pom_start) / 60)
 }
 
-const (
-	max_task_len = 40
-	separator    = '|-----------------------------------------------------------------------------|'
-)
+const max_task_len = 40
+const separator = '|-----------------------------------------------------------------------------|'
 
 fn (ved &Ved) insert_task() ! {
 	if ved.cur_task == '' || ved.task_minutes() == 0 {
