@@ -1578,7 +1578,7 @@ fn (mut ved Ved) add_workspace(path string) {
 }
 
 fn short_space(workspace string) string {
-	pos := workspace.last_index('/') or { return workspace }
+	pos := workspace.index_last('/') or { return workspace }
 	return workspace[pos + 1..].limit(10)
 }
 
