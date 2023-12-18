@@ -32,25 +32,25 @@ mut:
 	split_color     gx.Color
 	bgcolor         gx.Color
 	// base00
-	errorbgcolor    gx.Color
+	errorbgcolor gx.Color
 	// base08
-	title_color     gx.Color
+	title_color gx.Color
 	// base04
-	cursor_color    gx.Color
+	cursor_color gx.Color
 	// base05
-	string_color    gx.Color
+	string_color gx.Color
 	// base0B
-	string_cfg      gx.TextCfg
-	key_color       gx.Color
+	string_cfg gx.TextCfg
+	key_color  gx.Color
 	// base0E
-	key_cfg         gx.TextCfg
-	lit_color       gx.Color
+	key_cfg   gx.TextCfg
+	lit_color gx.Color
 	// base0E
-	lit_cfg         gx.TextCfg
-	text_color      gx.Color
+	lit_cfg    gx.TextCfg
+	text_color gx.Color
 	// base05
-	txt_cfg         gx.TextCfg
-	comment_color   gx.Color
+	txt_cfg       gx.TextCfg
+	comment_color gx.Color
 	// base03
 	comment_cfg     gx.TextCfg
 	file_name_color gx.Color
@@ -61,15 +61,15 @@ mut:
 	minus_cfg       gx.TextCfg
 	line_nr_color   gx.Color
 	// base01
-	line_nr_cfg     gx.TextCfg
-	green_color     gx.Color
+	line_nr_cfg gx.TextCfg
+	green_color gx.Color
 	// base0B
-	green_cfg       gx.TextCfg
-	red_color       gx.Color
+	green_cfg gx.TextCfg
+	red_color gx.Color
 	// base08
-	red_cfg         gx.TextCfg
-	disable_mouse   bool
-	disable_fmt     bool
+	red_cfg       gx.TextCfg
+	disable_mouse bool
+	disable_fmt   bool
 }
 
 fn (mut config Config) set_settings(path string) {

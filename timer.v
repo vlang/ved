@@ -18,11 +18,11 @@ const color_neutral = gx.rgb(39, 195, 221)
 
 struct Timer {
 mut:
-	gg             &gg.Context = unsafe { nil }
-	tasks          []Task
-	date           time.Time
+	gg    &gg.Context = unsafe { nil }
+	tasks []Task
+	date  time.Time
 	// the day being shown
-	pom_start      i64
+	pom_start i64
 	// unix time
 	pom_is_started bool
 }
