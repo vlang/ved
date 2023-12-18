@@ -319,7 +319,7 @@ fn (mut config Config) set_red() {
 
 fn (mut ved Ved) load_config2() {
 	if os.exists(config_path2) {
-		if conf2 := json.decode(Config, os.read_file(config_path2) or { return })  {
+		if conf2 := json.decode(Config, os.read_file(config_path2) or { return }) {
 			ved.cfg.disable_fmt = conf2.disable_fmt
 		} else {
 			println(err)

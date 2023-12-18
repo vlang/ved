@@ -6,18 +6,14 @@ import gx
 import os
 import strings
 
-const (
-	time_cfg = gx.TextCfg{
-		color: gx.gray
-		size: 14
-	}
-)
+const time_cfg = gx.TextCfg{
+	color: gx.gray
+	size: 14
+}
 
-const (
-	color_distracting = gx.rgb(255, 111, 130)
-	color_productive  = gx.rgb(50, 90, 110) // gx.rgb(167,236,82)
-	color_neutral     = gx.rgb(39, 195, 221)
-)
+const color_distracting = gx.rgb(255, 111, 130)
+const color_productive = gx.rgb(50, 90, 110) // gx.rgb(167,236,82)
+const color_neutral = gx.rgb(39, 195, 221)
 
 struct Timer {
 mut:
@@ -194,10 +190,8 @@ fn (ved &Ved) pomodoro_minutes() int {
 	return int((ved.now.unix - ved.timer.pom_start) / 60)
 }
 
-const (
-	max_task_len = 40
-	separator    = '|-----------------------------------------------------------------------------|'
-)
+const max_task_len = 40
+const separator = '|-----------------------------------------------------------------------------|'
 
 fn (ved &Ved) insert_task() ! {
 	if ved.cur_task == '' || ved.task_minutes() == 0 {
