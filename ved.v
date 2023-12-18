@@ -147,8 +147,6 @@ fn main() {
 		// splits_per_workspace: nr_splits
 		cur_split: 0
 		mode: .normal
-		view: 0
-		gg: 0
 		cb: clipboard.new()
 		open_paths: [][]string{len: max_nr_workspaces}
 	}
