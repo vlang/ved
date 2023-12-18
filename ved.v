@@ -10,22 +10,20 @@ import time
 import uiold
 import clipboard
 
-const (
-	exe_dir           = os.dir(os.executable())
-	home_dir          = os.home_dir()
-	settings_dir      = os.join_path(home_dir, '.ved')
-	codeblog_path     = os.join_path(home_dir, 'code', 'blog')
-	syntax_dir        = os.join_path(settings_dir, 'syntax')
-	session_path      = os.join_path(settings_dir, 'session')
-	workspaces_path   = os.join_path(settings_dir, 'workspaces')
-	timer_path        = os.join_path(settings_dir, 'timer')
-	tasks_path        = os.join_path(settings_dir, 'tasks')
-	config_path       = os.join_path(settings_dir, 'conf.toml')
-	config_path2      = os.join_path(settings_dir, 'config.json')
-	max_nr_workspaces = 10
-)
+const exe_dir = os.dir(os.executable())
+const home_dir = os.home_dir()
+const settings_dir = os.join_path(home_dir, '.ved')
+const codeblog_path = os.join_path(home_dir, 'code', 'blog')
+const syntax_dir = os.join_path(settings_dir, 'syntax')
+const session_path = os.join_path(settings_dir, 'session')
+const workspaces_path = os.join_path(settings_dir, 'workspaces')
+const timer_path = os.join_path(settings_dir, 'timer')
+const tasks_path = os.join_path(settings_dir, 'tasks')
+const config_path = os.join_path(settings_dir, 'conf.toml')
+const config_path2 = os.join_path(settings_dir, 'config.json')
+const max_nr_workspaces = 10
 
-[heap]
+@[heap]
 struct Ved {
 mut:
 	win_width            int
@@ -114,8 +112,7 @@ struct ViSize {
 	height int
 }
 
-const (
-	help_text = '
+const help_text = '
 Usage: ved [options] [files]
 
 Options:
@@ -124,15 +121,12 @@ Options:
   -dark                   Launch in dark mode.
   -two_splits
 '
-)
 
-const (
-	fpath     = os.resource_abs_path('RobotoMono-Regular.ttf')
-	args      = os.args.clone()
-	is_window = '-window' in args
-)
+const fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
+const args = os.args.clone()
+const is_window = '-window' in args
 
-[console]
+@[console]
 fn main() {
 	if '-h' in args || '--help' in args {
 		println(help_text)
@@ -799,7 +793,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	ved.gg.refresh_ui()
 }
 
-[manualfree]
+@[manualfree]
 fn on_char(code u32, mut ved Ved) {
 	if ved.just_switched {
 		ved.just_switched = false
