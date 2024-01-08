@@ -8,21 +8,21 @@ import gx
 import time
 import gg
 
-const txt_cfg = gx.TextCfg{
+const txt_cfg = gx.TextCfg {
 	size: 18
 }
 
 enum QueryType {
-	ctrlp            = 0
-	search           = 1
-	cam              = 2
-	open             = 3
-	ctrlj            = 4
-	task             = 5
-	grep             = 6
-	open_workspace   = 7
-	run              = 8
-	alert            = 9 // e.g. "running git pull..."
+	ctrlp = 0
+	search = 1
+	cam = 2
+	open = 3
+	ctrlj = 4
+	task = 5
+	grep = 6
+	open_workspace = 7
+	run = 8
+	alert = 9 // e.g. "running git pull..."
 	search_in_folder = 10
 }
 
