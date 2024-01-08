@@ -75,12 +75,11 @@ mut:
 	cq_in_a_row          int
 	search_dir           string // for cmd+/ search in the entire directory where the current file is located
 	search_dir_idx       int    // for looping thru search dir files
-	error_line           string // is displayed at the bottom
-	autocomplete_info    AutocompleteInfo
-	autocomplete_cache   map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
+	error_line           string // is displayed at the bottom["v.checker.Checker"] == 	[{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
 	debug_info           string
 	debugger             Debugger
 	// debugger_output      DebuggerOutput
+	funny Funny
 }
 
 // For syntax highlighting
@@ -92,13 +91,12 @@ enum ChunkKind {
 }
 
 enum EditorMode {
-	normal       = 0
-	insert       = 1
-	query        = 2
-	visual       = 3
-	timer        = 4
-	autocomplete = 5
-	debugger     = 6
+	normal   = 0
+	insert   = 1
+	query    = 2
+	visual   = 3
+	timer    = 4
+	debugger = 5
 }
 
 struct Chunk {
@@ -119,7 +117,7 @@ Options:
   -h, --help              Display this information.
   -window <window-name>   Launch in a window.
   -dark                   Launch in dark mode.
-  -two_splits
+  -split <amount>	  Specify how many text editing panes you want.
 '
 
 const fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
@@ -152,8 +150,6 @@ fn main() {
 	}
 	ved.handle_segfault()
 
-	ved.load_config2()
-
 	ved.cfg.set_settings(config_path)
 	ved.cfg.reload_config()
 
@@ -182,7 +178,7 @@ fn main() {
 		font_path: fpath
 		ui_mode: true
 	)
-	println('full screen=${!is_window}')
+	println('1FULL SCREEN=${!is_window}')
 	ved.timer = new_timer(ved.gg)
 	ved.load_all_tasks()
 	// TODO linux and windows
@@ -337,11 +333,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 }
 
 fn (ved &Ved) split_width() int {
-	mut split_width := ved.win_width / ved.nr_splits + 60
-	if split_width < 300 {
-		split_width = ved.win_width
-	}
-	return split_width
+	return ved.win_width / ved.nr_splits
 }
 
 fn frame(mut ved Ved) {
@@ -359,8 +351,8 @@ fn frame(mut ved Ved) {
 }
 
 fn (ved &Ved) draw_cursor(cursor_x int, y int) {
-	mut width := ved.cfg.char_width
 	// println('CURSOR WIDTH=${ved.cfg.char_width}')
+
 	match ved.cfg.cursor_style {
 		.block {
 			width = ved.cfg.char_width
@@ -368,19 +360,24 @@ fn (ved &Ved) draw_cursor(cursor_x int, y int) {
 		.beam {
 			width = 1
 		}
+		// TODO: find a way for visual and/or normal mode to have the background of the color be solid (or filled) but not overlap the text
+		// TODO: adjust the position OR width based on its actual value and the font size to not be left behind
 		.variable {
 			if ved.mode == .insert {
 				width = 1
-			} else if ved.mode == .visual {
-				// FIXME: This looks terrible.
-				// ved.gg.draw_rect_filled(cursor_x, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-				// ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-			} else {
-				width = ved.cfg.char_width
+				ved.gg.draw_rect_empty(cursor_x, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
+			}
+			/*
+			else if ved.mode == .visual {
+    				ved.gg.draw_rect_filled(cursor_x, y, width, ved.cfg.line_height, ved.cfg.cursor_color)
+    				ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y, 1, ved.cfg.line_height,
+        				ved.cfg.cursor_color)
+			}*/
+			else {
+				ved.gg.draw_rect_empty(cursor_x, y, ved.cfg.char_width, ved.cfg.line_height, ved.cfg.cursor_color)
 			}
 		}
 	}
-	ved.gg.draw_rect_empty(cursor_x, y, width, ved.cfg.line_height, ved.cfg.cursor_color)
 }
 
 fn (ved &Ved) calc_cursor_x() int {
@@ -442,41 +439,34 @@ fn (mut ved Ved) draw() {
 	}
 	// Black title background
 	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)
-	// Current split has dark blue title
-	// ved.gg.draw_rect_filled(split_x, 0, split_width, ved.cfg.line_height, gx.rgb(47, 11, 105))
-	// Title (file paths)
-	for i := to - 1; i >= from; i-- {
-		v := ved.views[i]
-		mut name := v.short_path
-		if v.changed && !v.path.ends_with('/out') {
-			name = '${name} [+]'
-		}
-		ved.gg.draw_text(ved.split_x(i - from) + v.padding_left + 10, 1, name, ved.cfg.file_name_cfg)
-	}
+
 	// Git diff stats
 	if ved.git_diff_plus != '+' {
-		ved.gg.draw_text(ved.win_width - 400, 1, ved.git_diff_plus, ved.cfg.plus_cfg)
+		// ved.gg.draw_text(ved.win_width - 400, 1, ved.git_diff_plus, ved.cfg.plus_cfg)
 	}
+
 	if ved.git_diff_minus != '-' {
-		ved.gg.draw_text(ved.win_width - 350, 1, ved.git_diff_minus, ved.cfg.minus_cfg)
+		// ved.gg.draw_text(ved.win_width - 350, 1, ved.git_diff_minus, ved.cfg.minus_cfg)
 	}
+
 	// Workspaces
 	nr_spaces := ved.workspaces.len
 	cur_space := ved.workspace_idx + 1
 	space_name := short_space(ved.workspace)
-	ved.gg.draw_text(ved.win_width - 220, 1, '[${space_name}]', ved.cfg.file_name_cfg)
-	ved.gg.draw_text(ved.win_width - 100, 1, '${cur_space}/${nr_spaces}', ved.cfg.file_name_cfg)
+
+	ved.gg.draw_text(ved.win_width - ved.funny.width_of_text('[${space_name}]', ved.cfg.char_width) - ved.funny.width_of_text('${cur_space}/${nr_spaces}',
+		ved.cfg.char_width) - ved.funny.width_of_text(time_format(ved.cfg.show_seconds_in_time,
+		ved.now), ved.cfg.char_width) - 25, 1, '[${space_name}]', ved.cfg.file_name_cfg)
+
+	// ved.gg.draw_text(ved.win_width - ved.funny.width_of_text('${cur_space}/${nr_spaces}',
+	// ved.cfg.char_width) - ved.funny.width_of_text(time_format(ved.cfg.show_seconds_in_time,
+	// ved.now), ved.cfg.char_width) - 15, 1, '${cur_space}/${nr_spaces}', ved.cfg.file_name_cfg)
+
 	// Time
-	ved.gg.draw_text(ved.win_width - 50, 1, ved.now.hhmm(), ved.cfg.file_name_cfg)
-	// ved.gg.draw_text(ved.win_width - 550, 1, now.hhmmss(), file_name_cfg)
-	// vim top right next to current time
-	/*
-	if ved.start_unix > 0 {
-		minutes := '1m' //ved.timer.minutes()
-		ved.gg.draw_text(ved.win_width - 300, 1, '${minutes}m' !,
-			ved.cfg.file_name_cfg)
-	}
-	*/
+	ved.gg.draw_text(ved.win_width - ved.funny.width_of_text(time_format(ved.cfg.show_seconds_in_time,
+		ved.now), ved.cfg.char_width) - 5, 1, time_format(ved.cfg.show_seconds_in_time,
+		ved.now), ved.cfg.file_name_cfg)
+
 	if ved.cur_task != '' {
 		// Draw current task
 		task_text_width := ved.cur_task.len * ved.cfg.char_width
@@ -491,14 +481,20 @@ fn (mut ved Ved) draw() {
 	if ved.timer.pom_is_started {
 		ved.gg.draw_text(split_width - 50, 1, '${ved.pomodoro_minutes()}m', ved.cfg.file_name_cfg)
 	}
-	// Draw "i" in insert mode
-	if ved.mode == .insert {
-		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
+
+	mut mode_text := '-- UNIMPLEMENTED --'
+
+	match ved.mode {
+		.normal { mode_text = '-- NORMAL --' }
+		.visual { mode_text = '-- VISUAL --' }
+		.insert { mode_text = '-- INSERT --' }
+		.query { mode_text = '-- QUERY --' }
+		.timer { mode_text = '-- TIMER --' }
+		.debugger { mode_text = '-- DEBUGGER --' }
 	}
-	// Draw "v" in visual mode
-	if ved.mode == .visual {
-		ved.gg.draw_text(5, 1, '-v-', ved.cfg.file_name_cfg)
-	}
+
+	ved.gg.draw_text(5, 1, mode_text, ved.cfg.file_name_cfg)
+
 	// Splits
 	// println('\nsplit from=$from to=$to nrviews=$ved.views.len refresh=$ved.refresh')
 	for i := to - 1; i >= from; i-- {
@@ -522,8 +518,6 @@ fn (mut ved Ved) draw() {
 	// query window
 	if ved.mode == .query {
 		ved.draw_query()
-	} else if ved.mode == .autocomplete {
-		ved.draw_autocomplete_window()
 	}
 	// Big error line at the bottom
 	if ved.error_line != '' {
@@ -770,24 +764,27 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
 fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	super := mod == .super
 	shift := mod == .shift
+
 	if key == .escape {
 		if ved.mode == .visual {
 			ved.exit_visual()
 		}
 		ved.mode = .normal
 	}
+
 	// Reset error line
 	ved.view.error_y = -1
 	ved.error_line = ''
+
 	match ved.mode {
 		.normal { ved.key_normal(key, mod) }
 		.visual { ved.key_visual(key, super, shift) }
 		.insert { ved.key_insert(key, mod) }
 		.query { ved.key_query(key, super) }
 		.timer { ved.timer.key_down(key, super) }
-		.autocomplete { ved.key_insert(key, mod) }
 		.debugger { ved.key_normal(key, mod) }
 	}
+
 	ved.gg.refresh_ui()
 }
 
@@ -802,7 +799,7 @@ fn on_char(code u32, mut ved Ved) {
 	// s := utf32_to_str(code)
 	// println('s="$s" code="$code"')
 	match ved.mode {
-		.insert, .autocomplete {
+		.insert {
 			ved.char_insert(s)
 		}
 		.query {
@@ -843,16 +840,11 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 	// shift := mod == .shift
 	match key {
 		.backspace {
-			ved.just_switched = true // prevent backspace symbol being added in char handler
+			// ved.just_switched = true // prevent backspace symbol being added in char handler
 			ved.view.backspace()
 		}
 		.enter {
-			if ved.mode == .autocomplete {
-				// Pressed enter in autocomplete mode, insert text from selected suggested field
-				ved.insert_suggested_field()
-			} else {
-				ved.view.enter()
-			}
+			ved.view.enter()
 		}
 		.escape {
 			ved.mode = .normal
@@ -892,41 +884,6 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 	if super && key == .g {
 		ved.view.insert_text('<code></code>')
 		ved.view.x -= 7
-	}
-	// Autocomplete
-	if key == .n && super {
-		ved.ctrl_n()
-		return
-	}
-	if key == .v && super {
-		ved.view.insert_text(ved.cb.paste())
-		ved.just_switched = true
-	}
-}
-
-fn (mut ved Ved) ctrl_n() {
-	line := ved.view.line()
-	mut i := ved.view.x - 1
-	end := i
-	for i > 0 && is_alpha_underscore(int(line[i])) {
-		i--
-	}
-	if !is_alpha_underscore(int(line[i])) {
-		i++
-	}
-	mut word := line[i..end + 1]
-	word = word.trim_space()
-	// Dont autocomplete if  fewer than 3 chars
-	if word.len < 3 {
-		return
-	}
-	for map_word in ved.words {
-		// If any word starts with our subword, add the rest
-		if map_word.starts_with(word) {
-			ved.view.insert_text(map_word[word.len..])
-			ved.just_switched = true
-			return
-		}
 	}
 }
 
@@ -1004,7 +961,8 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				println('FONT DECREASE')
 				ved.increase_font(-1)
 			} else if super {
-				ved.get_git_diff_full()
+				// ved.get_git_diff_full()
+				return
 			}
 		}
 		.equal {
@@ -1012,7 +970,8 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.increase_font(1)
 				println('FONT INCREASE')
 			} else {
-				ved.open_blog()
+				// ved.open_blog()
+				return
 			}
 		}
 		.apostrophe {
@@ -1166,7 +1125,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.just_switched = true
 				return
 			} else {
-				view.p()
+				ved.view.p()
 			}
 		}
 		.r {
@@ -1369,34 +1328,19 @@ fn (ved &Ved) word_under_cursor() string {
 	return word
 }
 
-// used only when pressing dot in insert mode and showing the autocomplete window
-fn (ved &Ved) word_under_cursor_no_right() string {
-	line := ved.view.line()
-	mut start := ved.view.x - 1
-	// println('\n\n1line="${line}" linelen=${line.len} start=${start} s="${line[start..]}"')
-	// println("C='${line[start]}'")
-	for start > 0 && is_alpha_underscore(int(line[start])) {
-		// println('minus')
-		start--
-	}
-	// println('new start=${start}')
-	mut word := line[start + 1..line.len]
-	word = word.trim_space()
-	return word
-}
-
 fn (mut ved Ved) star() {
 	ved.search_query = ved.word_under_cursor()
 	ved.search(.forward)
 }
 
+// TODO: see if this works right or what idk
 fn (mut ved Ved) char_insert(s string) {
-	if int(s[0]) < 32 {
-		return
-	}
+	// if int(s[0]) < 32 {
+	//	return
+	//}
+
 	ved.view.insert_text(s)
 	ved.prev_insert += s
-	// println(ved.prev_insert)
 }
 
 fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
@@ -1413,7 +1357,9 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 			}
 		}
 		.k {
-			view.vend--
+			if view.vend > 0 {
+				view.vend--
+			}
 		}
 		.y {
 			view.y_visual()
@@ -1436,7 +1382,7 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 		}
 		.comma {
 			if shift {
-				// >
+				// <
 				ved.view.shift_left()
 			}
 		}
@@ -1951,20 +1897,15 @@ fn (mut ved Ved) git_pull() {
 	ved.gg.refresh_ui()
 }
 
-const text_scale = 1.2
+const text_scale = 1.3
 
 fn (mut ved Ved) increase_font(delta int) {
-	// ved.cfg.text_size = int(f64(ved.cfg.text_size) * text_scale)
-	// ved.cfg.char_width = int(f64(ved.cfg.char_width) * text_scale)
-	// ved.cfg.line_height = int(f64(ved.cfg.line_height) * text_scale)
 	ved.cfg.text_size += delta * 2
-	if ved.cfg.text_size > 24 {
+	if ved.cfg.text_size > 76 {
 		return
 	}
 	ved.cfg.char_width += delta
-	// ved.cfg.char_width = ved.cfg.text_size - 10
 	ved.cfg.line_height = ved.cfg.text_size + 2
-	// x := ved.cfg.txt_cfg
 	ved.cfg.txt_cfg = gx.TextCfg{
 		...ved.cfg.txt_cfg
 		size: ved.cfg.text_size
@@ -1985,11 +1926,6 @@ fn (mut ved Ved) increase_font(delta int) {
 		...ved.cfg.string_cfg
 		size: ved.cfg.text_size
 	}
-	if ved.cfg.text_size > 20 && ved.nr_splits > 2 {
-		ved.nr_splits = 2
-	}
-	// println('NEW  CONFIG')
-	// println(ved.cfg)
 }
 
 fn filter_ascii_colors(s string) string {
@@ -1997,18 +1933,20 @@ fn filter_ascii_colors(s string) string {
 }
 
 fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
-	mut nr_splits := 3
-	if '-two_splits' in args {
-		nr_splits = 2
+	mut nr_splits := 1
+
+	if '-split' in args {
+		nr_splits = args.last().int()
 	}
-	if is_window || '-laptop' in args {
-		nr_splits = 1
+
+	if nr_splits > ved.win_width {
+		nr_splits = ved.win_width
 	}
-	max_split_width := ved.cfg.char_width * 110
-	println('MAX=${max_split_width}')
+
 	if false {
 		exit(1)
 	}
+
 	return nr_splits
 }
 
