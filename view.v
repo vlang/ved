@@ -195,6 +195,10 @@ fn (mut view View) save_file() {
 }
 
 fn (mut view View) format_file() {
+	view.ved.load_config2()
+	if view.ved.cfg.disable_fmt {
+		return
+	}
 	path := view.path
 	// Run formatters
 	fmt_cmd := view.ved.syntaxes[view.ved.current_syntax_idx].fmt_cmd.replace('<PATH>',
@@ -384,19 +388,15 @@ fn (mut view View) shift_b() {
 }
 
 fn (mut view View) dd() {
-	if view.lines.len == 0 {
-		return
+	if view.lines.len != 0 {
+		mut ved := view.ved
+		ved.prev_key = gg.KeyCode.invalid
+		ved.prev_cmd = 'dd'
+		ved.ylines = []
+		ved.ylines << view.line()
+		view.lines.delete(view.y)
+		view.changed = true
 	}
-	mut ved := view.ved
-	ved.prev_key = gg.KeyCode.invalid
-	ved.prev_cmd = 'dd'
-	ved.ylines = []
-	ved.ylines << view.line()
-	view.lines.delete(view.y)
-	if view.y == view.lines.len {
-		view.k()
-	}
-	view.changed = true
 }
 
 fn (mut view View) shift_right() {
@@ -472,6 +472,14 @@ fn (mut view View) insert_text(s string) {
 	}
 	view.x += s.runes().len
 	view.changed = true
+	// Show autocomplete window on `.`
+	if s == '.' {
+		println('DOOOT, SHOW WINDOW')
+		view.ved.mode = .autocomplete
+		view.ved.refresh = true
+		view.ved.gg.refresh_ui()
+		go view.ved.get_line_info()
+	}
 }
 
 fn (mut view View) backspace() {
@@ -592,8 +600,7 @@ fn (mut view View) join() {
 
 fn (mut v View) y_visual() {
 	mut ylines := []string{}
-	vtop, vbot := if v.vstart < v.vend { v.vstart, v.vend } else { v.vend, v.vstart }
-	for i := vtop; i <= vbot; i++ {
+	for i := v.vstart; i <= v.vend; i++ {
 		ylines << v.lines[i]
 	}
 	mut ved := v.ved
@@ -605,17 +612,10 @@ fn (mut v View) y_visual() {
 }
 
 fn (mut view View) d_visual() {
-	vtop := if view.vstart < view.vend { view.vstart } else { view.vend }
 	view.y_visual()
 	for i := 0; i < view.ved.ylines.len; i++ {
-		view.lines.delete(vtop)
+		view.lines.delete(view.y)
 	}
-	if view.y >= view.lines.len {
-		view.y = view.lines.len
-	} else {
-		view.y += 1
-	}
-	view.k()
 }
 
 fn (mut view View) cw() {

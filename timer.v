@@ -6,7 +6,7 @@ import gx
 import os
 import strings
 
-const time_cfg = gx.TextCfg {
+const time_cfg = gx.TextCfg{
 	color: gx.gray
 	size: 14
 }

@@ -6,6 +6,7 @@ module main
 import os
 import gx
 import toml
+import json
 
 // The different kinds of cursors
 enum Cursor {
@@ -56,7 +57,7 @@ mut:
 	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
 	disable_mouse   bool
-	show_seconds_in_time bool
+	disable_fmt     bool
 }
 
 fn (mut config Config) set_settings(path string) {
@@ -74,7 +75,6 @@ fn (mut config Config) reload_config() {
 	config.set_tab()
 	config.set_backspace_behaviour()
 	config.set_disable_mouse()
-	config.set_show_seconds_in_time()
 	config.set_vcolor()
 	config.set_split()
 	config.set_bgcolor()
@@ -143,10 +143,7 @@ fn (mut config Config) set_backspace_behaviour() {
 
 fn (mut config Config) set_disable_mouse() {
 	config.disable_mouse = config.settings.value('editor.disable_mouse').bool()
-}
-
-fn (mut config Config) set_show_seconds_in_time() {
-	config.show_seconds_in_time = config.settings.value('editor.show_seconds_in_time').bool()
+	config.disable_mouse = true // TODO remove once mouse bugs are fixed
 }
 
 // Convert a toml key color (in hex) to a gx.Color type
@@ -317,5 +314,15 @@ fn (mut config Config) set_red() {
 	config.red_cfg = gx.TextCfg{
 		size: config.text_size
 		color: config.red_color
+	}
+}
+
+fn (mut ved Ved) load_config2() {
+	if os.exists(config_path2) {
+		if conf2 := json.decode(Config, os.read_file(config_path2) or { return }) {
+			ved.cfg.disable_fmt = conf2.disable_fmt
+		} else {
+			println(err)
+		}
 	}
 }
