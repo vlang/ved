@@ -100,7 +100,7 @@ fn (mut t Timer) load_tasks() {
 	t.tasks = tasks
 }
 
-fn new_timer(gg_ &gg.Context) Timer {
+fn new_timer(mut gg_ gg.Context) Timer {
 	mut timer := Timer{
 		gg: gg_
 		date: time.now()
