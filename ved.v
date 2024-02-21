@@ -183,7 +183,7 @@ fn main() {
 		ui_mode: true
 	)
 	println('full screen=${!is_window}')
-	ved.timer = new_timer(ved.gg)
+	ved.timer = new_timer(mut ved.gg)
 	ved.load_all_tasks()
 	// TODO linux and windows
 	// C.AXUIElementCreateApplication(234)
