@@ -847,7 +847,7 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 			ved.view.backspace()
 		}
 		.enter {
-			if ved.mode == .autocomplete {
+			if false && ved.mode == .autocomplete {
 				// Pressed enter in autocomplete mode, insert text from selected suggested field
 				ved.insert_suggested_field()
 			} else {

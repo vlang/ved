@@ -209,6 +209,8 @@ fn (mut view View) format_file() {
 	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
 		os.system('sassc "${path}" > "${css}"')
+	} else if path.ends_with('.js') {
+		os.system('prettier --use-tabs -w "${path}"')
 	} else if fmt_cmd != '' {
 		os.system(fmt_cmd)
 	}
