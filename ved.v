@@ -1863,7 +1863,7 @@ fn (mut ved Ved) key_u() {
 fn (mut ved Ved) go_to_def() {
 	word := ved.word_under_cursor()
 	// println('GD "$word"')
-	queries := [') ${word}', 'fn ${word}']
+	queries := [') ${word}(', 'fn ${word}(']
 	mut view := ved.view
 	for query in queries {
 		for i, line in view.lines {
