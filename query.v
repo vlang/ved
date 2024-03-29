@@ -502,7 +502,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 			// Found in current screen, dont move it
 			if i >= view.from && i <= view.from + ved.page_height {
 				ved.prev_y = view.y
-				view.y = i
+				view.set_y(i)
 			} else {
 				ved.move_to_line(i)
 			}

@@ -77,7 +77,7 @@ fn (mut ved Ved) build_app(extra string) {
 	// Move to the first line of the output in the last view, so that it's
 	// always visible
 	last_view.from = 0
-	last_view.y = 0
+	last_view.set_y(0)
 	/*
 	// Reopen files (they were formatted)
 	for _view in ved.views {

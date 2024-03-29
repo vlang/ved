@@ -140,7 +140,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 	// Go to old y for this file
 	y := view.ved.file_y_pos[view.path]
 	if y > 0 {
-		view.y = y
+		view.set_y(y)
 		if path != view.path {
 			view.zz()
 		}
@@ -252,15 +252,20 @@ fn (mut view View) set_line(newline string) {
 	view.changed = true
 }
 
+fn (mut view View) set_y(new_y int) {
+	view.y = new_y
+	view.ved.update_cur_fn_name()
+}
+
 fn (mut view View) j() {
 	if view.lines.len == 0 {
 		return
 	}
 	line0 := view.line()
-	view.y++
+	view.set_y(view.y + 1)
 	// Reached end
 	if view.y >= view.lines.len {
-		view.y = view.lines.len - 1
+		view.set_y(view.lines.len - 1)
 		return
 	}
 	// Scroll
@@ -271,8 +276,8 @@ fn (mut view View) j() {
 	_, nr_tabs1 := nr_spaces_and_tabs_in_line(line0)
 	line := view.line()
 	_, nr_tabs2 := nr_spaces_and_tabs_in_line(line)
-	println('tabs1,2=${nr_tabs1},${nr_tabs2}')
-	println(view.ved.cfg.tab_size)
+	// println('tabs1,2=${nr_tabs1},${nr_tabs2}')
+	// println(view.ved.cfg.tab_size)
 	if nr_tabs2 > nr_tabs1 {
 		view.x -= (nr_tabs2 - nr_tabs1) * view.ved.cfg.tab_size - 1
 		if view.x < 0 {
@@ -294,7 +299,7 @@ fn (mut view View) k() {
 		return
 	}
 	line0 := view.line()
-	view.y--
+	view.set_y(view.y - 1)
 	// Scroll
 	if view.y < view.from && view.y >= 0 {
 		view.from--
@@ -303,8 +308,8 @@ fn (mut view View) k() {
 	_, nr_tabs1 := nr_spaces_and_tabs_in_line(line0)
 	line := view.line()
 	_, nr_tabs2 := nr_spaces_and_tabs_in_line(line)
-	println('tabs1,2=${nr_tabs1},${nr_tabs2}')
-	println(view.ved.cfg.tab_size)
+	// println('tabs1,2=${nr_tabs1},${nr_tabs2}')
+	// println(view.ved.cfg.tab_size)
 	if nr_tabs2 < nr_tabs1 {
 		view.x -= (nr_tabs1 - nr_tabs2) * view.ved.cfg.tab_size - 1
 		if view.x < 0 {
@@ -322,11 +327,11 @@ fn (mut view View) k() {
 }
 
 fn (mut view View) shift_h() {
-	view.y = view.from
+	view.set_y(view.from)
 }
 
 fn (mut view View) move_to_page_bot() {
-	view.y = view.from + view.page_height - 1
+	view.set_y(view.from + view.page_height - 1)
 }
 
 fn (mut view View) l() {
@@ -348,7 +353,7 @@ fn (mut view View) h() {
 }
 
 fn (mut view View) shift_g() {
-	view.y = view.lines.len - 1
+	view.set_y(view.lines.len - 1)
 	view.from = view.y - view.page_height + 1
 	if view.from < 0 {
 		view.from = 0
@@ -370,7 +375,7 @@ fn (mut view View) shift_i() {
 
 fn (mut view View) gg() {
 	view.from = 0
-	view.y = 0
+	view.set_y(0)
 }
 
 fn (mut view View) shift_f() {
@@ -378,7 +383,7 @@ fn (mut view View) shift_f() {
 	if view.from >= view.lines.len {
 		view.from = view.lines.len - 1
 	}
-	view.y = view.from
+	view.set_y(view.from)
 }
 
 fn (mut view View) shift_b() {
@@ -386,7 +391,7 @@ fn (mut view View) shift_b() {
 	if view.from < 0 {
 		view.from = 0
 	}
-	view.y = view.from
+	view.set_y(view.from)
 }
 
 fn (mut view View) dd() {
@@ -791,14 +796,14 @@ fn (mut view View) tt() {
 		return
 	}
 	mut ved := view.ved
-	ved.prev_key = gg.KeyCode.invalid
+	ved.prev_key = .invalid
 	view.open_file(view.prev_path, 0)
 }
 
 fn (mut view View) move_to_line(line int) {
 	view.prev_y = view.y
 	view.from = line
-	view.y = line
+	view.set_y(line)
 	view.zz()
 }
 

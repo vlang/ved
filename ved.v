@@ -80,6 +80,7 @@ mut:
 	autocomplete_cache   map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
 	debug_info           string
 	debugger             Debugger
+	cur_fn_name          string // Always displayed on the top bar
 	// debugger_output      DebuggerOutput
 }
 
@@ -172,7 +173,6 @@ fn main() {
 		window_title: 'Ved'
 		create_window: true
 		user_data: ved
-		use_ortho: true
 		scale: 2
 		bg_color: ved.cfg.bgcolor
 		frame_fn: frame
@@ -309,14 +309,14 @@ fn on_event(e &gg.Event, mut ved Ved) {
 		clicked_y := int((e.mouse_y / ved.cfg.line_height - 1.5) / 2) + ved.view.from
 		if clicked_y >= view.lines.len {
 			if view.lines.len == 0 {
-				view.y = 0
+				view.set_y(0)
 			} else {
-				view.y = view.lines.len - 1
+				view.set_y(view.lines.len - 1)
 			}
 		} else if clicked_y < 0 {
-			view.y = 1
+			view.set_y(1)
 		} else {
-			view.y = clicked_y
+			view.set_y(clicked_y)
 		}
 
 		// Wow, that's a lot of math that is probably pretty hard to parse.
@@ -491,6 +491,9 @@ fn (mut ved Ved) draw() {
 	if ved.timer.pom_is_started {
 		ved.gg.draw_text(split_width - 50, 1, '${ved.pomodoro_minutes()}m', ved.cfg.file_name_cfg)
 	}
+
+	// Cur fn name
+	ved.gg.draw_text(split_width - 600, 1, ved.cur_fn_name, ved.cfg.minus_cfg)
 	// Draw "i" in insert mode
 	if ved.mode == .insert {
 		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
@@ -858,7 +861,13 @@ fn (mut ved Ved) key_insert(key gg.KeyCode, mod gg.Modifier) {
 			ved.mode = .normal
 		}
 		.tab {
-			ved.view.insert_text('\t')
+			line := ved.view.line()
+			if line.ends_with('p ') {
+				ved.view.insert_text("rintln('')")
+				ved.view.x -= 2
+			} else {
+				ved.view.insert_text('\t')
+			}
 		}
 		.left {
 			if ved.view.x > 0 {
@@ -1570,14 +1579,14 @@ fn (mut ved Ved) add_workspace(path string) {
 }
 
 fn short_space(workspace string) string {
-	pos := workspace.index_last('/') or { return workspace }
+	pos := workspace.last_index('/') or { return workspace }
 	return workspace[pos + 1..].limit(10)
 }
 
 fn (mut ved Ved) move_to_line(n int) {
 	ved.prev_y = ved.view.y
 	ved.view.from = n
-	ved.view.y = n
+	ved.view.set_y(n)
 }
 
 fn (ved &Ved) save_session() {
@@ -2016,4 +2025,28 @@ fn (ved &Ved) get_splits_from_to() (int, int) {
 	from := ved.workspace_idx * ved.splits_per_workspace
 	to := from + ved.splits_per_workspace
 	return from, to
+}
+
+fn (mut ved Ved) update_cur_fn_name() {
+	if !(ved.view.path.ends_with('.v') || ved.view.path.ends_with('.go')) {
+		return
+	}
+	tt := time.now()
+	// TODO optimize, no allocations
+	for i := ved.view.y - 1; i >= 0; i-- {
+		line := ved.view.lines[i]
+		if line == '}' {
+			ved.cur_fn_name = ''
+			break
+		}
+		if line.starts_with('fn ') || line.starts_with('pub fn ') {
+			ved.cur_fn_name = line.find_between('fn ', '{').trim_space()
+			// Get just fn name, before "(" with params
+			pos := ved.cur_fn_name.last_index('(') or { 0 }
+			if pos > 0 {
+				ved.cur_fn_name = ved.cur_fn_name[..pos]
+			}
+			break
+		}
+	}
 }
