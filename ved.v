@@ -2031,7 +2031,6 @@ fn (mut ved Ved) update_cur_fn_name() {
 	if !(ved.view.path.ends_with('.v') || ved.view.path.ends_with('.go')) {
 		return
 	}
-	tt := time.now()
 	// TODO optimize, no allocations
 	for i := ved.view.y - 1; i >= 0; i-- {
 		line := ved.view.lines[i]
