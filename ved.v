@@ -1852,7 +1852,7 @@ fn (mut ved Ved) loop() {
 		ved.gg.refresh_ui()
 		// ved.timer.tick(ved)
 		time.sleep(5 * time.second)
-		if ved.timer.pom_is_started && ved.now.unix - ved.timer.pom_start > 25 * 60 {
+		if ved.timer.pom_is_started && ved.now.unix() - ved.timer.pom_start > 25 * 60 {
 			ved.timer.pom_is_started = false
 			lock_screen()
 		}
@@ -1947,7 +1947,7 @@ fn (ved &Ved) handle_segfault() {
 }
 
 fn (ved &Ved) task_minutes() int {
-	mut seconds := ved.now.unix - ved.task_start_unix
+	mut seconds := ved.now.unix() - ved.task_start_unix
 	if ved.task_start_unix <= 0 {
 		seconds = 0
 	}
