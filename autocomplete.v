@@ -29,7 +29,7 @@ struct AutocompleteField {
 fn (ved &Ved) draw_autocomplete_window() {
 	max_col_len := 45
 	cur_word := ved.word_under_cursor_no_right()
-	//println('1DRAW WINDOW cur word="${cur_word}"')
+	// println('1DRAW WINDOW cur word="${cur_word}"')
 	mut width := int(f64(ved.cfg.char_width * max_col_len) * 1.5)
 	mut height := nr_elems_to_show_in_autocomplete * ved.cfg.line_height
 	// Calculate position of the autocomplete box (next to the cursor)
@@ -39,7 +39,7 @@ fn (ved &Ved) draw_autocomplete_window() {
 	if cur_word != '' && ved.autocomplete_info.vars.len == 0 {
 		// Do not draw empty autocomplete window if there are no results and the user
 		// started typing after `.`
-		//println("NO RES, RET word='${cur_word}'")
+		// println("NO RES, RET word='${cur_word}'")
 		return
 	}
 
