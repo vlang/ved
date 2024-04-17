@@ -173,7 +173,7 @@ fn (mut timer Timer) key_down(key gg.KeyCode, super bool) {
 		}
 		.f {
 			// start 25 min pomodoro timer
-			timer.pom_start = time.now().unix
+			timer.pom_start = time.now().unix()
 			timer.pom_is_started = true
 		}
 		else {}
@@ -187,7 +187,7 @@ fn lock_screen() {
 }
 
 fn (ved &Ved) pomodoro_minutes() int {
-	return int((ved.now.unix - ved.timer.pom_start) / 60)
+	return int((ved.now.unix() - ved.timer.pom_start) / 60)
 }
 
 const max_task_len = 40
