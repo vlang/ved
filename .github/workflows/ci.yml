@@ -19,7 +19,7 @@ jobs:
         with:
           path: ved
       - name: Build V
-        run: make && sudo ./v symlink -githubci
+        run: make && sudo ./v symlink
       - name: v vet
         run: v vet ved/
       - name: v fmt -verify
@@ -33,7 +33,7 @@ jobs:
         with:
           repository: vlang/v
       - name: Build V
-        run: make && sudo ./v symlink -githubci
+        run: make && sudo ./v symlink
       - name: Checkout ved
         uses: actions/checkout@v4
         with:
@@ -61,7 +61,7 @@ jobs:
         with:
           path: ved
       - name: Build V
-        run: make && sudo ./v symlink -githubci
+        run: make && sudo ./v symlink
       - name: Build ved
         run: |
           cd ved
