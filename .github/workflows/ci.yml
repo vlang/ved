@@ -4,84 +4,86 @@ on:
   push:
   pull_request:
   schedule:
-    - cron:  '31 1,12 * * *'
+    - cron: '31 1,12 * * *'
 
 jobs:
   code-formatting:
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout V
-      uses: actions/checkout@v2
-      with:
-        repository: vlang/v
-    - name: Checkout ved
-      uses: actions/checkout@v2
-      with:
-        path: ved
-    - name: Build V
-      run: make
-    - name: v vet
-      run: ./v vet ved/
-    - name: v fmt -verify
-      run: ./v fmt -verify ved/
+      - name: Checkout V
+        uses: actions/checkout@v4
+        with:
+          repository: vlang/v
+      - name: Checkout ved
+        uses: actions/checkout@v4
+        with:
+          path: ved
+      - name: Build V
+        run: make && sudo ./v symlink
+      - name: v vet
+        run: v vet ved/
+      - name: v fmt -verify
+        run: v fmt -verify ved/
 
-  ubuntu:
+  check-ubuntu:
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout V
-      uses: actions/checkout@v2
-      with:
-        repository: vlang/v
-    - name: Checkout ved
-      uses: actions/checkout@v2
-      with:
-        path: ved
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install --quiet -y libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
-    - name: Build V
-      run: make
-    - name: Build ved
-      run: |
-        cd ved
-        ../v -prod .
-        ../v -autofree .
+      - name: Checkout V
+        uses: actions/checkout@v4
+        with:
+          repository: vlang/v
+      - name: Build V
+        run: make && sudo ./v symlink
+      - name: Checkout ved
+        uses: actions/checkout@v4
+        with:
+          path: ved
+      - name: Install dependencies
+        run: |
+          v retry -- sudo apt-get update
+          v retry -- sudo apt-get install --quiet -y \
+                          libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
+      - name: Build ved
+        run: |
+          cd ved
+          v -prod .
+          v -autofree .
 
-  macos:
+  check-macos:
     runs-on: macos-latest
     steps:
-    - name: Checkout V
-      uses: actions/checkout@v2
-      with:
-        repository: vlang/v
-    - name: Checkout ved
-      uses: actions/checkout@v2
-      with:
-        path: ved
-    - name: Build V
-      run: make
-    - name: Build ved
-      run: |
-        cd ved
-        ../v .
-        #v -prod .
+      - name: Checkout V
+        uses: actions/checkout@v4
+        with:
+          repository: vlang/v
+      - name: Checkout ved
+        uses: actions/checkout@v4
+        with:
+          path: ved
+      - name: Build V
+        run: make && sudo ./v symlink
+      - name: Build ved
+        run: |
+          cd ved
+          v .
+          v -prod .
 
-  windows:
+  check-windows:
     runs-on: windows-2019
     steps:
-    - name: Checkout V
-      uses: actions/checkout@v2
-      with:
-        repository: vlang/v
-    - name: Checkout ved
-      uses: actions/checkout@v2
-      with:
-        path: ved
-    - name: Build V
-      run: |
-        .\make.bat -gcc
-    - name: Build ved
-      run: |
-        cd ved
-        ..\v.exe -prod .
+      - name: Checkout V
+        uses: actions/checkout@v4
+        with:
+          repository: vlang/v
+      - name: Checkout ved
+        uses: actions/checkout@v4
+        with:
+          path: ved
+      - name: Build V
+        run: |
+          .\make.bat -gcc
+          .\v.exe symlink
+      - name: Build ved
+        run: |
+          cd ved
+          v -prod .
