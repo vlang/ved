@@ -1341,6 +1341,11 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			ved.view.j()
 			// ved.refresh = false
 		}
+		._5 {
+			if shift {
+				ved.pct()
+			}
+		}
 		else {}
 	}
 	if key != .r {
@@ -1373,6 +1378,9 @@ fn (ved &Ved) word_under_cursor() string {
 	for end < line.len && is_alpha_underscore(int(line[end])) {
 		end++
 	}
+	if start + 1 >= line.len {
+		return ''
+	}
 	mut word := line[start + 1..end]
 	word = word.trim_space()
 	return word
@@ -1397,6 +1405,87 @@ fn (ved &Ved) word_under_cursor_no_right() string {
 fn (mut ved Ved) star() {
 	ved.search_query = ved.word_under_cursor()
 	ved.search(.forward)
+}
+
+// switch between { and } etc
+fn (mut ved Ved) pct() {
+	mut line := ved.view.line()
+	if ved.view.x >= line.len {
+		return
+	}
+	c := line[ved.view.x]
+	if c !in [`{`, `}`, `[`, `]`, `(`, `)`] {
+		return
+	}
+	opposite_c := match c {
+		`{` { `}` }
+		`}` { `{` }
+		`[` { `]` }
+		`]` { `[` }
+		`(` { `)` }
+		`)` { `(` }
+		else { ` ` }
+	}
+	going_up := c in [`}`, `]`, `)`]
+	mut x := 0
+	mut line_nr := ved.view.y
+	mut stack := 0
+	// for line_nr >= 1 {
+	for {
+		if going_up {
+			line_nr--
+			if line_nr < 0 {
+				break
+			}
+		} else {
+			line_nr++
+			if line_nr >= ved.view.lines.len {
+				break
+			}
+		}
+
+		line = ved.view.lines[line_nr]
+		// for x >= 1 {
+		if going_up {
+			x = line.len
+		} else {
+			x = -1
+		}
+		// TODO handle {} in strings and comments
+		for {
+			if going_up {
+				x--
+				if x < 0 {
+					break
+				}
+			} else {
+				x++
+				if x >= line.len {
+					break
+				}
+			}
+			if line[x] == c {
+				stack++
+			} else if line[x] == opposite_c {
+				// println('GOT $oppsoite_c stack=${stack} line_nr=${line_nr} x=${x}')
+				if stack == 0 {
+					// If the char we need to move to is on the same page, just update view.y
+					// otherwise move to that line and zz (TODO maybe move this to a separate method)
+					if line_nr >= ved.view.from && line_nr <= ved.view.from + ved.page_height {
+						ved.view.y = line_nr
+					} else {
+						ved.move_to_line(line_nr)
+						ved.view.zz()
+					}
+					// Set the col as well
+					ved.view.x = x
+					return
+				} else {
+					stack--
+				}
+			}
+		}
+	}
 }
 
 fn (mut ved Ved) char_insert(s string) {
