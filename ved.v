@@ -1552,6 +1552,14 @@ fn (mut ved Ved) open_workspace(idx int) {
 	// Update cur split index. If we are in space 0 split 1 and go to
 	// space 1, split is updated to 4 (1 + 3 * (1-0))
 	ved.cur_split += diff * ved.splits_per_workspace
+
+	for i, view in ved.views {
+		// Maybe the file is not loaded correctly (can happen on ved's launch)
+		// Try to re-open it
+		if view.lines.len < 2 && view.path != '' {
+			ved.views[i].open_file(view.path, ved.view.y)
+		}
+	}
 	ved.update_view()
 	// ved.get_git_diff()
 }
@@ -1839,7 +1847,10 @@ fn (mut ved Ved) go_to_error(line string) {
 		if git_file.contains(filename) {
 			ved.view.open_file(git_file, ved.view.error_y) // ved.workspace + '/' + line)
 			ved.view.error_y = line_nr - 1
-			// ved.view.move_to_line(ved.view.error_y)
+			ved.view.move_to_line(ved.view.error_y)
+			if col > 0 {
+				ved.view.x = col - 1
+			}
 			return
 		}
 	}
@@ -2030,6 +2041,14 @@ fn (ved &Ved) get_splits_from_to() (int, int) {
 fn (mut ved Ved) update_cur_fn_name() {
 	if !(ved.view.path.ends_with('.v') || ved.view.path.ends_with('.go')) {
 		return
+	}
+	if ved.view.lines.len < 2 {
+		// Maybe the file is not loaded correctly (can happen on ved's launch)
+		// Try to re-open it
+		ved.view.open_file(ved.view.path, ved.view.y)
+		if ved.view.lines.len < 2 {
+			return
+		}
 	}
 	// TODO optimize, no allocations
 	for i := ved.view.y - 1; i >= 0; i-- {
