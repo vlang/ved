@@ -295,6 +295,9 @@ fn (mut view View) j() {
 }
 
 fn (mut view View) k() {
+	if view.y >= view.lines.len {
+		view.y = view.lines.len - 1
+	}
 	if view.y <= 0 {
 		return
 	}

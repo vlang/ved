@@ -9,6 +9,7 @@ import os
 import time
 import uiold
 import clipboard
+import math
 
 const exe_dir = os.dir(os.executable())
 const home_dir = os.home_dir()
@@ -528,7 +529,7 @@ fn (mut ved Ved) draw() {
 	} else if ved.mode == .autocomplete {
 		ved.draw_autocomplete_window()
 	}
-	// Big error line at the bottom
+	// Big red error line at the bottom
 	if ved.error_line != '' {
 		ved.gg.draw_rect_filled(0, ved.win_height - ved.cfg.line_height, ved.win_width,
 			ved.cfg.line_height, ved.cfg.errorbgcolor)
@@ -1886,7 +1887,7 @@ fn (mut ved Ved) get_build_file_location() ?string {
 fn (mut ved Ved) go_to_error(line string) {
 	ved.error_line = line.after('error: ')
 	// panic: volt/twitch.v:88
-	println('go to ERROR ${line}')
+	println('go to ERROR line="${line}"')
 	// if !line.contains('panic:') {
 	// return
 	// }
@@ -1910,13 +1911,16 @@ fn (mut ved Ved) go_to_error(line string) {
 	line_nr := vals[1].int()
 	col := vals[2].int()
 	println('path=${path} filename=${filename} linenr=${line_nr} col=${col}')
-	for i := 0; i < ved.views.len; i++ {
+	// Search for the file with the eror in all views inside current workspace
+	start_i := ved.workspace_idx * ved.splits_per_workspace
+	end_i := (ved.workspace_idx + 1) * ved.splits_per_workspace
+	for i := start_i; i < end_i && i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
 		if !view.path.contains(os.path_separator + filename) && view.path != filename {
 			continue
 		}
 		view.error_y = line_nr - 1
-		println('error_y=${view.error_y}')
+		println('i=${i} view.path=${view.path} error_y=${view.error_y} ')
 		view.move_to_line(view.error_y)
 		if col > 0 {
 			view.x = col - 1
@@ -1925,6 +1929,7 @@ fn (mut ved Ved) go_to_error(line string) {
 		// Done after the first view with the error
 		return
 	}
+	println('file with error not found (not open), running git ls-files')
 	// File with the error is not open right now, do it
 	s := os.execute('git -C ${ved.workspace} ls-files')
 	if s.exit_code == -1 {
@@ -2134,13 +2139,10 @@ fn (mut ved Ved) update_cur_fn_name() {
 	if ved.view.lines.len < 2 {
 		// Maybe the file is not loaded correctly (can happen on ved's launch)
 		// Try to re-open it
-		ved.view.open_file(ved.view.path, ved.view.y)
-		if ved.view.lines.len < 2 {
-			return
-		}
+		return
 	}
 	// TODO optimize, no allocations
-	for i := ved.view.y - 1; i >= 0; i-- {
+	for i := math.min(ved.view.y - 1, ved.view.lines.len - 1); i >= 0; i-- {
 		line := ved.view.lines[i]
 		if line == '}' {
 			ved.cur_fn_name = ''
