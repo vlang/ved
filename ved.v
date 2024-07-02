@@ -2111,8 +2111,9 @@ fn filter_ascii_colors(s string) string {
 }
 
 fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
+	println('screen_width=${width}')
 	mut nr_splits := 3
-	if '-two_splits' in args {
+	if '-two_splits' in args || width < 1800 {
 		nr_splits = 2
 	}
 	if is_window || '-laptop' in args {

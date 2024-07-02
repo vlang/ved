@@ -45,6 +45,10 @@
         "unsafe",
         "volatile",
         "__offsetof"
+       "none"
+      "nil"
+     "true"
+    "false"
     ],
-    "literals": ["none", "nil", "true", "false"]
+    "literals": [] //"none", "nil", "true", "false"]
 }

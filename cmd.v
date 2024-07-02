@@ -62,9 +62,10 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 	for line in lines {
 		is_warning := line.contains('warning:')
+		is_notice := line.contains('notice:')
 		// Go to the next warning only if there are no errors.
 		// This makes Ved go to errors before warnings.
-		if !is_warning || (is_warning && no_errors) {
+		if (!is_notice && !is_warning) || (is_warning && no_errors) || (is_notice && no_errors) {
 			ved.go_to_error(line)
 			break
 		}

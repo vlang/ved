@@ -224,7 +224,8 @@ fn (mut config Config) set_lit() {
 
 // base 04
 fn (mut config Config) set_title() {
-	config.title_color = config.get_toml_color('04') or { gx.rgb(40, 40, 40) }
+	// config.title_color = config.get_toml_color('04') or { gx.rgb(40, 40, 40) }
+	config.title_color = config.get_toml_color('04') or { gx.rgb(0, 0, 0) }
 }
 
 // base 05
