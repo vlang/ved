@@ -1,6 +1,6 @@
 //int focus_app(void* next, void* event, void* data) {
 int focus_app(struct OpaqueEventHandlerCallRef* next, struct OpaqueEventRef * event, void* data) {
-	NSLog(@"2The hot key was pressed.");
+	//NSLog(@"2The hot key was pressed.");
 	NSApplication *myApp = [NSApplication sharedApplication];
 	[myApp activateIgnoringOtherApps:YES];
 	return 0;
@@ -11,7 +11,7 @@ int focus_app(struct OpaqueEventHandlerCallRef* next, struct OpaqueEventRef * ev
 //struct OpaqueEventRef *inEvent, void *inUserData);
 
 void reg_key_ved2() {
-	puts("REGISTERING VED KEY2");
+	puts("Registering Ved global key");
 	EventHotKeyRef gMyHotKeyRef;
 	EventHotKeyID gMyHotKeyID;
 	EventTypeSpec eventType;

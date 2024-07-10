@@ -195,5 +195,6 @@ y d p J         yank, delete, paste, join lines
 gg G            go to the beginning/end of the file
 x r             delete/replace character under cursor
 C-n             autocomplete
++y              yank and copy to system clipboard
 ```
 

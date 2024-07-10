@@ -1018,7 +1018,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 		}
 		.equal {
-			if shift_and_super {
+			if shift {
+				ved.prev_key = .equal
+			} else if shift_and_super {
 				ved.increase_font(1)
 				println('FONT INCREASE')
 			} else {

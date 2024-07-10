@@ -615,8 +615,10 @@ fn (mut v View) y_visual() {
 	}
 	mut ved := v.ved
 	ved.ylines = ylines
-	// Copy YY to clipboard TODO
-	// mainWindow.SetClipboardString(strings.Join(ylines, "\n"))
+	// Copy YY to clipboard if +(=) was pressed before
+	if ved.prev_key == .equal {
+		ved.cb.copy(ylines.join('\n'))
+	}
 	v.vstart = -1
 	v.vend = -1
 }
