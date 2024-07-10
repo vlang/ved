@@ -19,7 +19,7 @@ struct Syntax {
 fn (mut ved Ved) load_syntaxes() {
 	println('loading syntax files...')
 	vsyntax := json.decode(Syntax, builtin_v_syntax_file_content) or {
-		panic('the builtin syntax file can not be decoded')
+		panic('the builtin syntax file "$builtin_v_syntax_file_content" can not be decoded $err')
 	}
 	ved.syntaxes << vsyntax
 	files := os.walk_ext(syntax_dir, '.syntax')

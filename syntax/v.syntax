@@ -44,11 +44,12 @@
         "union",
         "unsafe",
         "volatile",
-        "__offsetof"
-       "none"
-      "nil"
-     "true"
+        "__offsetof",
+       "none",
+      "nil",
+     "true",
     "false"
     ],
-    "literals": [] //"none", "nil", "true", "false"]
+    "literals": [] ,
+	"old_literals": ["none", "nil", "true", "false"]
 }
