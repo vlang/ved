@@ -40,8 +40,8 @@ fn (r MyReader) read(mut buf []u8) !int {
 fn main() {
 	reader := MyReader{}
 	user := User{
-		age: 23
-		name: 'Bob'
+		age:       23
+		name:      'Bob'
 		last_name: 'Peterson'
 	}
 	foo(4, user, reader)

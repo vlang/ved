@@ -231,8 +231,8 @@ fn (mut d Debugger) parse_var(line string, s string, is_struct bool) DebuggerVar
 		}
 	}
 	return DebuggerVariable{
-		name: name
-		typ: typ.replace('main__', '').replace('Array_', '[]').replace('_option_', '?').replace('__',
+		name:  name
+		typ:   typ.replace('main__', '').replace('Array_', '[]').replace('_option_', '?').replace('__',
 			'.')
 		value: value.trim_space()
 	}
@@ -284,11 +284,11 @@ fn (mut ved Ved) draw_debugger_variables() {
 		// col_width := 80
 		ved.gg.draw_text(x, y, var.name.limit(max_name_len),
 			color: debugger_name_color
-			size: txt_cfg.size
+			size:  txt_cfg.size
 		)
 		ved.gg.draw_text(x + col_width, y, var.value_fmt(max_value_len),
 			color: gx.white
-			size: txt_cfg.size
+			size:  txt_cfg.size
 		)
 		ved.gg.draw_text(ved.win_width - col_width, y, var.typ, color: gx.white, size: txt_cfg.size)
 	}

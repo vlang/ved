@@ -33,17 +33,17 @@ mut:
 fn (ved &Ved) new_view() View {
 	res := View{
 		padding_left: 0
-		path: ''
-		from: 0
-		y: 0
-		x: 0
-		prev_x: 0
-		page_height: ved.page_height
-		vstart: -1
-		vend: -1
-		ved: ved
-		error_y: -1
-		prev_y: -1
+		path:         ''
+		from:         0
+		y:            0
+		x:            0
+		prev_x:       0
+		page_height:  ved.page_height
+		vstart:       -1
+		vend:         -1
+		ved:          ved
+		error_y:      -1
+		prev_y:       -1
 	}
 	return res
 }

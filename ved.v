@@ -143,13 +143,13 @@ fn main() {
 	}
 	println('size=${size}')
 	mut ved := &Ved{
-		win_width: size.width
+		win_width:  size.width
 		win_height: size.height
 		// nr_splits: nr_splits
 		// splits_per_workspace: nr_splits
-		cur_split: 0
-		mode: .normal
-		cb: clipboard.new()
+		cur_split:  0
+		mode:       .normal
+		cb:         clipboard.new()
 		open_paths: [][]string{len: max_nr_workspaces}
 	}
 	ved.handle_segfault()
@@ -168,20 +168,20 @@ fn main() {
 	ved.load_syntaxes()
 
 	ved.gg = gg.new_context(
-		width: size.width
-		height: size.height // borderless_window: !is_window
-		fullscreen: !is_window
-		window_title: 'Ved'
+		width:         size.width
+		height:        size.height // borderless_window: !is_window
+		fullscreen:    !is_window
+		window_title:  'Ved'
 		create_window: true
-		user_data: ved
-		scale: 2
-		bg_color: ved.cfg.bgcolor
-		frame_fn: frame
-		event_fn: on_event
-		keydown_fn: key_down
-		char_fn: on_char
-		font_path: fpath
-		ui_mode: true
+		user_data:     ved
+		scale:         2
+		bg_color:      ved.cfg.bgcolor
+		frame_fn:      frame
+		event_fn:      on_event
+		keydown_fn:    key_down
+		char_fn:       on_char
+		font_path:     fpath
+		ui_mode:       true
 	)
 	println('full screen=${!is_window}')
 	ved.timer = new_timer(mut ved.gg)
@@ -534,7 +534,7 @@ fn (mut ved Ved) draw() {
 		ved.gg.draw_rect_filled(0, ved.win_height - ved.cfg.line_height, ved.win_width,
 			ved.cfg.line_height, ved.cfg.errorbgcolor)
 		ved.gg.draw_text(3, ved.win_height - ved.cfg.line_height, ved.error_line, gx.TextCfg{
-			size: ved.cfg.text_size
+			size:  ved.cfg.text_size
 			color: gx.white
 			align: gx.align_left
 		})
@@ -643,9 +643,9 @@ fn (ved &Ved) max_chars(view_idx int, nr_tabs int) int {
 
 fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 	chunk := Chunk{
-		typ: typ
+		typ:   typ
 		start: start
-		end: end
+		end:   end
 	}
 	ved.chunks << chunk
 }

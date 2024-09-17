@@ -199,7 +199,7 @@ fn (mut ved Ved) get_line_info() {
 		println('VARNAME=${var_name}')
 		mut var := AutocompleteVar{
 			name: var_name
-			typ: var_type
+			typ:  var_type
 		}
 		for i := 1; i < lines.len; i++ {
 			vals := lines[i].split(':')

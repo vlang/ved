@@ -8,7 +8,7 @@ import strings
 
 const time_cfg = gx.TextCfg{
 	color: gx.gray
-	size: 14
+	size:  14
 }
 
 const color_distracting = gx.rgb(255, 111, 130)
@@ -81,13 +81,13 @@ fn (mut t Timer) load_tasks() {
 		// TODO autofree bug remove clone()
 		name2 := if productive { name.clone() } else { name[1..] }
 		task := Task{
-			start: hour * 60 + min
-			end: hour_end * 60 + min_end
-			name: name2
-			duration: duration
+			start:        hour * 60 + min
+			end:          hour_end * 60 + min_end
+			name:         name2
+			duration:     duration
 			duration_min: duration[..duration.len - 1].int()
-			color: color
-			productive: productive
+			color:        color
+			productive:   productive
 		}
 		// println('task:')
 		// println(task)
@@ -102,7 +102,7 @@ fn (mut t Timer) load_tasks() {
 
 fn new_timer(mut gg_ gg.Context) Timer {
 	mut timer := Timer{
-		gg: gg_
+		gg:   gg_
 		date: time.now()
 	}
 	timer.load_tasks()
@@ -216,17 +216,17 @@ fn (ved &Ved) insert_task() ! {
 	} else {
 		// Two day entry (separated by 00:00)
 		midnight := time.Time{
-			year: start_time.year
-			month: start_time.month
-			day: start_time.day
-			hour: 23
+			year:   start_time.year
+			month:  start_time.month
+			day:    start_time.day
+			hour:   23
 			minute: 59
 		}
 		day_start := time.Time{
-			year: now.year
-			month: now.month
-			day: now.day
-			hour: 0
+			year:   now.year
+			month:  now.month
+			day:    now.day
+			hour:   0
 			minute: 0
 		}
 

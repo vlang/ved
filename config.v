@@ -197,7 +197,7 @@ fn (mut config Config) set_string() {
 	config.string_color = config.get_toml_color('0B') or { gx.rgb(179, 58, 44) }
 
 	config.string_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.string_color
 	}
 }
@@ -207,7 +207,7 @@ fn (mut config Config) set_key() {
 	config.key_color = config.get_toml_color('0E') or { gx.rgb(74, 103, 154) }
 
 	config.key_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.key_color
 	}
 }
@@ -217,7 +217,7 @@ fn (mut config Config) set_lit() {
 	config.lit_color = config.get_toml_color('0F') or { gx.rgb(7, 103, 154) }
 
 	config.lit_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.lit_color
 	}
 }
@@ -250,7 +250,7 @@ fn (mut config Config) set_txt() {
 	}
 
 	config.txt_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.text_color
 	}
 }
@@ -260,7 +260,7 @@ fn (mut config Config) set_comment() {
 	config.comment_color = config.get_toml_color('03') or { gx.dark_gray }
 
 	config.comment_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.comment_color
 	}
 }
@@ -268,7 +268,7 @@ fn (mut config Config) set_comment() {
 fn (mut config Config) set_filename() {
 	config.file_name_color = gx.white
 	config.file_name_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.file_name_color
 	}
 }
@@ -276,7 +276,7 @@ fn (mut config Config) set_filename() {
 fn (mut config Config) set_plus() {
 	config.plus_color = gx.green
 	config.plus_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.plus_color
 	}
 }
@@ -284,7 +284,7 @@ fn (mut config Config) set_plus() {
 fn (mut config Config) set_minus() {
 	config.minus_color = gx.green
 	config.minus_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.minus_color
 	}
 }
@@ -294,7 +294,7 @@ fn (mut config Config) set_line_nr() {
 	config.line_nr_color = config.get_toml_color('01') or { gx.dark_gray }
 
 	config.line_nr_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.line_nr_color
 		align: gx.align_right
 	}
@@ -305,7 +305,7 @@ fn (mut config Config) set_green() {
 	config.green_color = config.get_toml_color('0B') or { gx.green }
 
 	config.green_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.green_color
 	}
 }
@@ -313,7 +313,7 @@ fn (mut config Config) set_green() {
 fn (mut config Config) set_red() {
 	config.red_color = config.get_toml_color('08') or { gx.red }
 	config.red_cfg = gx.TextCfg{
-		size: config.text_size
+		size:  config.text_size
 		color: config.red_color
 	}
 }
