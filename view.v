@@ -83,7 +83,12 @@ fn (mut view View) open_file(path string, line_nr int) {
 			view.short_path = view.short_path[1..]
 		}
 	} else {
-		view.short_path = path
+		// Optimize space, replace /Users/username with ~
+		if path.starts_with(home_dir) {
+			view.short_path = path.replace(home_dir, '~')
+		} else {
+			view.short_path = path
+		}
 	}
 	mut ved := view.ved
 	ved.set_current_syntax_idx(os.file_ext(path))
@@ -791,11 +796,10 @@ fn (mut view View) ci(key gg.KeyCode) {
 			view.x = start + 1
 			view.ved.set_insert()
 		}
-		._9 {
-		}
+		._9 {}
 		else {}
 	}
-	//match 
+	// match
 	// view.dw()
 }
 

@@ -27,62 +27,61 @@ const max_nr_workspaces = 10
 @[heap]
 struct Ved {
 mut:
-	win_width            int
-	win_height           int
-	nr_splits            int
-	splits_per_workspace int
-	page_height          int
-	views                []View
-	cur_split            int
-	view                 &View = unsafe { nil }
-	mode                 EditorMode
-	just_switched        bool // for keydown/char events to avoid dup keys
-	prev_key             gg.KeyCode
-	prev_key_str         string // for `ci(` etc, no `(` in gg.KeyCode
-	prev_cmd             string
-	prev_insert          string // for `.` (re-enter the text that was just entered via cw etc)
-	all_git_files        []string
-	top_tasks            []string
-	gg                   &gg.Context = unsafe { nil }
-	query                string
-	search_query         string
-	query_type           QueryType
-	workspace            string
-	workspace_idx        int
-	workspaces           []string
-	ylines               []string // for y, yy
-	git_diff_plus        string   // short git diff stat top right
-	git_diff_minus       string
-	syntaxes             []Syntax
-	current_syntax_idx   int
-	chunks               []Chunk
-	is_building          bool
-	timer                Timer
-	task_start_unix      i64
-	cur_task             string
-	words                []string
-	file_y_pos           map[string]int // to save current line for each file s
-	refresh              bool = true
-	char_width           int
-	is_ml_comment        bool
-	gg_lines             []string
-	gg_pos               int
-	cfg                  Config
-	cb                   &clipboard.Clipboard = unsafe { nil }
-	open_paths           [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
-	prev_y               int        // for jumping back ('')
-	now                  time.Time  // cached value of time.now() to avoid calling it for every frame
-	search_history       []string
-	search_idx           int
-	cq_in_a_row          int
-	search_dir           string // for cmd+/ search in the entire directory where the current file is located
-	search_dir_idx       int    // for looping thru search dir files
-	error_line           string // is displayed at the bottom
-	autocomplete_info    AutocompleteInfo
-	autocomplete_cache   map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
-	debug_info           string
-	debugger             Debugger
-	cur_fn_name          string // Always displayed on the top bar
+	win_width          int
+	win_height         int
+	nr_splits          int
+	page_height        int
+	views              []View
+	cur_split          int
+	view               &View = unsafe { nil }
+	mode               EditorMode
+	just_switched      bool // for keydown/char events to avoid dup keys
+	prev_key           gg.KeyCode
+	prev_key_str       string // for `ci(` etc, no `(` in gg.KeyCode
+	prev_cmd           string
+	prev_insert        string // for `.` (re-enter the text that was just entered via cw etc)
+	all_git_files      []string
+	top_tasks          []string
+	gg                 &gg.Context = unsafe { nil }
+	query              string
+	search_query       string
+	query_type         QueryType
+	workspace          string
+	workspace_idx      int
+	workspaces         []string
+	ylines             []string // for y, yy
+	git_diff_plus      string   // short git diff stat top right
+	git_diff_minus     string
+	syntaxes           []Syntax
+	current_syntax_idx int
+	chunks             []Chunk
+	is_building        bool
+	timer              Timer
+	task_start_unix    i64
+	cur_task           string
+	words              []string
+	file_y_pos         map[string]int // to save current line for each file s
+	refresh            bool = true
+	char_width         int
+	is_ml_comment      bool
+	gg_lines           []string
+	gg_pos             int
+	cfg                Config
+	cb                 &clipboard.Clipboard = unsafe { nil }
+	open_paths         [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
+	prev_y             int        // for jumping back ('')
+	now                time.Time  // cached value of time.now() to avoid calling it for every frame
+	search_history     []string
+	search_idx         int
+	cq_in_a_row        int
+	search_dir         string // for cmd+/ search in the entire directory where the current file is located
+	search_dir_idx     int    // for looping thru search dir files
+	error_line         string // is displayed at the bottom
+	autocomplete_info  AutocompleteInfo
+	autocomplete_cache map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
+	debug_info         string
+	debugger           Debugger
+	cur_fn_name        string // Always displayed on the top bar
 	// debugger_output      DebuggerOutput
 }
 
@@ -147,7 +146,7 @@ fn main() {
 		win_width:  size.width
 		win_height: size.height
 		// nr_splits: nr_splits
-		// splits_per_workspace: nr_splits
+		// nr_splits: nr_splits
 		cur_split:  0
 		mode:       .normal
 		cb:         clipboard.new()
@@ -155,14 +154,15 @@ fn main() {
 	}
 	ved.handle_segfault()
 
+	// ved.cfg.set_settings(config_path)
+	println('CONFIG')
+	println(ved.cfg)
 	ved.load_config2()
+	ved.cfg.set_default_values()
 
-	ved.cfg.set_settings(config_path)
-	ved.cfg.reload_config()
-
-	nr_splits := ved.get_nr_splits_from_screen_size(size.width, size.height)
-	ved.nr_splits = nr_splits
-	ved.splits_per_workspace = nr_splits
+	ved.nr_splits = ved.get_nr_splits_from_screen_size(size.width, size.height)
+	ved.calc_nr_splits_from_text_size()
+	println('splits per w = ${ved.nr_splits}')
 
 	println('height=${size.height}')
 
@@ -339,7 +339,7 @@ fn on_event(e &gg.Event, mut ved Ved) {
 }
 
 fn (ved &Ved) split_width() int {
-	mut split_width := ved.win_width / ved.nr_splits + 60
+	mut split_width := ved.win_width / ved.nr_splits // + 60
 	if split_width < 300 {
 		split_width = ved.win_width
 	}
@@ -396,7 +396,7 @@ fn (ved &Ved) calc_cursor_x() int {
 		}
 		cursor_tab_off++
 	}
-	from := ved.workspace_idx * ved.splits_per_workspace
+	from := ved.workspace_idx * ved.nr_splits
 	split_width := ved.split_width()
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
 	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.cfg.char_width
@@ -482,7 +482,7 @@ fn (mut ved Ved) draw() {
 	if ved.cur_task != '' {
 		// Draw current task
 		task_text_width := ved.cur_task.len * ved.cfg.char_width
-		task_x := ved.win_width - split_width - task_text_width - 10
+		task_x := ved.win_width - split_width - task_text_width - 70
 		// ved.timer.gg.draw_text(task_x, 1, ved.timer.cur_task.to_upper(), file_name_cfg)
 		ved.gg.draw_text(task_x, 1, ved.cur_task, ved.cfg.file_name_cfg)
 		// Draw current task time
@@ -493,9 +493,6 @@ fn (mut ved Ved) draw() {
 	if ved.timer.pom_is_started {
 		ved.gg.draw_text(split_width - 50, 1, '${ved.pomodoro_minutes()}m', ved.cfg.file_name_cfg)
 	}
-
-	// Cur fn name
-	ved.gg.draw_text(split_width - 600, 1, ved.cur_fn_name, ved.cfg.minus_cfg)
 	// Draw "i" in insert mode
 	if ved.mode == .insert {
 		ved.gg.draw_text(5, 1, '-i-', ved.cfg.file_name_cfg)
@@ -515,6 +512,18 @@ fn (mut ved Ved) draw() {
 		ved.draw_split(i, from)
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
+	// Cur fn name (top right of current split)
+	cur_fn_width := ved.cfg.char_width * ved.cur_fn_name.len
+	cur_fn_x := (ved.cur_split % ved.nr_splits + 1) * split_width - cur_fn_width - 3
+	cur_fn_y := ved.cfg.line_height
+	ved.gg.draw_rect(
+		x:     cur_fn_x
+		y:     cur_fn_y
+		w:     cur_fn_width
+		h:     ved.cfg.line_height
+		color: ved.cfg.bgcolor // gx.rgb(40, 40, 40)
+	)
+	ved.gg.draw_text(cur_fn_x, cur_fn_y, ved.cur_fn_name, ved.cfg.comment_cfg)
 	// Debugger variables
 	if ved.mode == .debugger && ved.debugger.output.vars.len > 0 {
 		ved.draw_debugger_variables()
@@ -667,6 +676,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
 	// } else if line[0] == `-` {
 	ved.chunks = []
 	cur_syntax := ved.syntaxes[ved.current_syntax_idx] or { Syntax{} }
+	// TODO use runes for everything to fix keyword + 2+ byte rune words
 	for i := 0; i < line.len; i++ {
 		start := i
 		// Comment // #
@@ -815,7 +825,6 @@ fn on_char(code u32, mut ved Ved) {
 			ved.char_query(s)
 		}
 		.normal {
-			
 			// on char on normal only for replace with r
 			if !ved.just_switched && ved.prev_key == .r {
 				if s != 'r' {
@@ -955,7 +964,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		return
 	}
 	if ved.prev_cmd == 'ci' {
-		println("CALLING CI PREV S=$ved.prev_key_str")
+		println('CALLING CI PREV S=${ved.prev_key_str}')
 		view.ci(key)
 		return
 	}
@@ -982,8 +991,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				// <
 				ved.view.shift_left()
 			} else if super {
-				ved.cfg.reload_config()
-				ved.update_view()
+				//
+				// ved.cfg.reload_config()
+				// ved.update_view()
 			}
 		}
 		.slash {
@@ -1015,7 +1025,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		}
 		.minus {
 			if shift_and_super {
-				println('FONT DECREASE')
+				// println('FONT DECREASE')
 				ved.increase_font(-1)
 			} else if super {
 				ved.get_git_diff_full()
@@ -1026,7 +1036,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.prev_key = .equal
 			} else if shift_and_super {
 				ved.increase_font(1)
-				println('FONT INCREASE')
+				// println('FONT INCREASE')
 			}
 		}
 		.f12 {
@@ -1623,15 +1633,15 @@ fn (mut ved Ved) dot() {
 
 fn (mut ved Ved) next_split() {
 	ved.cur_split++
-	if ved.cur_split % ved.splits_per_workspace == 0 {
-		ved.cur_split -= ved.splits_per_workspace
+	if ved.cur_split % ved.nr_splits == 0 {
+		ved.cur_split -= ved.nr_splits
 	}
 	ved.update_view()
 }
 
 fn (mut ved Ved) prev_split() {
-	if ved.cur_split % ved.splits_per_workspace == 0 {
-		ved.cur_split += ved.splits_per_workspace - 1
+	if ved.cur_split % ved.nr_splits == 0 {
+		ved.cur_split += ved.nr_splits - 1
 	} else {
 		ved.cur_split--
 	}
@@ -1655,7 +1665,7 @@ fn (mut ved Ved) open_workspace(idx int) {
 	ved.workspace = ved.workspaces[idx]
 	// Update cur split index. If we are in space 0 split 1 and go to
 	// space 1, split is updated to 4 (1 + 3 * (1-0))
-	ved.cur_split += diff * ved.splits_per_workspace
+	ved.cur_split += diff * ved.nr_splits
 
 	for i, view in ved.views {
 		// Maybe the file is not loaded correctly (can happen on ved's launch)
@@ -1871,7 +1881,7 @@ fn (mut ved Ved) open_blog() {
 }
 
 fn (ved &Ved) get_last_view() &View {
-	pos := (ved.workspace_idx + 1) * ved.splits_per_workspace - 1
+	pos := (ved.workspace_idx + 1) * ved.nr_splits - 1
 	eprintln('> ${@METHOD} pos: ${pos}')
 	unsafe {
 		return &ved.views[pos]
@@ -1926,8 +1936,8 @@ fn (mut ved Ved) go_to_error(line string) {
 	col := vals[2].int()
 	println('path=${path} filename=${filename} linenr=${line_nr} col=${col}')
 	// Search for the file with the eror in all views inside current workspace
-	start_i := ved.workspace_idx * ved.splits_per_workspace
-	end_i := (ved.workspace_idx + 1) * ved.splits_per_workspace
+	start_i := ved.workspace_idx * ved.nr_splits
+	end_i := (ved.workspace_idx + 1) * ved.nr_splits
 	for i := start_i; i < end_i && i < ved.views.len; i++ {
 		mut view := unsafe { &ved.views[i] }
 		if !view.path.contains(os.path_separator + filename) && view.path != filename {
@@ -2081,12 +2091,21 @@ fn (mut ved Ved) git_pull() {
 
 const text_scale = 1.2
 
+const max_text_size = 24
+const min_text_size = 18
+
 fn (mut ved Ved) increase_font(delta int) {
-	// ved.cfg.text_size = int(f64(ved.cfg.text_size) * text_scale)
-	// ved.cfg.char_width = int(f64(ved.cfg.char_width) * text_scale)
-	// ved.cfg.line_height = int(f64(ved.cfg.line_height) * text_scale)
+	// println('INCREASE_FONT(${delta})')
+	// println('text_size=${ved.cfg.text_size}')
+	// println('char_width=${ved.cfg.char_width}')
+	// println('line_height=${ved.cfg.line_height}')
 	ved.cfg.text_size += delta * 2
-	if ved.cfg.text_size > 24 {
+	if ved.cfg.text_size > max_text_size {
+		ved.cfg.text_size = max_text_size
+		return
+	}
+	if ved.cfg.text_size < min_text_size {
+		ved.cfg.text_size = min_text_size
 		return
 	}
 	ved.cfg.char_width += delta
@@ -2113,11 +2132,21 @@ fn (mut ved Ved) increase_font(delta int) {
 		...ved.cfg.string_cfg
 		size: ved.cfg.text_size
 	}
-	if ved.cfg.text_size > 20 && ved.nr_splits > 2 {
-		ved.nr_splits = 2
-	}
+	// println('NEW text_size=${ved.cfg.text_size}')
+	// println('NEW char_width=${ved.cfg.char_width}')
+	// println('NEW line_height=${ved.cfg.line_height}\n')
+	ved.calc_nr_splits_from_text_size()
+	ved.save_config2()
 	// println('NEW  CONFIG')
 	// println(ved.cfg)
+}
+
+fn (mut ved Ved) calc_nr_splits_from_text_size() {
+	if ved.cfg.text_size > 20 && ved.nr_splits > 2 {
+		ved.nr_splits = 2
+	} else if ved.cfg.text_size <= 20 {
+		ved.nr_splits = ved.get_nr_splits_from_screen_size(ved.win_width, ved.win_height)
+	}
 }
 
 fn filter_ascii_colors(s string) string {
@@ -2142,8 +2171,8 @@ fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 }
 
 fn (ved &Ved) get_splits_from_to() (int, int) {
-	from := ved.workspace_idx * ved.splits_per_workspace
-	to := from + ved.splits_per_workspace
+	from := ved.workspace_idx * ved.nr_splits
+	to := from + ved.nr_splits
 	return from, to
 }
 
