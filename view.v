@@ -791,8 +791,11 @@ fn (mut view View) ci(key gg.KeyCode) {
 			view.x = start + 1
 			view.ved.set_insert()
 		}
+		._9 {
+		}
 		else {}
 	}
+	//match 
 	// view.dw()
 }
 

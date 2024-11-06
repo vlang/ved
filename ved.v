@@ -38,6 +38,7 @@ mut:
 	mode                 EditorMode
 	just_switched        bool // for keydown/char events to avoid dup keys
 	prev_key             gg.KeyCode
+	prev_key_str         string // for `ci(` etc, no `(` in gg.KeyCode
 	prev_cmd             string
 	prev_insert          string // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files        []string
@@ -814,6 +815,7 @@ fn on_char(code u32, mut ved Ved) {
 			ved.char_query(s)
 		}
 		.normal {
+			
 			// on char on normal only for replace with r
 			if !ved.just_switched && ved.prev_key == .r {
 				if s != 'r' {
@@ -824,6 +826,7 @@ fn on_char(code u32, mut ved Ved) {
 				}
 				return
 			}
+			ved.prev_key_str = s // for `ci(` etc, no `(` in gg.KeyCode
 		}
 		else {}
 	}
@@ -952,6 +955,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 		return
 	}
 	if ved.prev_cmd == 'ci' {
+		println("CALLING CI PREV S=$ved.prev_key_str")
 		view.ci(key)
 		return
 	}
@@ -1023,7 +1027,10 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			} else if shift_and_super {
 				ved.increase_font(1)
 				println('FONT INCREASE')
-			} else {
+			}
+		}
+		.f12 {
+			if shift {
 				ved.open_blog()
 			}
 		}
@@ -1234,6 +1241,7 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			// go to beginning
 			else {
 				if ved.prev_key == .g {
+					ved.prev_key = .invalid // so that e.g. "ggd" doesn't trigger "gd" (go to def) TODO do this for each multi key command?
 					ved.view.gg()
 					// ved.prev_key = 0
 				} else {
@@ -1381,9 +1389,11 @@ fn (ved &Ved) word_under_cursor() string {
 	for end < line.len && is_alpha_underscore(int(line[end])) {
 		end++
 	}
-	if start + 1 >= line.len {
+	if start + 1 >= line.len || start >= end {
 		return ''
 	}
+	// println("word under cursor line='$line' start=$start end=$end")
+	// print_backtrace()
 	mut word := line[start + 1..end]
 	word = word.trim_space()
 	return word
