@@ -8,9 +8,11 @@ import gx
 import time
 import gg
 
+/*
 const txt_cfg = gx.TextCfg{
 	size: 18
 }
+*/
 
 enum QueryType {
 	ctrlp            = 0
@@ -177,7 +179,7 @@ fn (mut ved Ved) char_query(s string) {
 		return
 	}
 	mut q := ved.query
-	println('char q(${s}) ${ved.query_type}')
+	// println('char q(${s}) ${ved.query_type}')
 	if ved.query_type in [.search, .search_in_folder, .grep] {
 		q = ved.search_query
 		ved.search_query = q + s
@@ -269,7 +271,7 @@ fn (q QueryType) str() string {
 const small_queries = [QueryType.search, .cam, .open, .run, .alert] //.grep
 
 const max_grep_lines = 20
-const query_width = 400
+const query_width = 700
 
 // Search, commit, open, ctrl p
 fn (mut ved Ved) draw_query() {
@@ -283,7 +285,7 @@ fn (mut ved Ved) draw_query() {
 		width *= 3
 		height *= 2
 	} else if ved.query_type in [.ctrlp, .ctrlj] {
-		height = 500
+		height = (max_grep_lines + 2) * (ved.cfg.line_height + line_padding) + 15
 	}
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
@@ -298,31 +300,110 @@ fn (mut ved Ved) draw_query() {
 	} else {
 		ved.query
 	}
-	ved.gg.draw_text(x + 10, y + 30, query_to_draw, txt_cfg)
+
+	ved.gg.draw_text(x + 10, y + ved.cfg.line_height, query_to_draw, ved.cfg.txt_cfg)
+	// Draw cursor
+	cursor_x := x + 10 + query_to_draw.len * ved.cfg.char_width + 1 // cursor
+	cursor_y := y + ved.cfg.line_height + 2
+	ved.gg.draw_rect(x: cursor_x, y: cursor_y, w: 2, h: ved.cfg.line_height - 4)
+	// Draw separator between query and files
+	ved.gg.draw_rect(
+		x:     x
+		y:     y + ved.cfg.line_height * 2
+		w:     width
+		h:     2
+		color: ved.cfg.comment_color
+	)
+	// Draw files
+	ved.draw_query_files(ved.query_type, x, y)
+	/*
 	match ved.query_type {
 		.ctrlp {
-			ved.draw_ctrlp_files(x, y)
+			ved.draw_query_files(.ctrlp, x, y)
+			// ved.draw_ctrlp_files(x, y)
 		}
-		.task {
-			ved.draw_top_tasks(x, y)
-		}
+		//.task {
+		// ved.draw_top_tasks(x, y)
+		//}
 		.grep {
-			ved.draw_git_grep(x, y)
+			ved.draw_query_files(.grep, x, y)
+			// ved.draw_git_grep(x, y)
 		}
 		.ctrlj {
-			ved.draw_open_files(x, y)
+			ved.draw_query_files(.ctrlj, x, y)
+			// ved.draw_open_files(x, y)
 		}
 		else {}
 	}
+	*/
 }
 
+const nr_ctrlp_results = 20
+const line_padding = 5
+
+fn (mut ved Ved) draw_query_files(kind QueryType, x int, y int) {
+	mut j := 0
+	lines := match kind {
+		.ctrlp {
+			ved.all_git_files
+		}
+		.grep {
+			ved.gg_lines
+		}
+		.ctrlj {
+			ved.open_paths[ved.workspace_idx]
+		}
+		else {
+			[]string{}
+		}
+	}
+	for s in lines {
+		if j == nr_ctrlp_results {
+			break
+		}
+		yy := y + 60 + (ved.cfg.line_height + line_padding) * j
+		if j == ved.gg_pos {
+			ved.gg.draw_rect_filled(x, yy, query_width, 30, ved.cfg.vcolor)
+		}
+		match kind {
+			.grep {
+				pos := s.index(':') or { continue }
+				path := s[..pos].limit(55)
+				pos2 := s.index_after(':', pos + 1)
+				if pos2 == -1 || pos2 >= s.len - 1 {
+					continue
+				}
+				text := s[pos2 + 1..].trim_space().limit(100)
+				if j == ved.gg_pos {
+					ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
+				}
+				line_nr := s[pos + 1..pos2]
+				ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', ved.cfg.txt_cfg)
+				ved.gg.draw_text(x + ved.cfg.char_width * 45, yy, text, ved.cfg.txt_cfg)
+			}
+			.ctrlp, .ctrlj {
+				mut file := s.to_lower()
+				file = file.trim_space()
+				if !file.contains(ved.query.to_lower()) {
+					continue
+				}
+				ved.gg.draw_text(x + 10, yy, file, ved.cfg.txt_cfg)
+			}
+			else {}
+		}
+
+		j++
+	}
+}
+
+/*
 fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 	mut j := 0
 	for file_ in ved.all_git_files {
-		if j == 15 {
+		if j == nr_ctrlp_results {
 			break
 		}
-		yy := y + 60 + 30 * j
+		yy := y + 60 + (ved.cfg.line_height + 5) * j
 		if j == ved.gg_pos {
 			ved.gg.draw_rect_filled(x, yy, query_width, 30, ved.cfg.vcolor)
 		}
@@ -331,7 +412,7 @@ fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
 		if !file.contains(ved.query.to_lower()) {
 			continue
 		}
-		ved.gg.draw_text(x + 10, yy, file, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, file, ved.cfg.txt_cfg)
 		j++
 	}
 }
@@ -353,7 +434,7 @@ fn (mut ved Ved) draw_open_files(x int, y int) {
 		if !file.contains(ved.query.to_lower()) {
 			continue
 		}
-		ved.gg.draw_text(x + 10, yy, file, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, file, ved.cfg.txt_cfg)
 		j++
 	}
 }
@@ -370,11 +451,13 @@ fn (mut ved Ved) draw_top_tasks(x int, y int) {
 			continue
 		}
 		// println('DOES CONTAIN "$file" $j')
-		ved.gg.draw_text(x + 10, y + 60 + 30 * j, task, txt_cfg)
+		ved.gg.draw_text(x + 10, y + 60 + 30 * j, task, ved.cfg.txt_cfg)
 		j++
 	}
 }
+*/
 
+/*
 fn (mut ved Ved) draw_git_grep(x int, y int) {
 	for i, line in ved.gg_lines {
 		if i == max_grep_lines {
@@ -392,10 +475,11 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 			ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 		}
 		line_nr := line[pos + 1..pos2]
-		ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', txt_cfg)
-		ved.gg.draw_text(x + 450, yy, text, txt_cfg)
+		ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', ved.cfg.txt_cfg)
+		ved.gg.draw_text(x + 450, yy, text, ved.cfg.txt_cfg)
 	}
 }
+*/
 
 // Open file on enter
 // fn input_enter(s string, ved * Ved) {

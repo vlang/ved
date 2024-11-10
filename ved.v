@@ -2132,6 +2132,10 @@ fn (mut ved Ved) increase_font(delta int) {
 		...ved.cfg.string_cfg
 		size: ved.cfg.text_size
 	}
+	ved.cfg.file_name_cfg = gx.TextCfg{
+		...ved.cfg.file_name_cfg
+		size: ved.cfg.text_size
+	}
 	// println('NEW text_size=${ved.cfg.text_size}')
 	// println('NEW char_width=${ved.cfg.char_width}')
 	// println('NEW line_height=${ved.cfg.line_height}\n')
