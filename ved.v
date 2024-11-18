@@ -2189,8 +2189,7 @@ fn (mut ved Ved) update_cur_fn_name() {
 		return
 	}
 	// TODO optimize, no allocations
-	start := int_min(ved.view.y - 1, ved.view.lines.len - 1)
-	for i := start; i >= 0; i-- {
+	for i := int_min(ved.view.y - 1, ved.view.lines.len - 1); i >= 0; i-- {
 		line := ved.view.lines[i]
 		if line == '}' {
 			ved.cur_fn_name = ''
