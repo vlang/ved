@@ -9,7 +9,6 @@ import os
 import time
 import uiold
 import clipboard
-import math
 
 const exe_dir = os.dir(os.executable())
 const home_dir = os.home_dir()
@@ -2190,7 +2189,7 @@ fn (mut ved Ved) update_cur_fn_name() {
 		return
 	}
 	// TODO optimize, no allocations
-	for i := math.min(ved.view.y - 1, ved.view.lines.len - 1); i >= 0; i-- {
+	for i := int_min(ved.view.y - 1, ved.view.lines.len - 1); i >= 0; i-- {
 		line := ved.view.lines[i]
 		if line == '}' {
 			ved.cur_fn_name = ''
