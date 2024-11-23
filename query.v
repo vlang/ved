@@ -282,7 +282,7 @@ fn (mut ved Ved) draw_query() {
 		height = 70
 	}
 	if ved.query_type == .grep {
-		width *= 3
+		width = 1000
 		height *= 2
 	} else if ved.query_type in [.ctrlp, .ctrlj] {
 		height = (max_grep_lines + 2) * (ved.cfg.line_height + line_padding) + 15
@@ -307,35 +307,17 @@ fn (mut ved Ved) draw_query() {
 	cursor_y := y + ved.cfg.line_height + 2
 	ved.gg.draw_rect(x: cursor_x, y: cursor_y, w: 2, h: ved.cfg.line_height - 4)
 	// Draw separator between query and files
-	ved.gg.draw_rect(
-		x:     x
-		y:     y + ved.cfg.line_height * 2
-		w:     width
-		h:     2
-		color: ved.cfg.comment_color
-	)
+	if ved.query_type !in [.search, .cam] {
+		ved.gg.draw_rect(
+			x:     x
+			y:     y + ved.cfg.line_height * 2
+			w:     width
+			h:     2
+			color: ved.cfg.comment_color
+		)
+	}
 	// Draw files
 	ved.draw_query_files(ved.query_type, x, y)
-	/*
-	match ved.query_type {
-		.ctrlp {
-			ved.draw_query_files(.ctrlp, x, y)
-			// ved.draw_ctrlp_files(x, y)
-		}
-		//.task {
-		// ved.draw_top_tasks(x, y)
-		//}
-		.grep {
-			ved.draw_query_files(.grep, x, y)
-			// ved.draw_git_grep(x, y)
-		}
-		.ctrlj {
-			ved.draw_query_files(.ctrlj, x, y)
-			// ved.draw_open_files(x, y)
-		}
-		else {}
-	}
-	*/
 }
 
 const nr_ctrlp_results = 20
