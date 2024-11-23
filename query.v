@@ -523,6 +523,9 @@ fn (mut ved Ved) git_grep() {
 		if line.contains('LICENSE:') {
 			continue
 		}
+		if line.contains('Binary file ') && line.contains(' matches') {
+			continue
+		}
 		ved.gg_lines << line
 	}
 }
