@@ -30,13 +30,15 @@ v .
 
 Ved should build in under a second.
 
-By default V's built-in font rendering is used, but there's an option to use freetype, which may provide better rendering for some users:
+By default V's built-in font rendering is used, but there's an option to use freetype,
+which may provide better rendering for some users:
 
 ```
 v -d use_freetype .
 ```
 
-To use freetype, it must first be installed on your system. Follow the steps for your platform below.
+To use freetype, it must first be installed on your system.
+Follow the steps for your platform below.
 
 Ubuntu:
 ```
@@ -94,9 +96,15 @@ Discord (primary community): https://discord.gg/vlang. Join the `#ved` channel.
 
 ### Configuration
 
-Ved creates a settings directory in `$HOME/.ved` where it stores workspaces, sessions, tasks, and the configuration file. The configuration file is simply a [TOML](https://toml.io/) file called `conf.toml`. It provides a way to change some basic settings and the editor colors.
+Ved creates a settings directory in `$HOME/.ved` where it stores workspaces,
+sessions, tasks, and the configuration file.
+The configuration file is simply a [TOML](https://toml.io/) file called `conf.toml`.
+It provides a way to change some basic settings and the editor colors.
 
-If you don't want to touch the config file, you never have to! Ved does not create it by itself and it provides sensible defaults to get you started. If you are more adventurous, here is an example configuration file that contains all of the possible settings:
+If you don't want to touch the config file, you never have to!
+Ved does not create it by itself and it provides sensible defaults to get you started.
+If you are more adventurous, here is an example configuration file that contains all
+of the possible settings:
 
 ```toml
 # To get started, create a file called "conf.toml" in $HOME/.ved
