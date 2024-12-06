@@ -1635,6 +1635,7 @@ fn (mut ved Ved) next_split() {
 	if ved.cur_split % ved.nr_splits == 0 {
 		ved.cur_split -= ved.nr_splits
 	}
+	ved.update_cur_fn_name()
 	ved.update_view()
 }
 
@@ -1644,6 +1645,7 @@ fn (mut ved Ved) prev_split() {
 	} else {
 		ved.cur_split--
 	}
+	ved.update_cur_fn_name()
 	ved.update_view()
 }
 
