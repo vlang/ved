@@ -177,7 +177,7 @@ fn main() {
 		scale:         2
 		bg_color:      ved.cfg.bgcolor
 		frame_fn:      frame
-		event_fn:      on_event
+		on_event:      ved.on_event
 		keydown_fn:    key_down
 		char_fn:       on_char
 		font_path:     fpath
@@ -262,10 +262,12 @@ fn main() {
 	ved.gg.run()
 }
 
-fn on_event(e &gg.Event, mut ved Ved) {
+fn (mut ved Ved) on_event(e &gg.Event) {
+	println('on even ${ved.win_width}')
 	ved.refresh = true
-	ved.win_height = gg.window_size().height
-	ved.win_width = gg.window_size().width
+	size := gg.window_size()
+	ved.win_height = size.height
+	ved.win_width = size.width
 
 	if e.typ == .mouse_scroll {
 		if e.scroll_y < -0.2 {
