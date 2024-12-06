@@ -512,17 +512,19 @@ fn (mut ved Ved) draw() {
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cur fn name (top right of current split)
-	cur_fn_width := ved.cfg.char_width * ved.cur_fn_name.len
-	cur_fn_x := (ved.cur_split % ved.nr_splits + 1) * split_width - cur_fn_width - 3
-	cur_fn_y := ved.cfg.line_height
-	ved.gg.draw_rect(
-		x:     cur_fn_x
-		y:     cur_fn_y
-		w:     cur_fn_width
-		h:     ved.cfg.line_height
-		color: ved.cfg.bgcolor // gx.rgb(40, 40, 40)
-	)
-	ved.gg.draw_text(cur_fn_x, cur_fn_y, ved.cur_fn_name, ved.cfg.comment_cfg)
+	if view.y != view.from { // Don't draw current fn name if the first visible line is selected
+		cur_fn_width := ved.cfg.char_width * ved.cur_fn_name.len
+		cur_fn_x := (ved.cur_split % ved.nr_splits + 1) * split_width - cur_fn_width - 3
+		cur_fn_y := ved.cfg.line_height
+		ved.gg.draw_rect(
+			x:     cur_fn_x
+			y:     cur_fn_y
+			w:     cur_fn_width
+			h:     ved.cfg.line_height
+			color: ved.cfg.bgcolor // gx.rgb(40, 40, 40)
+		)
+		ved.gg.draw_text(cur_fn_x, cur_fn_y, ved.cur_fn_name, ved.cfg.comment_cfg)
+	}
 	// Debugger variables
 	if ved.mode == .debugger && ved.debugger.output.vars.len > 0 {
 		ved.draw_debugger_variables()

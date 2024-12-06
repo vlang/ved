@@ -360,7 +360,12 @@ fn (mut ved Ved) draw_query_files(kind QueryType, x int, y int) {
 					ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 				}
 				line_nr := s[pos + 1..pos2]
-				ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', ved.cfg.txt_cfg)
+				ved.gg.draw_text2(
+					x:     x + 10
+					y:     yy
+					text:  path.limit(50) + ':${line_nr}'
+					color: gx.purple
+				)
 				ved.gg.draw_text(x + ved.cfg.char_width * 45, yy, text, ved.cfg.txt_cfg)
 			}
 			.ctrlp, .ctrlj {
