@@ -140,6 +140,9 @@ fn main() {
 	if size.width == 0 || size.height == 0 {
 		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
 	}
+	if size.height % 20 != 0 {
+		size.height -= size.height % 20
+	}
 	println('size=${size}')
 	mut ved := &Ved{
 		win_width:  size.width
@@ -265,7 +268,12 @@ fn main() {
 fn (mut ved Ved) on_event(e &gg.Event) {
 	println('on even ${ved.win_width}')
 	ved.refresh = true
-	size := gg.window_size()
+	mut size := gg.screen_size()
+
+	if size.height % 20 != 0 {
+		size.height -= size.height % 20 + ved.cfg.line_height
+	}
+	println(size)
 	ved.win_height = size.height
 	ved.win_width = size.width
 
