@@ -2181,6 +2181,7 @@ fn (ved &Ved) get_splits_from_to() (int, int) {
 
 fn (mut ved Ved) update_cur_fn_name() {
 	if !(ved.view.path.ends_with('.v') || ved.view.path.ends_with('.go')) {
+		ved.cur_fn_name = ''
 		return
 	}
 	if ved.view.lines.len < 2 {
