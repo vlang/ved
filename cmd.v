@@ -36,10 +36,10 @@ fn (mut ved Ved) build_app(extra string) {
 	building_cmd := 'sh ${build_file}'
 	eprintln('building with `${building_cmd}` ...')
 
-	mut last_view := ved.get_last_view()
+	last_view_idx := ved.last_view_idx()
 
 	os.write_file(out_file, 'Building...') or { panic(err) }
-	last_view.open_file(out_file, 0)
+	ved.views[last_view_idx].open_file(out_file, 0)
 
 	out := os.execute(building_cmd)
 	if out.exit_code == -1 {
@@ -47,9 +47,9 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 
 	os.write_file(out_file, filter_ascii_colors(out.output)) or { panic(err) }
-	last_view.open_file(out_file, 0)
+	ved.views[last_view_idx].open_file(out_file, 0)
 
-	last_view.shift_g()
+	ved.views[last_view_idx].shift_g()
 	// error line
 	alines := out.output.split_into_lines()
 	lines := alines.filter(it.contains('.v:') || it.contains('.go:'))
@@ -77,8 +77,8 @@ fn (mut ved Ved) build_app(extra string) {
 	ved.is_building = false
 	// Move to the first line of the output in the last view, so that it's
 	// always visible
-	last_view.from = 0
-	last_view.set_y(0)
+	ved.views[last_view_idx].from = 0
+	ved.views[last_view_idx].set_y(0)
 	/*
 	// Reopen files (they were formatted)
 	for _view in ved.views {

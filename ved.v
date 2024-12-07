@@ -140,8 +140,12 @@ fn main() {
 	if size.width == 0 || size.height == 0 {
 		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
 	}
-	if size.height % 20 != 0 {
-		size.height -= size.height % 20
+	// Fix macbook notch crap
+	$if macos {
+		if size.height % 20 != 0 {
+			// size.height -= size.height % 20 + ved.cfg.line_height
+			size.height -= 32 // ved.cfg.line_height
+		}
 	}
 	println('size=${size}')
 	mut ved := &Ved{
@@ -266,16 +270,22 @@ fn main() {
 }
 
 fn (mut ved Ved) on_event(e &gg.Event) {
-	println('on even ${ved.win_width}')
+	// println('on_event ${ved.win_width}')
 	ved.refresh = true
+	/*
+	// TODO change win height/width only on cmd + enter (exit full screen etc)
 	mut size := gg.screen_size()
 
-	if size.height % 20 != 0 {
-		size.height -= size.height % 20 + ved.cfg.line_height
+	// Fix macbook notch crap
+	$if macos {
+		if size.height % 20 != 0 {
+			// size.height -= size.height % 20 + ved.cfg.line_height
+			size.height -= 32 // ved.cfg.line_height
+		}
 	}
-	println(size)
 	ved.win_height = size.height
 	ved.win_width = size.width
+	*/
 
 	if e.typ == .mouse_scroll {
 		if e.scroll_y < -0.2 {
@@ -1899,6 +1909,10 @@ fn (ved &Ved) get_last_view() &View {
 	unsafe {
 		return &ved.views[pos]
 	}
+}
+
+fn (ved &Ved) last_view_idx() int {
+	return (ved.workspace_idx + 1) * ved.nr_splits - 1
 }
 
 fn (mut ved Ved) save_changed_files() {
