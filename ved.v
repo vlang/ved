@@ -127,6 +127,22 @@ const fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
 const args = os.args.clone()
 const is_window = '-window' in args
 
+fn get_screen_size() (int, int) {
+	mut size := gg.screen_size()
+	if size.width == 0 || size.height == 0 {
+		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
+	}
+	// Fix macbook notch crap
+	$if macos {
+		if size.height % 20 != 0 {
+			// size.height -= size.height % 20 + ved.cfg.line_height
+			size.height -= 32 // ved.cfg.line_height
+		}
+	}
+	println('size=${size}')
+	return size.width, size.height
+}
+
 @[console]
 fn main() {
 	if '-h' in args || '--help' in args {
@@ -136,14 +152,10 @@ fn main() {
 	if !os.is_dir(settings_dir) {
 		os.mkdir(settings_dir) or { panic(err) }
 	}
-	mut size := gg.screen_size()
-	if size.width == 0 || size.height == 0 {
-		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
-	}
-	println('size=${size}')
+	width, height := get_screen_size()
 	mut ved := &Ved{
-		win_width:  size.width
-		win_height: size.height
+		win_width:  width
+		win_height: height
 		// nr_splits: nr_splits
 		// nr_splits: nr_splits
 		cur_split:  0
@@ -159,17 +171,17 @@ fn main() {
 	ved.load_config2()
 	ved.cfg.set_default_values()
 
-	ved.nr_splits = ved.get_nr_splits_from_screen_size(size.width, size.height)
+	ved.nr_splits = ved.get_nr_splits_from_screen_size(width, height)
 	ved.calc_nr_splits_from_text_size()
 	println('splits per w = ${ved.nr_splits}')
 
-	println('height=${size.height}')
+	println('height=${height}')
 
 	ved.load_syntaxes()
 
 	ved.gg = gg.new_context(
-		width:         size.width
-		height:        size.height // borderless_window: !is_window
+		width:         width
+		height:        height // borderless_window: !is_window
 		fullscreen:    !is_window
 		window_title:  'Ved'
 		create_window: true
@@ -177,7 +189,7 @@ fn main() {
 		scale:         2
 		bg_color:      ved.cfg.bgcolor
 		frame_fn:      frame
-		event_fn:      on_event
+		on_event:      ved.on_event
 		keydown_fn:    key_down
 		char_fn:       on_char
 		font_path:     fpath
@@ -262,10 +274,23 @@ fn main() {
 	ved.gg.run()
 }
 
-fn on_event(e &gg.Event, mut ved Ved) {
+fn (mut ved Ved) on_event(e &gg.Event) {
+	// println('on_event ${ved.win_width}')
 	ved.refresh = true
-	ved.win_height = gg.window_size().height
-	ved.win_width = gg.window_size().width
+	/*
+	// TODO change win height/width only on cmd + enter (exit full screen etc)
+	mut size := gg.screen_size()
+
+	// Fix macbook notch crap
+	$if macos {
+		if size.height % 20 != 0 {
+			// size.height -= size.height % 20 + ved.cfg.line_height
+			size.height -= 32 // ved.cfg.line_height
+		}
+	}
+	ved.win_height = size.height
+	ved.win_width = size.width
+	*/
 
 	if e.typ == .mouse_scroll {
 		if e.scroll_y < -0.2 {
@@ -512,17 +537,19 @@ fn (mut ved Ved) draw() {
 		// println('draw split $i: ${ glfw.get_time() - t }')
 	}
 	// Cur fn name (top right of current split)
-	cur_fn_width := ved.cfg.char_width * ved.cur_fn_name.len
-	cur_fn_x := (ved.cur_split % ved.nr_splits + 1) * split_width - cur_fn_width - 3
-	cur_fn_y := ved.cfg.line_height
-	ved.gg.draw_rect(
-		x:     cur_fn_x
-		y:     cur_fn_y
-		w:     cur_fn_width
-		h:     ved.cfg.line_height
-		color: ved.cfg.bgcolor // gx.rgb(40, 40, 40)
-	)
-	ved.gg.draw_text(cur_fn_x, cur_fn_y, ved.cur_fn_name, ved.cfg.comment_cfg)
+	if view.y != view.from { // Don't draw current fn name if the first visible line is selected
+		cur_fn_width := ved.cfg.char_width * ved.cur_fn_name.len
+		cur_fn_x := (ved.cur_split % ved.nr_splits + 1) * split_width - cur_fn_width - 3
+		cur_fn_y := ved.cfg.line_height
+		ved.gg.draw_rect(
+			x:     cur_fn_x
+			y:     cur_fn_y
+			w:     cur_fn_width
+			h:     ved.cfg.line_height
+			color: ved.cfg.bgcolor // gx.rgb(40, 40, 40)
+		)
+		ved.gg.draw_text(cur_fn_x, cur_fn_y, ved.cur_fn_name, ved.cfg.comment_cfg)
+	}
 	// Debugger variables
 	if ved.mode == .debugger && ved.debugger.output.vars.len > 0 {
 		ved.draw_debugger_variables()
@@ -970,10 +997,14 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	match key {
 		.enter {
 			// Full screen => window
-			if false && super {
-				ved.nr_splits = 1
-				ved.win_width = 600
-				ved.win_height = 500
+			// Update screen size
+			if super {
+				println('full screen')
+				width, height := get_screen_size()
+
+				// ved.nr_splits = 1
+				ved.win_width = width
+				ved.win_height = height
 				// glfw.post_empty_event()
 			}
 		}
@@ -1635,6 +1666,7 @@ fn (mut ved Ved) next_split() {
 	if ved.cur_split % ved.nr_splits == 0 {
 		ved.cur_split -= ved.nr_splits
 	}
+	ved.update_cur_fn_name()
 	ved.update_view()
 }
 
@@ -1644,6 +1676,7 @@ fn (mut ved Ved) prev_split() {
 	} else {
 		ved.cur_split--
 	}
+	ved.update_cur_fn_name()
 	ved.update_view()
 }
 
@@ -1885,6 +1918,10 @@ fn (ved &Ved) get_last_view() &View {
 	unsafe {
 		return &ved.views[pos]
 	}
+}
+
+fn (ved &Ved) last_view_idx() int {
+	return (ved.workspace_idx + 1) * ved.nr_splits - 1
 }
 
 fn (mut ved Ved) save_changed_files() {
@@ -2181,6 +2218,7 @@ fn (ved &Ved) get_splits_from_to() (int, int) {
 
 fn (mut ved Ved) update_cur_fn_name() {
 	if !(ved.view.path.ends_with('.v') || ved.view.path.ends_with('.go')) {
+		ved.cur_fn_name = ''
 		return
 	}
 	if ved.view.lines.len < 2 {

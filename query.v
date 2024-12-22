@@ -282,7 +282,7 @@ fn (mut ved Ved) draw_query() {
 		height = 70
 	}
 	if ved.query_type == .grep {
-		width = 1000
+		width *= 2
 		height *= 2
 	} else if ved.query_type in [.ctrlp, .ctrlj] {
 		height = (max_grep_lines + 2) * (ved.cfg.line_height + line_padding) + 15
@@ -307,12 +307,12 @@ fn (mut ved Ved) draw_query() {
 	cursor_y := y + ved.cfg.line_height + 2
 	ved.gg.draw_rect(x: cursor_x, y: cursor_y, w: 2, h: ved.cfg.line_height - 4)
 	// Draw separator between query and files
-	if ved.query_type !in [.search, .cam] {
+	if ved.query_type !in [.search, .cam, .run] {
 		ved.gg.draw_rect(
 			x:     x
 			y:     y + ved.cfg.line_height * 2
 			w:     width
-			h:     2
+			h:     1
 			color: ved.cfg.comment_color
 		)
 	}
@@ -360,7 +360,12 @@ fn (mut ved Ved) draw_query_files(kind QueryType, x int, y int) {
 					ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
 				}
 				line_nr := s[pos + 1..pos2]
-				ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', ved.cfg.txt_cfg)
+				ved.gg.draw_text2(
+					x:     x + 10
+					y:     yy
+					text:  path.limit(50) + ':${line_nr}'
+					color: gx.purple
+				)
 				ved.gg.draw_text(x + ved.cfg.char_width * 45, yy, text, ved.cfg.txt_cfg)
 			}
 			.ctrlp, .ctrlj {
