@@ -521,7 +521,7 @@ fn (mut ved Ved) git_grep() {
 	}
 	lines := s.output.split_into_lines()
 	ved.gg_lines = []
-	for line in lines {
+	top_loop: for line in lines {
 		if line.contains('thirdparty/') {
 			continue
 		}
@@ -530,6 +530,14 @@ fn (mut ved Ved) git_grep() {
 		}
 		if line.contains('Binary file ') && line.contains(' matches') {
 			continue
+		}
+		// Handle grep file extensions to filter (defined in .ved file per workspace)
+		if ved.grep_file_exts[ved.workspace].len > 0 {
+			for ext in ved.grep_file_exts[ved.workspace] {
+				if !line.contains('.${ext}:') {
+					continue top_loop
+				}
+			}
 		}
 		ved.gg_lines << line
 	}

@@ -9,6 +9,7 @@ import os
 import time
 import uiold
 import clipboard
+import json
 
 const exe_dir = os.dir(os.executable())
 const home_dir = os.home_dir()
@@ -80,8 +81,15 @@ mut:
 	autocomplete_cache map[string][]AutocompleteField // autocomplete_cache["v.checker.Checker"] == [{"AnonFn", "void"}, {"cur_anon_fn", "AnonFn"}]
 	debug_info         string
 	debugger           Debugger
-	cur_fn_name        string // Always displayed on the top bar
+	cur_fn_name        string              // Always displayed on the top bar
+	grep_file_exts     map[string][]string // m['workspace_path'] == ['v', 'go']
 	// debugger_output      DebuggerOutput
+}
+
+// From parsed workspace/path/.ved json file
+struct Workspace {
+	grep_file_extensions []string
+	// path string
 }
 
 // For syntax highlighting
@@ -263,6 +271,7 @@ fn main() {
 		}
 		ved.open_workspace(0)
 	}
+	ved.grep_file_exts = read_grep_file_exts(ved.workspaces)
 	ved.load_session()
 	ved.load_timer()
 	println('first_launch=${first_launch}')
@@ -2243,4 +2252,25 @@ fn (mut ved Ved) update_cur_fn_name() {
 			break
 		}
 	}
+}
+
+fn read_grep_file_exts(workspaces []string) map[string][]string {
+	mut res := map[string][]string{}
+	for w in workspaces {
+		path := '${w}/.ved'
+		if !os.exists(path) {
+			continue
+		}
+		f := os.read_file(path) or {
+			println(err)
+			continue
+		}
+		x := json.decode(Workspace, f) or {
+			println(err)
+			continue
+		}
+		res[w] = x.grep_file_extensions
+		println('got ${x.grep_file_extensions} exts for workspace ${w}')
+	}
+	return res
 }
