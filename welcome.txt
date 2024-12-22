@@ -59,3 +59,13 @@ y d p J         yank, delete, paste, join lines
 gg G            go to the beginning/end of the file
 x r             delete/replace character under cursor
 C-n             autocomplete
+
+### .ved configuration file for each workspace
+Add a `.ved` json config file to the root of your workspace. Right now it supports the following options:
+
+```json
+{
+	"grep_file_extensions": ["go", "v"] // File extensions that git grep should search in. Everything else is ignored.
+}
+```
+
