@@ -80,7 +80,7 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						line := ved.gg_lines[ved.gg_pos]
 						path := line.all_before(':')
 						pos := line.index(':') or { 0 }
-						pos2 := line.index_after(':', pos + 1)
+						pos2 := line.index_after(':', pos + 1) or { -1 }
 						// line_nr := line[path.len + 1..].int() - 1
 						line_nr := line[pos + 1..pos2].int() - 1
 						ved.view.open_file(ved.workspace + '/' + path, line_nr)
@@ -351,7 +351,7 @@ fn (mut ved Ved) draw_query_files(kind QueryType, x int, y int) {
 			.grep {
 				pos := s.index(':') or { continue }
 				path := s[..pos].limit(55)
-				pos2 := s.index_after(':', pos + 1)
+				pos2 := s.index_after(':', pos + 1) or { -1 }
 				if pos2 == -1 || pos2 >= s.len - 1 {
 					continue
 				}
@@ -452,7 +452,7 @@ fn (mut ved Ved) draw_git_grep(x int, y int) {
 		}
 		pos := line.index(':') or { continue }
 		path := line[..pos].limit(50)
-		pos2 := line.index_after(':', pos + 1)
+		pos2 := line.index_after(':', pos + 1) or { -1 }
 		if pos2 == -1 || pos2 >= line.len - 1 {
 			continue
 		}
