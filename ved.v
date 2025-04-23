@@ -398,58 +398,6 @@ fn frame(mut ved Ved) {
 	ved.refresh = false
 }
 
-fn (ved &Ved) draw_cursor(cursor_x int, y int) {
-	mut width := ved.cfg.char_width
-	// println('CURSOR WIDTH=${ved.cfg.char_width}')
-	match ved.cfg.cursor_style {
-		.block {
-			width = ved.cfg.char_width
-		}
-		.beam {
-			width = 1
-		}
-		.variable {
-			if ved.mode == .insert {
-				width = 1
-			} else if ved.mode == .visual {
-				// FIXME: This looks terrible.
-				// ved.gg.draw_rect_filled(cursor_x, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-				// ved.gg.draw_rect_filled(cursor_x + ved.cfg.char_width, y, 1, ved.cfg.line_height, ved.cfg.cursor_color)
-			} else {
-				width = ved.cfg.char_width
-			}
-		}
-	}
-	ved.gg.draw_rect_empty(cursor_x, y, width, ved.cfg.line_height, ved.cfg.cursor_color)
-}
-
-fn (ved &Ved) calc_cursor_x() int {
-	line := ved.view.line()
-	// Tab offset for cursor
-	mut cursor_tab_off := 0
-	for i := 0; i < line.len && i < ved.view.x; i++ {
-		// if rune != '\t' {
-		if int(line[i]) != ved.cfg.tab {
-			break
-		}
-		cursor_tab_off++
-	}
-	from := ved.workspace_idx * ved.nr_splits
-	split_width := ved.split_width()
-	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
-	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.cfg.char_width
-	if cursor_tab_off > 0 {
-		// If there's a tab, need to shift the cursor to the left by   nr of tabsl
-		cursor_x -= ved.cfg.char_width * cursor_tab_off
-	}
-	return cursor_x
-}
-
-fn (ved &Ved) calc_cursor_y() int {
-	y := (ved.view.y - ved.view.from) * ved.cfg.line_height + ved.cfg.line_height
-	return y
-}
-
 fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	super := mod == .super
 	shift := mod == .shift
