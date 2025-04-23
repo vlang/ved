@@ -1379,14 +1379,20 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 			// Next workspace
 		}
+		// ]
 		.right_bracket {
 			if super {
 				ved.open_workspace(ved.workspace_idx + 1)
 			}
 		}
+		// [
 		.left_bracket {
 			if super {
 				ved.open_workspace(ved.workspace_idx - 1)
+			}
+			else if ved.prev_key == .left_bracket {
+				ved.go_to_fn_start()
+				println('[[ !!!!!')
 			}
 		}
 		._8 {
@@ -2052,44 +2058,6 @@ fn (mut ved Ved) key_u() {
 	}
 }
 
-fn (mut ved Ved) go_to_def() {
-	word := ved.word_under_cursor()
-	// println('GD "$word"')
-	queries := [') ${word}(', 'fn ${word}(']
-	mut view := ved.view
-	for query in queries {
-		for i, line in view.lines {
-			if line.contains(query) {
-				ved.move_to_line(i)
-				return
-			}
-		}
-	}
-	// Not found in current file, try all files in the git tree
-	if ved.all_git_files.len == 0 {
-		// ctrl p not pressed, force to generate all git files list
-		ved.load_git_tree()
-	}
-	for query in queries {
-		for file_ in ved.all_git_files {
-			mut file := file_.to_lower()
-			file = file.trim_space()
-			if !file.ends_with('.v') {
-				continue
-			}
-			file = '${ved.workspace}/${file}'
-			lines := os.read_lines(file) or { continue }
-			// println('trying file $file with $lines.len lines')
-			for j, line in lines {
-				if line.contains(query) {
-					view.open_file(file, j)
-					// ved.move_to_line(j)
-					return
-				}
-			}
-		}
-	}
-}
 
 fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	println('crash!')
