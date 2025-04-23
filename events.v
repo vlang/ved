@@ -630,20 +630,28 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, mod gg.Modifier) {
 				ved.view.shift_left()
 			}
 		}
-		.g {
+		.g { // Handle 'g' in visual mode
 			if shift { // G key
 				// Select to end of file
 				if view.lines.len > 0 {
 					view.vend = view.lines.len - 1
 					view.set_y(view.vend) // Move cursor to last line
-					// Adjust scroll position
-					view.from = view.vend - view.page_height + 1
-					if view.from < 0 {
-						view.from = 0
+					// Scroll view to show the end
+					view.from = if view.vend > view.page_height {
+						view.vend - view.page_height + 1
+					} else {
+						0
 					}
 				}
+				ved.prev_key = .invalid // Reset potential double-key sequence
+				return
+			} else if ved.prev_key == .g { // gg key (Select to start of file)
+				view.vend = 0 // Select up to the first line (index 0)
+				view.set_y(0) // Move cursor to the first line
+				view.from = 0 // Ensure the top of the file is visible
+				ved.prev_key = .invalid // Reset the double-key state
+				return
 			}
-			// Note: `gg` is not typically used in visual mode, handled in normal mode.
 		}
 		// Page Down handling
 		.page_down, .f {
@@ -664,9 +672,10 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, mod gg.Modifier) {
 			view.vend = view.y // Extend selection to new cursor position
 		}
 		else {}
-	}
-	if key != .r {
-		// otherwise R is triggered when we press C-R
+	} // end match key
+
+	// Default prev_key handling (only if the key wasn't part of a completed sequence like gg or G)
+	if key != .r { // Keep the existing check for 'r'
 		ved.prev_key = key
 	}
 }
