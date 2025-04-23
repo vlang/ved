@@ -42,14 +42,18 @@ fn (mut ved Ved) go_to_def() {
 	}
 }
 
+// Implements the `[[` command, moving the cursor to the start of the current or preceding function definition.
 fn (mut ved Ved) go_to_fn_start() {
 	mut view := ved.view
 	// Start checking from the line *above* the current cursor position
 	mut current_line_nr := view.y - 1
 
 	for current_line_nr >= 0 {
+		// Ensure we don't access an invalid index if the file is empty or near the beginning
 		if current_line_nr < view.lines.len {
 			line := view.lines[current_line_nr]
+			// Check if the line starts with "fn " (V function definition)
+			// TODO: Potentially add checks for other languages like Go ("func ") if needed
 			if line.starts_with('fn ') {
 				ved.move_to_line(current_line_nr)
 				view.zz() // Center the view on the found function
