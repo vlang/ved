@@ -17,7 +17,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	ved.error_line = ''
 	match ved.mode {
 		.normal { ved.key_normal(key, mod) }
-		.visual { ved.key_visual(key, super, shift) }
+		.visual { ved.key_visual(key, mod) } // Pass full mod
 		.insert { ved.key_insert(key, mod) }
 		.query { ved.key_query(key, super) }
 		.timer { ved.timer.key_down(key, super) }
@@ -583,7 +583,9 @@ fn (mut ved Ved) char_insert(s string) {
 	// println(ved.prev_insert)
 }
 
-fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
+fn (mut ved Ved) key_visual(key gg.KeyCode, mod gg.Modifier) {
+	super := mod == .super || mod == .ctrl
+	shift := mod == .shift
 	mut view := ved.view
 	match key {
 		.j {
@@ -627,6 +629,21 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 				// <
 				ved.view.shift_left()
 			}
+		}
+		.g {
+			if shift { // G key
+				// Select to end of file
+				if view.lines.len > 0 {
+					view.vend = view.lines.len - 1
+					view.set_y(view.vend) // Move cursor to last line
+					// Adjust scroll position
+					view.from = view.vend - view.page_height + 1
+					if view.from < 0 {
+						view.from = 0
+					}
+				}
+			}
+			// Note: `gg` is not typically used in visual mode, handled in normal mode.
 		}
 		// Page Down handling
 		.page_down, .f {
