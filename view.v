@@ -249,10 +249,16 @@ fn (view &View) char() int {
 }
 
 fn (mut view View) set_line(newline string) {
-	if view.y + 1 > view.lines.len {
-		view.lines << newline
-	} else {
+	if view.y < 0 { // Basic sanity check
+		return
+	}
+	if view.y < view.lines.len { // Check if index is within current bounds
 		view.lines[view.y] = newline
+	} else if view.y == view.lines.len { // Check if index is exactly one past the end
+		view.lines << newline
+	} else { // Index is too large
+		// Optionally, append anyway or just return to prevent further issues
+		view.lines << newline // Append as a fallback? Or just return? Append seems safer for paste.
 	}
 	view.changed = true
 }
@@ -549,7 +555,18 @@ fn (mut view View) o() {
 fn (mut view View) o_generic(delta int) {
 	view.y += delta
 	// Insert the same amount of spaces/tabs as in prev line
-	prev_line := if view.lines.len == 0 || view.y == 0 { '' } else { view.lines[view.y - 1] }
+	prev_line := if view.lines.len == 0 || view.y == 0 {
+		''
+	} else {
+		// Ensure index is valid before accessing
+		prev_idx := view.y - 1
+		if prev_idx >= 0 && prev_idx < view.lines.len { // Added check
+			view.lines[prev_idx]
+		} else {
+			// This case shouldn't happen based on the logic, but handle defensively
+			'' // Default to no indentation if index is bad
+		}
+	}
 	nr_spaces, nr_tabs := nr_spaces_and_tabs_in_line(prev_line)
 	mut new_line := strings.repeat(`\t`, nr_tabs) + strings.repeat(` `, nr_spaces)
 	if prev_line.ends_with('{') || prev_line.ends_with('{ ') {
