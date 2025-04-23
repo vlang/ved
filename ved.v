@@ -439,7 +439,7 @@ fn (ved &Ved) calc_cursor_x() int {
 	line_x := split_width * (ved.cur_split - from) + ved.view.padding_left + 10
 	mut cursor_x := line_x + (ved.view.x + cursor_tab_off * ved.cfg.tab_size) * ved.cfg.char_width
 	if cursor_tab_off > 0 {
-		// If there's a tab, need to shift the cursor to the left by  nr of tabsl
+		// If there's a tab, need to shift the cursor to the left by   nr of tabsl
 		cursor_x -= ved.cfg.char_width * cursor_tab_off
 	}
 	return cursor_x
@@ -1238,9 +1238,27 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 		}
 		.comma {
 			if shift {
-				// >
+				// <
 				ved.view.shift_left()
 			}
+		}
+		// Page Down handling
+		.page_down, .f {
+			if key == .f && !super {
+				// Only handle Ctrl+F for page down
+				return
+			}
+			view.shift_f() // Move view and cursor
+			view.vend = view.y // Extend selection to new cursor position
+		}
+		// Page Up handling
+		.page_up, .b {
+			if key == .b && !super {
+				// Only handle Ctrl+B for page up
+				return
+			}
+			view.shift_b() // Move view and cursor
+			view.vend = view.y // Extend selection to new cursor position
 		}
 		else {}
 	}
