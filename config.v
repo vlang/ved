@@ -57,6 +57,7 @@ mut:
 	red_color       gx.Color // base08
 	red_cfg         gx.TextCfg
 	disable_mouse   bool = true
+	show_file_tree  bool
 	// Config.json
 	disable_fmt bool
 }
@@ -325,6 +326,7 @@ fn (mut ved Ved) load_config2() {
 			println(err)
 		}
 	}
+	ved.cfg.set_default_values()
 }
 
 fn (mut ved Ved) save_config2() {

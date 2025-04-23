@@ -51,8 +51,9 @@ fn (mut ved Ved) build_app(extra string) {
 
 	ved.views[last_view_idx].shift_g()
 	// error line
-	alines := out.output.split_into_lines()
-	lines := alines.filter(it.contains('.v:') || it.contains('.go:'))
+	lines := out.output.split_into_lines()
+	println('lines=${lines}')
+	// lines := alines.filter(it.contains('.v:') || it.contains('.go:'))
 	mut no_errors := true // !out.output.contains('error:')
 	for line in lines {
 		// no "warning:" in a line means it's an error
@@ -60,13 +61,40 @@ fn (mut ved Ved) build_app(extra string) {
 			no_errors = false
 		}
 	}
-	for line in lines {
+	println('no_errors=${no_errors}')
+	mut i := 0
+	for _, line in lines {
+		if !line.contains('.v:') && !line.contains('.go:') {
+			println('skip1 ${line}')
+			i++
+			continue
+		}
 		is_warning := line.contains('warning:')
 		is_notice := line.contains('notice:')
+		is_error := line.contains('error:')
+		if !is_warning && !is_notice && !is_error {
+			println('skip2 ${line}')
+			i++
+			continue
+		}
+		println('${i}, HANDLE E LINE ${line}')
 		// Go to the next warning only if there are no errors.
 		// This makes Ved go to errors before warnings.
-		if (!is_notice && !is_warning) || (is_warning && no_errors) || (is_notice && no_errors) {
-			ved.go_to_error(line)
+		if is_error && ((!is_notice && !is_warning) || (is_warning && no_errors)
+			|| (is_notice && no_errors)) {
+			mut error_details := ''
+			for i < lines.len - 1 {
+				if lines[i].contains('Details') {
+					error_details += lines[i]
+					if i + 1 < lines.len {
+						error_details += lines[i + 1]
+						break
+					}
+				}
+				i++
+			}
+			// next_line := if i < lines.len - 1 { lines[i + 1] } else { '' }
+			ved.go_to_error(line, error_details)
 			break
 		}
 	}
@@ -118,7 +146,7 @@ fn (mut ved Ved) run_file() {
 	lines := out.output.split_into_lines()
 	for line in lines {
 		if line.contains('.v:') || line.contains('.go:') {
-			ved.go_to_error(line)
+			ved.go_to_error(line, '')
 			break
 		}
 	}

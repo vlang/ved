@@ -46,7 +46,7 @@ mut:
 	query              string
 	search_query       string
 	query_type         QueryType
-	workspace          string
+	workspace          string // full path of the current workspace (a short version of it is rendered on otp right)
 	workspace_idx      int
 	workspaces         []string
 	ylines             []string // for y, yy
@@ -84,6 +84,7 @@ mut:
 	cur_fn_name        string              // Always displayed on the top bar
 	grep_file_exts     map[string][]string // m['workspace_path'] == ['v', 'go']
 	// debugger_output      DebuggerOutput
+	tree Tree // for rendering file tree on the left
 }
 
 // From parsed workspace/path/.ved json file
@@ -137,6 +138,10 @@ const is_window = '-window' in args
 
 fn get_screen_size() (int, int) {
 	mut size := gg.screen_size()
+	println('AAA SIZE=$size')
+	if true {
+		//exit(0)
+	}
 	if size.width == 0 || size.height == 0 {
 		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
 	}
@@ -177,7 +182,6 @@ fn main() {
 	println('CONFIG')
 	println(ved.cfg)
 	ved.load_config2()
-	ved.cfg.set_default_values()
 
 	ved.nr_splits = ved.get_nr_splits_from_screen_size(width, height)
 	ved.calc_nr_splits_from_text_size()
@@ -274,6 +278,7 @@ fn main() {
 	ved.grep_file_exts = read_grep_file_exts(ved.workspaces)
 	ved.load_session()
 	ved.load_timer()
+	ved.init_tree()
 	println('first_launch=${first_launch}')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
 		ved.view.open_file(os.join_path(exe_dir, 'welcome.txt'), 0)
@@ -583,6 +588,10 @@ fn (mut ved Ved) draw() {
 			color: gx.white
 			align: gx.align_left
 		})
+	}
+	if ved.cfg.show_file_tree {
+		// Draw file tree
+		ved.tree.draw(mut ved)
 	}
 }
 
@@ -1571,11 +1580,13 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, super bool, shift bool) {
 			if view.vend >= view.from + view.page_height {
 				view.from++
 			}
+			ved.view.j() // Move the cursor down as well (mimics vim's behavior)
 		}
 		.k {
 			if view.vend > 0 {
 				view.vend--
 			}
+			ved.view.k() // Move the cursor up as well (mimics vim's behavior)
 		}
 		.y {
 			view.y_visual()
@@ -1755,8 +1766,8 @@ fn (mut ved Ved) move_to_line(n int) {
 fn (ved &Ved) save_session() {
 	println('saving session...')
 	mut f := os.create(session_path) or { panic('fail') }
-	for i, view in ved.views {
-		println('saving view #${i} ${view.path}')
+	for _, view in ved.views {
+		// println('saving view #${i} ${view.path}')
 		// if view.path == '' {
 		// continue
 		// }
@@ -1953,13 +1964,11 @@ fn (mut ved Ved) get_build_file_location() ?string {
 	return build_file
 }
 
-fn (mut ved Ved) go_to_error(line string) {
+fn (mut ved Ved) go_to_error(line string, error_details string) {
 	ved.error_line = line.after('error: ')
+	ved.error_line += '    ' + error_details
 	// panic: volt/twitch.v:88
-	println('go to ERROR line="${line}"')
-	// if !line.contains('panic:') {
-	// return
-	// }
+	println('go to ERROR line="${line}" error_details=${error_details}')
 	// line = line.replace('panic: ', '')
 	vals := line.split(':')
 	println('vals=${vals}')
