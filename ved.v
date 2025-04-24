@@ -54,7 +54,7 @@ mut:
 	git_diff_minus     string
 	syntaxes           []Syntax
 	current_syntax_idx int
-	chunks             []Chunk
+	chunks             []Chunk // Used temporarily during highlighting
 	is_building        bool
 	timer              Timer
 	task_start_unix    i64
@@ -63,7 +63,6 @@ mut:
 	file_y_pos         map[string]int // to save current line for each file s
 	refresh            bool = true
 	char_width         int
-	is_ml_comment      bool
 	gg_lines           []string
 	gg_pos             int
 	cfg                Config

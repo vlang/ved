@@ -2,6 +2,7 @@ module main
 
 import gx
 import os
+import time
 
 fn (mut ved Ved) draw() {
 	mut view := ved.view
@@ -154,13 +155,21 @@ fn (ved &Ved) split_x(i int) int {
 
 fn (mut ved Ved) draw_split(i int, split_from int) {
 	view := ved.views[i]
-	ved.is_ml_comment = false
+	// Determine initial comment state for the first visible line
+	// (handle /**/ comments blocks that start before current page)
+	mut current_is_ml_comment := false
+	if view.hl_on {
+		current_is_ml_comment = ved.determine_ml_comment_state(view, view.from)
+	}
+	ext := os.file_ext(view.path) // Cache extension
+	mcomment := get_mcomment_by_ext(ext) // Cache delimiters
+
 	split_width := ved.split_width()
 	split_x := split_width * (i - split_from)
 	// Vertical split line
 	ved.gg.draw_line(split_x, ved.cfg.line_height + 1, split_x, ved.win_height, ved.cfg.split_color)
 	// Lines
-	mut line_nr := 1 // relative y
+	mut line_nr_rel := 1 // relative y on screen
 	for j := view.from; j < view.from + ved.page_height && j < view.lines.len; j++ {
 		line := view.lines[j]
 		if line.len > 5000 {
@@ -168,7 +177,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 			continue
 		}
 		x := split_x + view.padding_left
-		y := line_nr * ved.cfg.line_height
+		y := line_nr_rel * ved.cfg.line_height
 		// Error bg
 		if view.error_y == j {
 			ved.gg.draw_rect_filled(x + 10, y - 1, split_width - view.padding_left - 10,
@@ -201,7 +210,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 		mut s := line[nr_tabs..] // tabs have been skipped, remove them from the string
 		if s == '' {
-			line_nr++
+			line_nr_rel++
 			continue
 		}
 		// Number of chars to display in this view
@@ -230,16 +239,51 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 				s = s[..max]
 			}
 		}
+
 		if view.hl_on {
-			// println('line="$s" nrtabs=$nr_tabs line_x=$line_x')
-			ved.draw_text_line(line_x, y, s, os.file_ext(view.path))
+			// Handle multi page /**/
+			start_comment_pos := s.index(mcomment.start1.str() + mcomment.start2.str()) or { -1 }
+			end_comment_pos := s.index(mcomment.end1.str() + mcomment.end2.str()) or { -1 }
+			if current_is_ml_comment {
+				if end_comment_pos != -1 { // Comment ends on this line
+					// Draw comment part
+					comment_part := s[..end_comment_pos + 2]
+					ved.gg.draw_text(line_x, y, comment_part, ved.cfg.comment_cfg)
+					// Draw rest normally
+					normal_part := s[end_comment_pos + 2..]
+					if normal_part.len > 0 {
+						normal_part_x := line_x + comment_part.len * ved.cfg.char_width // Adjust based on actual rendered width if needed
+						ved.draw_text_line_standard_syntax(normal_part_x, y, normal_part,
+							ext)
+					}
+					current_is_ml_comment = false // Update state for next line
+				} else { // Entire line is inside the comment
+					ved.gg.draw_text(line_x, y, s, ved.cfg.comment_cfg)
+					// current_is_ml_comment remains true
+				}
+			} else { // current_is_ml_comment is false
+				if start_comment_pos != -1
+					&& (end_comment_pos == -1 || end_comment_pos < start_comment_pos) { // Comment starts here and continues
+					// Draw normal part before / *
+					normal_part := s[..start_comment_pos]
+					if normal_part.len > 0 {
+						ved.draw_text_line_standard_syntax(line_x, y, normal_part, ext)
+					}
+					// Draw comment part from / * onwards
+					comment_part := s[start_comment_pos..]
+					comment_part_x := line_x + normal_part.len * ved.cfg.char_width // Adjust based on actual rendered width if needed
+					ved.gg.draw_text(comment_part_x, y, comment_part, ved.cfg.comment_cfg)
+					current_is_ml_comment = true // Update state for next line
+				} else { // No multiline comment start OR it's a single-line /* ... */
+					// Use the standard highlighter for the whole line
+					ved.draw_text_line_standard_syntax(line_x, y, s, ext)
+					// current_is_ml_comment remains false
+				}
+			}
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
-		// if old_len != s.len {
-		// ved.draw_text_line(line_x, y + 1, '!!!')
-		//}
-		line_nr++
+		line_nr_rel++
 	}
 }
 
@@ -257,7 +301,10 @@ fn (mut ved Ved) add_chunk(typ ChunkKind, start int, end int) {
 	ved.chunks << chunk
 }
 
-fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
+// Handles syntax highlighting for a line assuming it does *not* start within a multi-line comment
+// and does *not* start a multi-line comment that continues to the next line.
+// It handles single-line comments (//, #), strings, keywords, literals, and single-line /* ... */ comments.
+fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext string) {
 	// mcomment := get_mcomment_by_ext(os.file_ext(ved.view.path))
 	mcomment := get_mcomment_by_ext(ext)
 	// Red/green test hack
@@ -274,74 +321,97 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
 	ved.chunks = []
 	cur_syntax := ved.syntaxes[ved.current_syntax_idx] or { Syntax{} }
 	// TODO use runes for everything to fix keyword + 2+ byte rune words
-	for i := 0; i < line.len; i++ {
+
+	mut i := 0 // Use mut i instead of for loop index to allow manual increment
+	for i < line.len {
 		start := i
 		// Comment // #
 		if i > 0 && line[i - 1] == `/` && line[i] == `/` {
 			ved.add_chunk(.a_comment, start - 1, line.len)
+			i = line.len // End the loop
 			break
 		}
 		if line[i] == `#` {
 			ved.add_chunk(.a_comment, start, line.len)
+			i = line.len // End the loop
 			break
 		}
-		// Comment   /*
-		// (unless it's /* line */ which is a single line)
-		if i > 0 && line[i - 1] == mcomment.start1 && line[i] == mcomment.start2
-			&& !(line[line.len - 2] == mcomment.end1 && line[line.len - 1] == mcomment.end2) {
-			// All after /* is  a comment
-			ved.add_chunk(.a_comment, start, line.len)
-			ved.is_ml_comment = true
-			break
+
+		// Single line Comment /* ... */
+		if i < line.len - 1 && line[i] == mcomment.start1 && line[i + 1] == mcomment.start2 {
+			end_pos := line.index_after(mcomment.end1.str() + mcomment.end2.str(), i + 2) or { -1 }
+			if end_pos != -1 {
+				ved.add_chunk(.a_comment, start, end_pos + 2)
+				i = end_pos + 2 // Move past the comment
+				continue
+			} else {
+				// This case (start found but no end on this line) should be handled by the new logic in draw_split.
+				// If we reach here, it means draw_split decided this line doesn't start a *continuing* multiline comment.
+				// Treat the '/*' as normal text by just advancing `i`.
+				i += 1
+				continue
+			}
 		}
-		// End of /**/
-		if i > 0 && line[i - 1] == mcomment.end1 && line[i] == mcomment.end2 {
-			// All before */ is still a comment
-			ved.add_chunk(.a_comment, 0, start + 1)
-			ved.is_ml_comment = false
-			break
-		}
-		// String
+		// String '...'
 		if line[i] == `'` {
-			i++
-			for i < line.len - 1 && line[i] != `'` {
-				i++
+			mut end := i + 1
+			for end < line.len && line[end] != `'` {
+				// Handle escaped quote \'
+				if line[end] == `\\` && end + 1 < line.len && line[end + 1] == `'` {
+					end++ // Skip escaped quote
+				}
+				end++
 			}
-			if i >= line.len {
-				i = line.len - 1
-			}
-			ved.add_chunk(.a_string, start, i + 1)
+			if end >= line.len {
+				end = line.len - 1
+			} else {
+				end += 1
+			} // include closing quote
+			ved.add_chunk(.a_string, start, end)
+			i = end // Move past the string
+			continue
 		}
+		// String "..."
 		if line[i] == `"` {
-			i++
-			for i < line.len - 1 && line[i] != `"` {
-				i++
+			mut end := i + 1
+			for end < line.len && line[end] != `"` {
+				// Handle escaped quote \"
+				if line[end] == `\\` && end + 1 < line.len && line[end + 1] == `"` {
+					end++ // Skip escaped quote
+				}
+				end++
 			}
-			if i >= line.len {
-				i = line.len - 1
-			}
-			ved.add_chunk(.a_string, start, i + 1)
+			if end >= line.len {
+				end = line.len - 1
+			} else {
+				end += 1
+			} // include closing quote
+			ved.add_chunk(.a_string, start, end)
+			i = end // Move past the string
+			continue
 		}
 		// Key
-		for i < line.len && is_alpha_underscore(int(line[i])) {
-			i++
+		if is_alpha_underscore(int(line[i])) {
+			mut end := i + 1
+			for end < line.len && is_alpha_underscore(int(line[end])) {
+				end++
+			}
+			word := line[start..end]
+			if word in cur_syntax.literals {
+				ved.add_chunk(.a_lit, start, end)
+			} else if word in cur_syntax.keywords {
+				ved.add_chunk(.a_key, start, end)
+			}
+			// If it's not a keyword or literal, it will be drawn as normal text later.
+			i = end // Move past the word
+			continue
 		}
-		word := line[start..i]
-		// println('word="$word"')
-		if word in cur_syntax.literals {
-			// println('$word is key')
-			ved.add_chunk(.a_lit, start, i)
-			// println('adding key. len=$ved.chunks.len')
-		} else if word in cur_syntax.keywords {
-			// println('$word is key')
-			ved.add_chunk(.a_key, start, i)
-			// println('adding key. len=$ved.chunks.len')
-		}
+
+		// If none of the above matched, advance by one character
+		i++
 	}
-	if ved.is_ml_comment {
-		ved.gg.draw_text(x, y, line, ved.cfg.comment_cfg)
-		return
-	}
+
+	// --- Keep the original chunk drawing logic ---
 	if ved.chunks.len == 0 {
 		// println('no chunks')
 		ved.gg.draw_text(x, y, line, ved.cfg.txt_cfg)
@@ -352,7 +422,7 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
 	// TODO use runes
 	// runes := msg.runes.slice_fast(chunk.pos, chunk.end)
 	// txt := join_strings(runes)
-	for i, chunk in ved.chunks {
+	for j, chunk in ved.chunks {
 		// println('chunk #$i start=$chunk.start end=$chunk.end typ=$chunk.typ')
 		// Initial text chunk (not necessarily initial, but the one right before current chunk,
 		// since we don't have a seperate chunk for text)
@@ -372,11 +442,12 @@ fn (mut ved Ved) draw_text_line(x int, y int, line string, ext string) {
 		ved.gg.draw_text(x + chunk.start * ved.cfg.char_width, y, s, cfg)
 		pos = chunk.end
 		// Final text chunk
-		if i == ved.chunks.len - 1 && chunk.end < line.len {
-			final := line[chunk.end..line.len]
+		if j == ved.chunks.len - 1 && chunk.end < line.len {
+			final := line[chunk.end..]
 			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, final, ved.cfg.txt_cfg)
 		}
 	}
+	// --- End of original chunk drawing logic ---
 }
 
 fn (ved &Ved) draw_cursor(cursor_x int, y int) {
