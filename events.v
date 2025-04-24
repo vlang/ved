@@ -5,7 +5,6 @@ import gg
 
 fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	super := mod == .super
-	shift := mod == .shift
 	if key == .escape {
 		if ved.mode == .visual {
 			ved.exit_visual()
