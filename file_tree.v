@@ -40,8 +40,8 @@ fn (mut t Tree) init(workspace_path string) {
 	t.root = 0
 	t.load_children(t.root)
 	t.refresh()
-	//println('TTTT')
-	//println(t)
+	// println('TTTT')
+	// println(t)
 }
 
 fn (mut t Tree) refresh() {

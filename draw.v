@@ -2,7 +2,6 @@ module main
 
 import gx
 import os
-import time
 
 fn (mut ved Ved) draw() {
 	mut view := ved.view
