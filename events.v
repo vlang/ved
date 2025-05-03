@@ -3,6 +3,94 @@ module main
 import os
 import gg
 
+fn (mut ved Ved) on_event(e &gg.Event) {
+	// println('on_event ${ved.win_width}')
+	ved.refresh = true
+	/*
+	// TODO change win height/width only on cmd + enter (exit full screen etc)
+	mut size := gg.screen_size()
+
+	// Fix macbook notch crap
+	$if macos {
+		if size.height % 20 != 0 {
+			// size.height -= size.height % 20 + ved.cfg.line_height
+			size.height -= 32 // ved.cfg.line_height
+		}
+	}
+	ved.win_height = size.height
+	ved.win_width = size.width
+	*/
+
+	if e.typ == .mouse_scroll {
+		if e.scroll_y < -0.2 {
+			ved.view.j()
+		} else if e.scroll_y > 0.2 {
+			ved.view.k()
+		}
+	}
+
+	// FIXME: The rounding math here cause the Y coord to be unintuitive sometimes.
+	if e.typ == .mouse_down {
+		if ved.cfg.disable_mouse {
+			return
+		}
+
+		mut view := ved.view
+
+		mut current_line := ''
+		if view.y > 0 && view.y < view.lines.len {
+			current_line = view.lines[view.y]
+		}
+		current_line_split := current_line.split('\t')
+		mut leading_tabs := 0
+		for i := 0; i < current_line_split.len; i++ {
+			if current_line_split[i] == '' {
+				leading_tabs++
+			}
+		}
+
+		// Focus the pane currently under the cursor before continuing
+		for i := 0; i < ved.nr_splits; i++ {
+			sw := ved.split_width()
+			starting_x := 2 * i * sw
+			ending_x := 2 * (i + 1) * sw
+
+			if e.mouse_x > starting_x && e.mouse_x < ending_x {
+				ved.cur_split = i
+				ved.update_view()
+			}
+		}
+
+		clicked_y := int((e.mouse_y / ved.cfg.line_height - 1.5) / 2) + ved.view.from
+		if clicked_y >= view.lines.len {
+			if view.lines.len == 0 {
+				view.set_y(0)
+			} else {
+				view.set_y(view.lines.len - 1)
+			}
+		} else if clicked_y < 0 {
+			view.set_y(1)
+		} else {
+			view.set_y(clicked_y)
+		}
+
+		// Wow, that's a lot of math that is probably pretty hard to parse.
+		// In the future I need to separate this into several variables,
+		// and perhaps even its own function.
+		clicked_x := int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
+		if view.lines.len <= 0 {
+			return
+		}
+		if clicked_x > view.lines[view.y].len {
+			view.x = view.lines[view.y].len
+		} else if clicked_x < 0 {
+			view.x = 0
+		} else {
+			view.x = clicked_x
+		}
+	}
+}
+
 fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	super := mod == .super
 	if key == .escape {

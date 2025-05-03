@@ -38,6 +38,10 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 					return
 				}
 				ved.query = ved.query[..ved.query.len - 1]
+				// Re-filter ctrlp results on backspace to update the list immediately
+				if ved.query_type == .ctrlp {
+					ved.filter_ctrlp_results()
+				}
 			} else {
 				if ved.search_query.len == 0 {
 					return
@@ -76,7 +80,7 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 				}
 				.grep {
 					// Key down was pressed after typing, now pressing enter opens the file
-					if ved.gg_pos > -1 && ved.gg_lines.len > 0 {
+					if ved.gg_pos > -1 && ved.gg_lines.len > 0 && ved.gg_pos < ved.gg_lines.len {
 						line := ved.gg_lines[ved.gg_pos]
 						path := line.all_before(':')
 						pos := line.index(':') or { 0 }
@@ -117,8 +121,12 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 					}
 					.ctrlp {
 						ved.gg_pos++
-						if ved.gg_pos >= ved.all_git_files.len {
-							ved.gg_pos = ved.all_git_files.len - 1
+						// Use ctrlp_results length for boundary check
+						if ved.gg_pos >= ved.ctrlp_results.len {
+							ved.gg_pos = ved.ctrlp_results.len - 1
+						}
+						if ved.gg_pos < 0 && ved.ctrlp_results.len > 0 { // Handle empty case
+							ved.gg_pos = 0
 						}
 					}
 					.search {
@@ -138,7 +146,7 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 		.up {
 			if ved.mode == .query {
 				match ved.query_type {
-					.grep, .ctrlp {
+					.grep, .ctrlp { // Apply same logic to ctrlp
 						ved.gg_pos--
 						if ved.gg_pos < 0 {
 							ved.gg_pos = 0
@@ -158,9 +166,23 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 			}
 		}
 		.tab {
-			// TODO COPY PASTA
-			if ved.mode == .query && ved.query_type == .grep {
-				ved.gg_pos++
+			// TODO COPY PASTA - adapt for ctrlp if needed
+			if ved.mode == .query {
+				match ved.query_type {
+					.grep {
+						ved.gg_pos++
+						if ved.gg_pos >= ved.gg_lines.len {
+							ved.gg_pos = 0 // wrap around? or stop?
+						}
+					}
+					.ctrlp {
+						ved.gg_pos++
+						if ved.gg_pos >= ved.ctrlp_results.len {
+							ved.gg_pos = 0 // wrap around? or stop?
+						}
+					}
+					else {}
+				}
 			}
 			ved.just_switched = true
 		}
@@ -168,6 +190,10 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 			if super {
 				clip := ved.cb.paste()
 				ved.query += clip
+				// Re-filter ctrlp results after paste
+				if ved.query_type == .ctrlp {
+					ved.filter_ctrlp_results()
+				}
 			}
 		}
 		else {}
@@ -178,67 +204,113 @@ fn (mut ved Ved) char_query(s string) {
 	if int(s[0]) < 32 {
 		return
 	}
-	mut q := ved.query
 	// println('char q(${s}) ${ved.query_type}')
 	if ved.query_type in [.search, .search_in_folder, .grep] {
-		q = ved.search_query
-		ved.search_query = q + s
+		ved.search_query += s
 		println('new sq=${ved.search_query}')
+	} else if ved.query_type == .ctrlp {
+		ved.query += s
+		ved.filter_ctrlp_results() // Filter results as user types
 	} else {
-		ved.query = q + s
+		ved.query += s
 	}
 }
 
+// Loads files for the *current* workspace into `all_git_files`.
 fn (mut ved Ved) load_git_tree() {
-	ved.query = ''
+	ved.query = '' // Reset query when loading tree
+	ved.ctrlp_results = [] // Reset ctrlp results as well
+	ved.gg_pos = -1
 
 	mut dir := ved.workspace
 	if dir == '' {
-		dir = '.'
+		dir = '.' // Should not happen if workspace is managed correctly
 	}
 	if ved.is_git_tree() {
-		// Cache all git files
+		// Cache all git files for the current workspace
 		s := os.execute('git -C ${dir} ls-files')
 		if s.exit_code == -1 {
+			ved.all_git_files = []
 			return
 		}
 		ved.all_git_files = s.output.split_into_lines()
 	} else {
+		/*
 		// Get all files if not a git repo
 		mut files := []string{}
 		os.walk_with_context(dir, &files, fn (mut fs []string, f string) {
 			if f == '.' || f == '..' {
 				return
 			}
-			if os.is_file(f) {
-				fs << f
+			full_path := os.join_path(dir, f) // Need full path for is_file check
+			if os.is_file(full_path) {
+				// Store relative path
+				fs << f.replace(dir + os.path_separator, '')
 			}
 		})
-
-		ved.all_git_files = []
-		for f in files {
-			ved.all_git_files << f.all_after('${dir}/')
-		}
+		ved.all_git_files = files
+		*/
 	}
-	/*
-	ved.all_git_files = []
-	ved.all_git_files << ved.view.open_paths
-	mut git_files := s.output.split_into_lines()
-	git_files.sort_by_len()
-	ved.all_git_files << git_files
-	*/
 	ved.all_git_files.sort_by_len()
+	// Also filter results initially when Ctrl+P is pressed
+	if ved.query_type == .ctrlp {
+		ved.filter_ctrlp_results()
+	}
 }
 
-fn (ved &Ved) load_all_tasks() {
-	/*
-	mut rows := ved.timer.db.q_strings('select distinct name from tasks')
-	for row in rows {
-		t := row.vals[0]
-		ved.top_tasks << t
+// Filters files for Ctrl+P based on the current query.
+// Searches current workspace first, then others if no results found.
+fn (mut ved Ved) filter_ctrlp_results() {
+	ved.ctrlp_results = [] // Clear previous results
+	ved.gg_pos = -1 // Reset selection
+	query_lower := ved.query.to_lower()
+
+	// 1. Search current workspace
+	current_ws_path := ved.workspace
+	for file_ in ved.all_git_files { // all_git_files should hold current workspace files
+		file_path := file_.trim_space()
+		if file_path.to_lower().contains(query_lower) {
+			ved.ctrlp_results << CtrlPResult{
+				file_path:      file_path
+				workspace_path: current_ws_path
+				display_name:   file_path
+			}
+			// Limit results early?
+			// Stop adding results once we reach the display limit to avoid unnecessary processing
+			if ved.ctrlp_results.len >= nr_ctrlp_results {
+				return
+			}
+		}
 	}
-	println(ved.top_tasks)
-	*/
+
+	// 2. If no results in current workspace and query is not empty, search others
+	if ved.ctrlp_results.len == 0 && query_lower != '' {
+		for ws_path in ved.workspaces {
+			if ws_path == current_ws_path {
+				continue // Skip current workspace, already searched
+			}
+			// Get files for this other workspace (might be slow if not cached)
+			other_files := ved.get_files_for_workspace(ws_path)
+			short_ws_name := short_space(ws_path)
+			for file_path in other_files {
+				file_path_trimmed := file_path.trim_space()
+				if file_path_trimmed.to_lower().contains(query_lower) {
+					ved.ctrlp_results << CtrlPResult{
+						file_path:      file_path_trimmed
+						workspace_path: ws_path
+						display_name:   '${file_path_trimmed} (${short_ws_name})'
+					}
+					// Limit results early?
+					if ved.ctrlp_results.len >= nr_ctrlp_results {
+						return
+					}
+				}
+			}
+		}
+	}
+
+	// Optionally sort results here if needed (e.g., by length, alphabetically)
+	// ved.ctrlp_results.sort(...)
 }
 
 fn (mut ved Ved) is_git_tree() bool {
@@ -246,7 +318,7 @@ fn (mut ved Ved) is_git_tree() bool {
 
 	out := os.execute('git -C "${path}" rev-parse --is-inside-work-tree')
 	if out.exit_code != -1 {
-		return out.output == 'true\n'
+		return out.output.trim_space() == 'true' // Ensure comparison is robust
 	}
 
 	return false
@@ -256,7 +328,7 @@ fn (q QueryType) str() string {
 	return match q {
 		.search { 'find' }
 		.search_in_folder { 'find in folder' }
-		.ctrlp { 'ctrl p (git files)' }
+		.ctrlp { 'ctrl p (files)' } // Updated title
 		.open { 'open' }
 		.open_workspace { 'open workspace' }
 		.cam { 'git commit -am' }
@@ -272,29 +344,38 @@ const small_queries = [QueryType.search, .cam, .open, .run, .alert] //.grep
 
 const max_grep_lines = 20
 const query_width = 700
+const nr_ctrlp_results = 20 // Max results to show for Ctrl+P
+const line_padding = 5
 
 // Search, commit, open, ctrl p
 fn (mut ved Ved) draw_query() {
 	// println('DRAW Q type=$ved.query_type')
 	mut width := query_width
-	mut height := 360
+	mut height := 360 // Default height
+
+	// Determine fixed height based on query type
 	if ved.query_type in small_queries {
 		height = 70
-	}
-	if ved.query_type == .grep {
-		width *= 2
-		height *= 2
-	} else if ved.query_type in [.ctrlp, .ctrlj] {
+	} else if ved.query_type == .grep {
+		width *= 2 // Keep grep wide
+		// Use fixed height based on max_grep_lines
 		height = (max_grep_lines + 2) * (ved.cfg.line_height + line_padding) + 15
+	} else if ved.query_type in [.ctrlp, .ctrlj] {
+		// Use fixed height based on nr_ctrlp_results
+		height = (nr_ctrlp_results + 2) * (ved.cfg.line_height + line_padding) + 15
 	}
+	// Ensure minimum height
+	if height < 70 {
+		height = 70
+	}
+
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
 	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
-	// query background
-	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)
+
 	query_to_draw := if ved.query_type in [.search, .search_in_folder, .grep] {
 		ved.search_query
 	} else {
@@ -307,7 +388,7 @@ fn (mut ved Ved) draw_query() {
 	cursor_y := y + ved.cfg.line_height + 2
 	ved.gg.draw_rect(x: cursor_x, y: cursor_y, w: 2, h: ved.cfg.line_height - 4)
 	// Draw separator between query and files
-	if ved.query_type !in [.search, .cam, .run] {
+	if ved.query_type !in [.search, .cam, .run, .alert] { // Exclude alert too
 		ved.gg.draw_rect(
 			x:     x
 			y:     y + ved.cfg.line_height * 2
@@ -316,39 +397,42 @@ fn (mut ved Ved) draw_query() {
 			color: ved.cfg.comment_color
 		)
 	}
-	// Draw files
-	ved.draw_query_files(ved.query_type, x, y)
+	// Draw files/results list
+	ved.draw_query_results(ved.query_type, x, y, width) // Pass width
 }
 
-const nr_ctrlp_results = 20
-const line_padding = 5
+// Renamed and generalized function to draw results list
+fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
+	mut j := 0 // Index for visible item count
+	line_y_start := y + ved.cfg.line_height * 2 + line_padding // Start drawing below separator
 
-fn (mut ved Ved) draw_query_files(kind QueryType, x int, y int) {
-	mut j := 0
-	lines := match kind {
+	match kind {
 		.ctrlp {
-			ved.all_git_files
+			// Iterate over the pre-filtered results
+			for i, result in ved.ctrlp_results {
+				// Stop drawing if we exceed the display limit
+				if j >= nr_ctrlp_results {
+					break
+				}
+				yy := line_y_start + (ved.cfg.line_height + line_padding) * j
+				if i == ved.gg_pos { // Use index `i` for selection highlight
+					ved.gg.draw_rect_filled(x, yy, width, ved.cfg.line_height + line_padding,
+						ved.cfg.vcolor)
+				}
+				ved.gg.draw_text(x + 10, yy + line_padding / 2, result.display_name, ved.cfg.txt_cfg)
+				j++
+			}
 		}
 		.grep {
-			ved.gg_lines
-		}
-		.ctrlj {
-			ved.open_paths[ved.workspace_idx]
-		}
-		else {
-			[]string{}
-		}
-	}
-	for s in lines {
-		if j == nr_ctrlp_results {
-			break
-		}
-		yy := y + 60 + (ved.cfg.line_height + line_padding) * j
-		if j == ved.gg_pos {
-			ved.gg.draw_rect_filled(x, yy, query_width, 30, ved.cfg.vcolor)
-		}
-		match kind {
-			.grep {
+			for i, s in ved.gg_lines {
+				if j >= max_grep_lines { // Use grep limit
+					break
+				}
+				yy := line_y_start + (ved.cfg.line_height + line_padding) * j
+				if i == ved.gg_pos {
+					ved.gg.draw_rect_filled(x, yy, width, ved.cfg.line_height + line_padding,
+						ved.cfg.vcolor) // Use passed width
+				}
 				pos := s.index(':') or { continue }
 				path := s[..pos].limit(55)
 				pos2 := s.index_after(':', pos + 1) or { -1 }
@@ -356,159 +440,109 @@ fn (mut ved Ved) draw_query_files(kind QueryType, x int, y int) {
 					continue
 				}
 				text := s[pos2 + 1..].trim_space().limit(100)
-				if j == ved.gg_pos {
-					ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
-				}
 				line_nr := s[pos + 1..pos2]
+				// Draw path and line number
 				ved.gg.draw_text2(
 					x:     x + 10
-					y:     yy
+					y:     yy + line_padding / 2
 					text:  path.limit(50) + ':${line_nr}'
 					color: gx.purple
 				)
-				ved.gg.draw_text(x + ved.cfg.char_width * 45, yy, text, ved.cfg.txt_cfg)
+				// Draw matching text part (adjust x position)
+				text_x := x + 10 + (path.limit(50).len + 1 + line_nr.len + 2) * ved.cfg.char_width // Approximate position
+				ved.gg.draw_text(text_x, yy + line_padding / 2, text, ved.cfg.txt_cfg)
+				j++
 			}
-			.ctrlp, .ctrlj {
-				mut file := s.to_lower()
-				file = file.trim_space()
-				if !file.contains(ved.query.to_lower()) {
-					continue
-				}
-				ved.gg.draw_text(x + 10, yy, file, ved.cfg.txt_cfg)
-			}
-			else {}
 		}
-
-		j++
+		.ctrlj {
+			// TODO: Implement drawing for ctrlj if needed, similar to ctrlp
+			// using ved.open_paths[ved.workspace_idx]
+		}
+		else {
+			// No list for other query types
+		}
 	}
 }
 
-/*
-fn (mut ved Ved) draw_ctrlp_files(x int, y int) {
-	mut j := 0
-	for file_ in ved.all_git_files {
-		if j == nr_ctrlp_results {
-			break
-		}
-		yy := y + 60 + (ved.cfg.line_height + 5) * j
-		if j == ved.gg_pos {
-			ved.gg.draw_rect_filled(x, yy, query_width, 30, ved.cfg.vcolor)
-		}
-		mut file := file_.to_lower()
-		file = file.trim_space()
-		if !file.contains(ved.query.to_lower()) {
-			continue
-		}
-		ved.gg.draw_text(x + 10, yy, file, ved.cfg.txt_cfg)
-		j++
-	}
-}
-
-// TODO merge with ctrlp_files
-fn (mut ved Ved) draw_open_files(x int, y int) {
-	mut j := 0
-	// println('draw open_files len=$ved.open_paths.len')
-	for file_ in ved.open_paths[ved.workspace_idx] {
-		if j == 15 {
-			break
-		}
-		yy := y + 60 + 30 * j
-		if j == ved.gg_pos {
-			ved.gg.draw_rect_filled(x, yy, query_width * 2, 30, ved.cfg.vcolor)
-		}
-		mut file := file_.to_lower()
-		file = file.trim_space()
-		if !file.contains(ved.query.to_lower()) {
-			continue
-		}
-		ved.gg.draw_text(x + 10, yy, file, ved.cfg.txt_cfg)
-		j++
-	}
-}
-
-fn (mut ved Ved) draw_top_tasks(x int, y int) {
-	mut j := 0
-	q := ved.query.to_lower()
-	for task_ in ved.top_tasks {
-		if j == 10 {
-			break
-		}
-		task := task_.to_lower()
-		if !task.contains(q) {
-			continue
-		}
-		// println('DOES CONTAIN "$file" $j')
-		ved.gg.draw_text(x + 10, y + 60 + 30 * j, task, ved.cfg.txt_cfg)
-		j++
-	}
-}
-*/
-
-/*
-fn (mut ved Ved) draw_git_grep(x int, y int) {
-	for i, line in ved.gg_lines {
-		if i == max_grep_lines {
-			break
-		}
-		pos := line.index(':') or { continue }
-		path := line[..pos].limit(50)
-		pos2 := line.index_after(':', pos + 1) or { -1 }
-		if pos2 == -1 || pos2 >= line.len - 1 {
-			continue
-		}
-		text := line[pos2 + 1..].trim_space().limit(70)
-		yy := y + 60 + 30 * i
-		if i == ved.gg_pos {
-			ved.gg.draw_rect_filled(x, yy, query_width * 3, 30, ved.cfg.vcolor)
-		}
-		line_nr := line[pos + 1..pos2]
-		ved.gg.draw_text(x + 10, yy, path.limit(50) + ':${line_nr}', ved.cfg.txt_cfg)
-		ved.gg.draw_text(x + 450, yy, text, ved.cfg.txt_cfg)
-	}
-}
-*/
-
-// Open file on enter
-// fn input_enter(s string, ved * Ved) {
-// if s != '' {
+// Open file on enter for Ctrl+P
 fn (mut ved Ved) ctrlp_open() {
-	// Open the selected file in the list
-	mut i := 0
-	for file_ in ved.all_git_files {
-		mut file := file_.to_lower()
-		file = file.trim_space()
-		if file.contains(ved.query.to_lower()) {
-			if i == ved.gg_pos || ved.gg_pos <= 0 {
-				mut path := file_.trim_space()
-				mut space := ved.workspace
-				if space == '' {
-					space = '.'
-				}
-				path = '${space}/${path}'
-				ved.view.open_file(path, 0)
-				break
-			}
-			i++
-		}
+	println('ctrlpopen gg_pos=${ved.gg_pos}')
+	if ved.gg_pos < 0 || ved.gg_pos >= ved.ctrlp_results.len {
+		println(1)
+		// Attempt to open if only one result and selection is invalid (e.g., -1)
+		// if ved.ctrlp_results.len == 1 {
+		println('set to 0')
+		ved.gg_pos = 0
+		//} else {
+		// println('invalid index')
+		// return // Invalid selection index
+		//}
 	}
+	// Get the selected result
+	selected_result := ved.ctrlp_results[ved.gg_pos]
+
+	// Construct the full path using the result's workspace and file path
+	full_path := os.join_path(selected_result.workspace_path, selected_result.file_path)
+
+	// Open the file in the current view
+	// This might open a file from another workspace in the current view's split.
+	// Consider if a workspace switch is desired later.
+	ved.view.open_file(full_path, 0)
+
+	// Reset state after opening
 	ved.gg_pos = -1
-	ved.save_session()
+	ved.query = ''
+	ved.ctrlp_results = []
+	ved.save_session() // Save session as a file was potentially opened/switched
 }
 
 // TODO merge with fn above
 fn (mut ved Ved) ctrlj_open() {
-	for p in ved.open_paths[ved.workspace_idx] {
-		if p.contains(ved.query.to_lower()) {
-			mut path := p.trim_space()
-			mut space := ved.workspace
-			if space == '' {
-				space = '.'
-			}
-			path = '${space}/${path}'
-			ved.view.open_file(path, 0)
-			break
+	// Ensure gg_pos is valid for the open_paths list
+	current_open_paths := ved.open_paths[ved.workspace_idx]
+	if ved.gg_pos < 0 || ved.gg_pos >= current_open_paths.len {
+		// Attempt to open if only one result and selection is invalid
+		if current_open_paths.len == 1 && ved.query == '' { // Assuming only one open file if query is empty
+			ved.gg_pos = 0
+		} else {
+			// Need filtering logic here if query is used for ctrlj
+			return
 		}
 	}
+
+	// Filter open paths based on query to find the actual selected path
+	// (gg_pos relates to the *filtered* list shown, not the full list)
+	// This part needs careful implementation matching how ctrlj filtering works.
+	// Simple filtering for demonstration:
+	mut filtered_paths := []string{}
+	for p in current_open_paths {
+		if p.to_lower().contains(ved.query.to_lower()) {
+			filtered_paths << p
+		}
+	}
+
+	if ved.gg_pos < 0 || ved.gg_pos >= filtered_paths.len {
+		return
+	}
+
+	selected_relative_path := filtered_paths[ved.gg_pos].trim_space()
+
+	if selected_relative_path == '' {
+		return
+	}
+
+	// Construct full path (assuming ctrlj shows files relative to current workspace)
+	mut space := ved.workspace
+	if space == '' {
+		space = '.'
+	}
+	full_path := os.join_path(space, selected_relative_path)
+	ved.view.open_file(full_path, 0)
+
+	// Reset state
+	ved.gg_pos = -1
+	ved.query = ''
+	ved.save_session()
 }
 
 fn (mut ved Ved) git_grep() {
@@ -558,71 +592,118 @@ fn (mut ved Ved) search(search_type SearchType) {
 	mut to := view.lines.len
 	mut di := 1
 	goback := search_type == .backward
+	start_line := if goback { view.y - 1 } else { view.y + 1 } // Start search from next/prev line
+
 	if search_type == .backward {
-		to = 0
+		to = -1 // Go down to index 0
 		di = -1
 	}
-	for i := view.y; true; i += di {
-		if goback && i <= to {
-			break
+
+	// First pass: from start_line to end/beginning of file
+	for i := start_line; true; i += di {
+		if (goback && i <= to) || (!goback && i >= to) {
+			break // Reached end/beginning
 		}
-		if !goback && i >= to {
-			break
-		}
-		if i >= view.lines.len {
-			break
-		}
-		if i < 0 {
+		if i >= view.lines.len || i < 0 { // Bounds check
 			continue
 		}
+
 		line := view.lines[i]
 		if pos := line.index(ved.search_query) {
-			// Already here, skip
-			if pos == view.x && i == view.y {
-				continue
-			}
-			// Found in current screen, dont move it
-			if i >= view.from && i <= view.from + ved.page_height {
+			// Found
+			if i >= view.from && i < view.from + ved.page_height { // Check < page_height
 				ved.prev_y = view.y
 				view.set_y(i)
 			} else {
 				ved.move_to_line(i)
 			}
 			view.x = pos
-			break
+			ved.add_to_search_history() // Add to history upon successful find
+			return
 		}
-		// Haven't found it, try from the top
-		if !goback && !passed && i == view.lines.len - 1 {
-			if ved.search_dir == '' {
-				i = 0
-				passed = true
+	}
+
+	// Second pass (wrap around): from beginning/end to original line
+	start_wrap := if goback { view.lines.len - 1 } else { 0 }
+	end_wrap := if goback { view.y } else { view.y } // Search up to original line
+
+	for i := start_wrap; true; i += di {
+		if (goback && i < end_wrap) || (!goback && i > end_wrap) {
+			break // Reached original line
+		}
+		if i >= view.lines.len || i < 0 { // Bounds check
+			continue
+		}
+
+		line := view.lines[i]
+		if pos := line.index(ved.search_query) {
+			// Found on wrap
+			if i >= view.from && i < view.from + ved.page_height {
+				ved.prev_y = view.y
+				view.set_y(i)
 			} else {
-				// Go to the next file in the directory
-				ext := '.' + ved.view.path.after('.')
-				files := os.walk_ext(os.dir(ved.view.path), ext)
-				for ved.search_dir_idx < files.len {
-					text := os.read_file(files[ved.search_dir_idx]) or { panic(err) }
-					if text.contains(ved.search_query) {
-						ved.view.open_file(files[ved.search_dir_idx], 0)
-						ved.view.gg()
-						ved.search_dir_idx++
-						ved.search(search_type)
-						break
-					}
-					ved.search_dir_idx++
-				}
-				// println('ffffff $files')
+				ved.move_to_line(i)
+			}
+			view.x = pos
+			ved.add_to_search_history() // Add to history upon successful find
+			return
+		}
+	}
+
+	// If still not found and searching in folder is enabled
+	if ved.search_dir != '' && search_type == .forward { // Only support forward search in folder for now
+		ext := '.' + ved.view.path.after('.')
+		// Ensure search_dir exists and is a directory
+		if !os.is_dir(ved.search_dir) {
+			println('Search directory "${ved.search_dir}" not found or is not a directory.')
+			ved.search_dir = '' // Reset search dir if invalid
+			return
+		}
+		files := os.walk_ext(ved.search_dir, ext) // Use the specified search_dir
+		current_file_index := files.index(ved.view.path) // Find index of current file
+
+		for i := current_file_index + 1; i < files.len; i++ { // Start from file *after* current
+			file_path := files[i]
+			if file_path == ved.view.path {
+				continue
+			}
+			// Should not happen, but safe check
+
+			text := os.read_file(file_path) or {
+				println('Error reading file: ${file_path}')
+				continue // Skip file if cannot read
+			}
+			if pos := text.index(ved.search_query) {
+				ved.view.open_file(file_path, 0) // Open the new file
+				// Now perform a search within the newly opened file to find the first match
+				ved.search(search_type) // Recursive call to find position in the new file
+				ved.add_to_search_history() // Add to history
+				return
 			}
 		}
-		/*
-		// Same, but for reverse search
-		else if goback && !passed && i == 0 {
-			i = view.lines.len - 1
-			passed = true
-		}
-		*/
+		// If search reaches end of directory without finding, maybe wrap around? (Optional)
+		println('Search query "${ved.search_query}" not found in folder "${ved.search_dir}".')
+	} else {
+		println('Search query "${ved.search_query}" not found in current file.')
 	}
-	ved.search_history << ved.search_query
-	// ved.search_idx++
-	ved.search_idx = ved.search_history.len
+}
+
+// Helper to add query to history only if it's new
+fn (mut ved Ved) add_to_search_history() {
+	if ved.search_query != ''
+		&& (ved.search_history.len == 0 || ved.search_history.last() != ved.search_query) {
+		ved.search_history << ved.search_query
+		ved.search_idx = ved.search_history.len // Point index past the end for new searches
+	}
+}
+
+fn (ved &Ved) load_all_tasks() {
+	/*
+        mut rows := ved.timer.db.q_strings('select distinct name from tasks')
+        for row in rows {
+                t := row.vals[0]
+                ved.top_tasks << t
+        }
+        println(ved.top_tasks)
+        */
 }

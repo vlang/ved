@@ -24,6 +24,13 @@ const config_path = os.join_path(settings_dir, 'conf.toml')
 const config_path2 = os.join_path(settings_dir, 'config.json')
 const max_nr_workspaces = 10
 
+// Represents a file found during a Ctrl+P search
+struct CtrlPResult {
+	file_path      string // Relative path within its workspace
+	workspace_path string
+	display_name   string // Pre-formatted name for display
+}
+
 @[heap]
 struct Ved {
 mut:
@@ -39,8 +46,9 @@ mut:
 	prev_key           gg.KeyCode
 	prev_key_str       string // for `ci(` etc, no `(` in gg.KeyCode
 	prev_cmd           string
-	prev_insert        string // for `.` (re-enter the text that was just entered via cw etc)
-	all_git_files      []string
+	prev_insert        string        // for `.` (re-enter the text that was just entered via cw etc)
+	all_git_files      []string      // Files for the *current* workspace only
+	ctrlp_results      []CtrlPResult // Filtered results for Ctrl+P across workspaces
 	top_tasks          []string
 	gg                 &gg.Context = unsafe { nil }
 	query              string
@@ -92,14 +100,6 @@ struct Workspace {
 	// path string
 }
 
-// For syntax highlighting
-enum ChunkKind {
-	a_string  = 1
-	a_comment = 2
-	a_key     = 3
-	a_lit     = 4
-}
-
 enum EditorMode {
 	normal       = 0
 	insert       = 1
@@ -108,12 +108,6 @@ enum EditorMode {
 	timer        = 4
 	autocomplete = 5
 	debugger     = 6
-}
-
-struct Chunk {
-	start int
-	end   int
-	typ   ChunkKind
 }
 
 struct ViSize {
@@ -285,94 +279,6 @@ fn main() {
 	spawn ved.loop()
 	ved.refresh = true
 	ved.gg.run()
-}
-
-fn (mut ved Ved) on_event(e &gg.Event) {
-	// println('on_event ${ved.win_width}')
-	ved.refresh = true
-	/*
-	// TODO change win height/width only on cmd + enter (exit full screen etc)
-	mut size := gg.screen_size()
-
-	// Fix macbook notch crap
-	$if macos {
-		if size.height % 20 != 0 {
-			// size.height -= size.height % 20 + ved.cfg.line_height
-			size.height -= 32 // ved.cfg.line_height
-		}
-	}
-	ved.win_height = size.height
-	ved.win_width = size.width
-	*/
-
-	if e.typ == .mouse_scroll {
-		if e.scroll_y < -0.2 {
-			ved.view.j()
-		} else if e.scroll_y > 0.2 {
-			ved.view.k()
-		}
-	}
-
-	// FIXME: The rounding math here cause the Y coord to be unintuitive sometimes.
-	if e.typ == .mouse_down {
-		if ved.cfg.disable_mouse {
-			return
-		}
-
-		mut view := ved.view
-
-		mut current_line := ''
-		if view.y > 0 && view.y < view.lines.len {
-			current_line = view.lines[view.y]
-		}
-		current_line_split := current_line.split('\t')
-		mut leading_tabs := 0
-		for i := 0; i < current_line_split.len; i++ {
-			if current_line_split[i] == '' {
-				leading_tabs++
-			}
-		}
-
-		// Focus the pane currently under the cursor before continuing
-		for i := 0; i < ved.nr_splits; i++ {
-			sw := ved.split_width()
-			starting_x := 2 * i * sw
-			ending_x := 2 * (i + 1) * sw
-
-			if e.mouse_x > starting_x && e.mouse_x < ending_x {
-				ved.cur_split = i
-				ved.update_view()
-			}
-		}
-
-		clicked_y := int((e.mouse_y / ved.cfg.line_height - 1.5) / 2) + ved.view.from
-		if clicked_y >= view.lines.len {
-			if view.lines.len == 0 {
-				view.set_y(0)
-			} else {
-				view.set_y(view.lines.len - 1)
-			}
-		} else if clicked_y < 0 {
-			view.set_y(1)
-		} else {
-			view.set_y(clicked_y)
-		}
-
-		// Wow, that's a lot of math that is probably pretty hard to parse.
-		// In the future I need to separate this into several variables,
-		// and perhaps even its own function.
-		clicked_x := int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
-		if view.lines.len <= 0 {
-			return
-		}
-		if clicked_x > view.lines[view.y].len {
-			view.x = view.lines[view.y].len
-		} else if clicked_x < 0 {
-			view.x = 0
-		} else {
-			view.x = clicked_x
-		}
-	}
 }
 
 fn (ved &Ved) split_width() int {
@@ -662,6 +568,9 @@ fn (mut ved Ved) open_workspace(idx int) {
 	// space 1, split is updated to 4 (1 + 3 * (1-0))
 	ved.cur_split += diff * ved.nr_splits
 
+	// Load git files for the new workspace
+	ved.load_git_tree()
+
 	for i, view in ved.views {
 		// Maybe the file is not loaded correctly (can happen on ved's launch)
 		// Try to re-open it
@@ -696,7 +605,7 @@ fn (mut ved Ved) add_workspace(path string) {
 }
 
 fn short_space(workspace string) string {
-	pos := workspace.last_index('/') or { return workspace }
+	pos := workspace.last_index(os.path_separator) or { return workspace }
 	return workspace[pos + 1..].limit(10)
 }
 
@@ -1186,4 +1095,45 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 		println('got ${x.grep_file_extensions} exts for workspace ${w}')
 	}
 	return res
+}
+
+// Helper to get files for a specific workspace (similar to load_git_tree but targeted)
+// TODO: Caching? For now, load every time.
+fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
+	if ws_path == '' {
+		return []
+	}
+	// Check if it's a git repo first
+	mut is_git := false
+	out_git_check := os.execute('git -C "${ws_path}" rev-parse --is-inside-work-tree')
+	if out_git_check.exit_code != -1 {
+		is_git = out_git_check.output.trim_space() == 'true'
+	}
+
+	if is_git {
+		s := os.execute('git -C ${ws_path} ls-files')
+		if s.exit_code == -1 {
+			return []string{}
+		}
+		mut files := s.output.split_into_lines()
+		files.sort_by_len()
+		return files
+	} else {
+		/*
+		// Fallback to walking the directory if not a git repo
+		mut files := []string{}
+		os.walk_with_context(ws_path, &files, fn (mut fs []string, f string) {
+			if f == '.' || f == '..' {
+				return
+			}
+			if os.is_file(f) {
+				// Store path relative to the workspace
+				fs << f.replace(ws_path + os.path_separator, '')
+			}
+		})
+		files.sort_by_len()
+		return files
+		*/
+	}
+	return []
 }
