@@ -588,7 +588,6 @@ fn (mut ved Ved) search(search_type SearchType) {
 		return
 	}
 	mut view := ved.view
-	mut passed := false
 	mut to := view.lines.len
 	mut di := 1
 	goback := search_type == .backward
@@ -673,7 +672,7 @@ fn (mut ved Ved) search(search_type SearchType) {
 				println('Error reading file: ${file_path}')
 				continue // Skip file if cannot read
 			}
-			if pos := text.index(ved.search_query) {
+			if _ := text.index(ved.search_query) {
 				ved.view.open_file(file_path, 0) // Open the new file
 				// Now perform a search within the newly opened file to find the first match
 				ved.search(search_type) // Recursive call to find position in the new file
