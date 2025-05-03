@@ -8,7 +8,7 @@ on:
 
 jobs:
   code-formatting:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout V
         uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
         run: v fmt -verify ved/
 
   check-ubuntu:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout V
         uses: actions/checkout@v4
