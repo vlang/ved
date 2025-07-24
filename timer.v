@@ -2,18 +2,17 @@ module main
 
 import time
 import gg
-import gx
 import os
 import strings
 
-const time_cfg = gx.TextCfg{
-	color: gx.gray
+const time_cfg = gg.TextCfg{
+	color: gg.gray
 	size:  14
 }
 
-const color_distracting = gx.rgb(255, 111, 130)
-const color_productive = gx.rgb(50, 90, 110) // gx.rgb(167,236,82)
-const color_neutral = gx.rgb(39, 195, 221)
+const color_distracting = gg.rgb(255, 111, 130)
+const color_productive = gg.rgb(50, 90, 110) // gx.rgb(167,236,82)
+const color_neutral = gg.rgb(39, 195, 221)
 
 struct Timer {
 mut:
@@ -28,7 +27,7 @@ struct Task {
 	start        int
 	end          int
 	name         string
-	color        gx.Color
+	color        gg.Color
 	duration     string
 	duration_min int
 	productive   bool
@@ -116,7 +115,7 @@ fn (mut t Timer) draw() {
 	window_height := t.gg.height - 20
 	window_x := (t.gg.width - window_width) / 2
 	window_y := (t.gg.height - window_height) / 2
-	t.gg.draw_rect_filled(window_x, window_y, window_width, window_height, gx.white)
+	t.gg.draw_rect_filled(window_x, window_y, window_width, window_height, gg.white)
 	hour_width := window_height / 24 // window_width / 25// 60 / scale  // 60 min
 	scale := 60.0 / f64(hour_width)
 	mut total := 0
@@ -130,7 +129,7 @@ fn (mut t Timer) draw() {
 		height := f64(task.end - task.start) / scale
 		t.gg.draw_rect_filled(f32(x), f32(y), f32(hour_width), f32(height), task.color)
 		t.gg.draw_text(int(x) + hour_width + 10, int(y) + 5, task.name + ' ' + task.duration,
-			gx.TextCfg{
+			gg.TextCfg{
 			color: task.color
 		})
 		if task.productive {
@@ -143,20 +142,20 @@ fn (mut t Timer) draw() {
 		if hour < 24 {
 			t.gg.draw_text(hour_x - 25, hour_y + 10, '${hour:02d}', time_cfg)
 		}
-		t.gg.draw_line(hour_x, hour_y, hour_x + hour_width, hour_y, gx.gray)
+		t.gg.draw_line(hour_x, hour_y, hour_x + hour_width, hour_y, gg.gray)
 	}
 	// Large left vertical line
 	t.gg.draw_line(window_x + 30, window_y + 10, window_x + 30, window_y + 10 + 24 * hour_width,
-		gx.gray)
+		gg.gray)
 	// Large right vertical line
 	t.gg.draw_line(window_x + 30 + hour_width, window_y + 10, window_x + 30 + hour_width,
-		window_y + 10 + 24 * hour_width, gx.gray)
+		window_y + 10 + 24 * hour_width, gg.gray)
 	// Draw the date in the top right corner
 	t.gg.draw_text_def(window_x + window_width - 100, 20, t.date.ymmdd())
 	// Draw total time
 	h := total / 60
 	m := total % 60
-	t.gg.draw_text(window_x + window_width - 100, 100, '${h}:${m:02d}', gx.TextCfg{
+	t.gg.draw_text(window_x + window_width - 100, 100, '${h}:${m:02d}', gg.TextCfg{
 		color: color_productive
 	})
 }

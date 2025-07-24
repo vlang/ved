@@ -1,7 +1,7 @@
 module main
 
 import os
-import gx
+import gg
 
 struct Node {
 mut:
@@ -139,10 +139,10 @@ fn (mut t Tree) draw(mut ved Ved) {
 		if node.is_dir {
 			// Draw expand/collapse symbol
 			symbol := if node.expanded { '- ' } else { '+ ' }
-			ved.gg.draw_text2(x: pos.x, y: pos.y, text: symbol, color: gx.black)
-			ved.gg.draw_text2(x: pos.x + 20, y: pos.y, text: text, color: gx.blue)
+			ved.gg.draw_text2(x: pos.x, y: pos.y, text: symbol, color: gg.black)
+			ved.gg.draw_text2(x: pos.x + 20, y: pos.y, text: text, color: gg.blue)
 		} else {
-			ved.gg.draw_text2(x: pos.x + 20, y: pos.y, text: text, color: gx.black)
+			ved.gg.draw_text2(x: pos.x + 20, y: pos.y, text: text, color: gg.black)
 		}
 	}
 }

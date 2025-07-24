@@ -4,7 +4,6 @@
 module main
 
 import gg
-import gx
 import os
 import time
 import uiold
@@ -979,27 +978,27 @@ fn (mut ved Ved) increase_font(delta int) {
 	// ved.cfg.char_width = ved.cfg.text_size - 10
 	ved.cfg.line_height = ved.cfg.text_size + 2
 	// x := ved.cfg.txt_cfg
-	ved.cfg.txt_cfg = gx.TextCfg{
+	ved.cfg.txt_cfg = gg.TextCfg{
 		...ved.cfg.txt_cfg
 		size: ved.cfg.text_size
 	}
-	ved.cfg.comment_cfg = gx.TextCfg{
+	ved.cfg.comment_cfg = gg.TextCfg{
 		...ved.cfg.comment_cfg
 		size: ved.cfg.text_size
 	}
-	ved.cfg.key_cfg = gx.TextCfg{
+	ved.cfg.key_cfg = gg.TextCfg{
 		...ved.cfg.key_cfg
 		size: ved.cfg.text_size
 	}
-	ved.cfg.line_nr_cfg = gx.TextCfg{
+	ved.cfg.line_nr_cfg = gg.TextCfg{
 		...ved.cfg.line_nr_cfg
 		size: ved.cfg.text_size
 	}
-	ved.cfg.string_cfg = gx.TextCfg{
+	ved.cfg.string_cfg = gg.TextCfg{
 		...ved.cfg.string_cfg
 		size: ved.cfg.text_size
 	}
-	ved.cfg.file_name_cfg = gx.TextCfg{
+	ved.cfg.file_name_cfg = gg.TextCfg{
 		...ved.cfg.file_name_cfg
 		size: ved.cfg.text_size
 	}

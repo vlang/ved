@@ -4,7 +4,7 @@
 module main
 
 import os
-import gx
+import gg
 // import toml
 import json
 
@@ -28,34 +28,34 @@ mut:
 	tab_size        int = 4
 	tab             int = int(`\t`) // TODO read from config file?
 	backspace_go_up bool
-	vcolor          gx.Color // v selection background color
-	split_color     gx.Color
-	bgcolor         gx.Color // base00
-	errorbgcolor    gx.Color // base08
-	title_color     gx.Color // base04
-	cursor_color    gx.Color // base05
-	string_color    gx.Color // base0B
-	string_cfg      gx.TextCfg
-	key_color       gx.Color // base0E
-	key_cfg         gx.TextCfg
-	lit_color       gx.Color // base0E
-	lit_cfg         gx.TextCfg
-	text_color      gx.Color // base05
-	txt_cfg         gx.TextCfg
-	comment_color   gx.Color // base03
-	comment_cfg     gx.TextCfg
-	file_name_color gx.Color
-	file_name_cfg   gx.TextCfg
-	plus_color      gx.Color
-	plus_cfg        gx.TextCfg
-	minus_color     gx.Color
-	minus_cfg       gx.TextCfg
-	line_nr_color   gx.Color // base01
-	line_nr_cfg     gx.TextCfg
-	green_color     gx.Color // base0B
-	green_cfg       gx.TextCfg
-	red_color       gx.Color // base08
-	red_cfg         gx.TextCfg
+	vcolor          gg.Color // v selection background color
+	split_color     gg.Color
+	bgcolor         gg.Color // base00
+	errorbgcolor    gg.Color // base08
+	title_color     gg.Color // base04
+	cursor_color    gg.Color // base05
+	string_color    gg.Color // base0B
+	string_cfg      gg.TextCfg
+	key_color       gg.Color // base0E
+	key_cfg         gg.TextCfg
+	lit_color       gg.Color // base0E
+	lit_cfg         gg.TextCfg
+	text_color      gg.Color // base05
+	txt_cfg         gg.TextCfg
+	comment_color   gg.Color // base03
+	comment_cfg     gg.TextCfg
+	file_name_color gg.Color
+	file_name_cfg   gg.TextCfg
+	plus_color      gg.Color
+	plus_cfg        gg.TextCfg
+	minus_color     gg.Color
+	minus_cfg       gg.TextCfg
+	line_nr_color   gg.Color // base01
+	line_nr_cfg     gg.TextCfg
+	green_color     gg.Color // base0B
+	green_cfg       gg.TextCfg
+	red_color       gg.Color // base08
+	red_cfg         gg.TextCfg
 	disable_mouse   bool = true
 	show_file_tree  bool
 	// Config.json
@@ -148,17 +148,17 @@ fn (config Config) get_toml_color(base string) !gx.Color {
 
 fn (mut config Config) set_vcolor() {
 	if !config.dark_mode {
-		config.vcolor = gx.rgb(226, 233, 241)
+		config.vcolor = gg.rgb(226, 233, 241)
 	} else {
-		config.vcolor = gx.rgb(60, 60, 60)
+		config.vcolor = gg.rgb(60, 60, 60)
 	}
 }
 
 fn (mut config Config) set_split() {
 	if !config.dark_mode {
-		config.split_color = gx.rgb(223, 223, 223)
+		config.split_color = gg.rgb(223, 223, 223)
 	} else {
-		config.split_color = gx.rgb(50, 50, 50)
+		config.split_color = gg.rgb(50, 50, 50)
 	}
 }
 
@@ -166,9 +166,9 @@ fn (mut config Config) set_split() {
 fn (mut config Config) set_bgcolor() {
 	// config.bgcolor = config.get_toml_color('00') or {
 	config.bgcolor = if config.dark_mode {
-		gx.rgb(30, 30, 30)
+		gg.rgb(30, 30, 30)
 	} else {
-		gx.rgb(245, 245, 245)
+		gg.rgb(245, 245, 245)
 	}
 	//}
 }
@@ -176,14 +176,14 @@ fn (mut config Config) set_bgcolor() {
 // base 01
 fn (mut config Config) set_errorbgcolor() {
 	// config.errorbgcolor = config.get_toml_color('01') or { gx.rgb(240, 0, 0) }
-	config.errorbgcolor = gx.rgb(240, 0, 0)
+	config.errorbgcolor = gg.rgb(240, 0, 0)
 }
 
 // base 0B
 fn (mut config Config) set_string() {
 	// config.string_color = config.get_toml_color('0B') or { gx.rgb(179, 58, 44) }
-	config.string_color = gx.rgb(179, 58, 44)
-	config.string_cfg = gx.TextCfg{
+	config.string_color = gg.rgb(179, 58, 44)
+	config.string_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.string_color
 	}
@@ -192,9 +192,9 @@ fn (mut config Config) set_string() {
 // base 0E
 fn (mut config Config) set_key() {
 	// config.key_color = config.get_toml_color('0E') or { gx.rgb(74, 103, 154) }
-	config.key_color = gx.rgb(74, 103, 154)
+	config.key_color = gg.rgb(74, 103, 154)
 
-	config.key_cfg = gx.TextCfg{
+	config.key_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.key_color
 	}
@@ -203,9 +203,9 @@ fn (mut config Config) set_key() {
 // base 0F
 fn (mut config Config) set_lit() {
 	// config.lit_color = config.get_toml_color('0F') or { gx.rgb(7, 103, 154) }
-	config.lit_color = gx.rgb(7, 103, 154)
+	config.lit_color = gg.rgb(7, 103, 154)
 
-	config.lit_cfg = gx.TextCfg{
+	config.lit_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.lit_color
 	}
@@ -214,16 +214,16 @@ fn (mut config Config) set_lit() {
 // base 04
 fn (mut config Config) set_title() {
 	// config.title_color = config.get_toml_color('04') or { gx.rgb(40, 40, 40) }
-	config.title_color = gx.rgb(0, 0, 0)
+	config.title_color = gg.rgb(0, 0, 0)
 }
 
 // base 05
 fn (mut config Config) set_cursor() {
 	// config.cursor_color = config.get_toml_color('05') or {
 	config.cursor_color = if !config.dark_mode {
-		gx.black
+		gg.black
 	} else {
-		gx.white
+		gg.white
 	}
 	//}
 }
@@ -232,12 +232,12 @@ fn (mut config Config) set_cursor() {
 fn (mut config Config) set_txt() {
 	// config.text_color = config.get_toml_color('05') or {
 	config.text_color = if !config.dark_mode {
-		gx.black
+		gg.black
 	} else {
-		gx.rgb(212, 212, 212)
+		gg.rgb(212, 212, 212)
 	}
 
-	config.txt_cfg = gx.TextCfg{
+	config.txt_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.text_color
 	}
@@ -246,33 +246,33 @@ fn (mut config Config) set_txt() {
 // base 03
 fn (mut config Config) set_comment() {
 	// config.comment_color = config.get_toml_color('03') or { gx.dark_gray }
-	config.comment_color = gx.dark_gray
+	config.comment_color = gg.dark_gray
 
-	config.comment_cfg = gx.TextCfg{
+	config.comment_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.comment_color
 	}
 }
 
 fn (mut config Config) set_filename() {
-	config.file_name_color = gx.white
-	config.file_name_cfg = gx.TextCfg{
+	config.file_name_color = gg.white
+	config.file_name_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.file_name_color
 	}
 }
 
 fn (mut config Config) set_plus() {
-	config.plus_color = gx.green
-	config.plus_cfg = gx.TextCfg{
+	config.plus_color = gg.green
+	config.plus_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.plus_color
 	}
 }
 
 fn (mut config Config) set_minus() {
-	config.minus_color = gx.green
-	config.minus_cfg = gx.TextCfg{
+	config.minus_color = gg.green
+	config.minus_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.minus_color
 	}
@@ -281,30 +281,30 @@ fn (mut config Config) set_minus() {
 // base 01
 fn (mut config Config) set_line_nr() {
 	// config.line_nr_color = config.get_toml_color('01') or { gx.dark_gray }
-	config.line_nr_color = gx.dark_gray
+	config.line_nr_color = gg.dark_gray
 
-	config.line_nr_cfg = gx.TextCfg{
+	config.line_nr_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.line_nr_color
-		align: gx.align_right
+		align: gg.align_right
 	}
 }
 
 // base 0B
 fn (mut config Config) set_green() {
-	// config.green_color = config.get_toml_color('0B') or { gx.green }
-	config.green_color = gx.green
+	// config.green_color = config.get_toml_color('0B') or { gg.green }
+	config.green_color = gg.green
 
-	config.green_cfg = gx.TextCfg{
+	config.green_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.green_color
 	}
 }
 
 fn (mut config Config) set_red() {
-	// config.red_color = config.get_toml_color('08') or { gx.red }
-	config.red_color = gx.red
-	config.red_cfg = gx.TextCfg{
+	// config.red_color = config.get_toml_color('08') or { gg.red }
+	config.red_color = gg.red
+	config.red_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.red_color
 	}
