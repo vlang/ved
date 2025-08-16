@@ -69,7 +69,7 @@ jobs:
           v -prod .
 
   check-windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
       - name: Checkout V
         uses: actions/checkout@v4
