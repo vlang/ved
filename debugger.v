@@ -6,12 +6,12 @@ module main
 import os
 import term
 import time
-import gx
+import gg
 import strings
 
-const breakpoint_color = gx.rgb(136, 136, 97) // yellow
+const breakpoint_color = gg.rgb(136, 136, 97) // yellow
 
-const debugger_name_color = gx.rgb(197, 134, 192) // pink
+const debugger_name_color = gg.rgb(197, 134, 192) // pink
 
 struct Debugger {
 mut:
@@ -287,11 +287,11 @@ fn (mut ved Ved) draw_debugger_variables() {
 			size:  ved.cfg.txt_cfg.size
 		)
 		ved.gg.draw_text(x + col_width, y, var.value_fmt(max_value_len),
-			color: gx.white
+			color: gg.white
 			size:  ved.cfg.txt_cfg.size
 		)
 		ved.gg.draw_text(ved.win_width - col_width, y, var.typ,
-			color: gx.white
+			color: gg.white
 			size:  ved.cfg.txt_cfg.size
 		)
 	}

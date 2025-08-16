@@ -4,9 +4,8 @@
 module main
 
 import os
-import gx
-import time
 import gg
+import time
 
 /*
 const txt_cfg = gx.TextCfg{
@@ -371,7 +370,7 @@ fn (mut ved Ved) draw_query() {
 
 	x := (ved.win_width - width) / 2
 	y := (ved.win_height - height) / 2
-	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
+	ved.gg.draw_rect_filled(x, y, width, height, gg.white)
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
@@ -446,7 +445,7 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 					x:     x + 10
 					y:     yy + line_padding / 2
 					text:  path.limit(50) + ':${line_nr}'
-					color: gx.purple
+					color: gg.purple
 				)
 				// Draw matching text part (adjust x position)
 				text_x := x + 10 + (path.limit(50).len + 1 + line_nr.len + 2) * ved.cfg.char_width // Approximate position

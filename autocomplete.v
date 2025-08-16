@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 module main
 
-import gx
+import gg
 import os
 import time
 
@@ -46,7 +46,7 @@ fn (ved &Ved) draw_autocomplete_window() {
 	if ved.autocomplete_info.vars.len == 0 {
 		return
 	}
-	ved.gg.draw_rect_filled(x, y, width, height, gx.white)
+	ved.gg.draw_rect_filled(x, y, width, height, gg.white)
 	// ved.gg.draw_text(x + 10, y + 30, 'AUTOCOMPLETE', txt_cfg)
 
 	// for i, var in ved.autocomplete_info.vars {
@@ -70,8 +70,8 @@ fn (ved &Ved) draw_autocomplete_window() {
 		// Draw var name + type
 		nt := '${var.name}: ${var.typ}'
 		ved.gg.draw_rect_filled(x + width, y, ved.cfg.char_width * nt.len, ved.cfg.line_height,
-			gx.white)
-		ved.gg.draw_text(x + width, y, nt, gx.TextCfg{
+			gg.white)
+		ved.gg.draw_text(x + width, y, nt, gg.TextCfg{
 			...ved.cfg.txt_cfg
 			bold: true
 		})
@@ -81,7 +81,7 @@ fn (ved &Ved) draw_autocomplete_window() {
 			y: y
 			width: 100
 			height: ved.cfg.line_height
-			color: gx.white
+			color: gg.white
 		)
 		*/
 		mut i := 0 // number of filtered fields
@@ -96,7 +96,7 @@ fn (ved &Ved) draw_autocomplete_window() {
 					ved.cfg.txt_cfg)
 				// Draw field type
 				ved.gg.draw_text(x + 10 + first_col_width, y + i * ved.cfg.line_height,
-					field.typ, gx.TextCfg{ ...ved.cfg.txt_cfg, color: gx.gray })
+					field.typ, gg.TextCfg{ ...ved.cfg.txt_cfg, color: gg.gray })
 			}
 
 			if i >= nr_elems_to_show_in_autocomplete - 1 {
@@ -108,16 +108,16 @@ fn (ved &Ved) draw_autocomplete_window() {
 
 		// Draw number of fields and current number (e.g. "3/24")
 		counter := '1/${i}'
-		ved.gg.draw_text(x + width, y, counter, gx.TextCfg{
+		ved.gg.draw_text(x + width, y, counter, gg.TextCfg{
 			...ved.cfg.txt_cfg
 			align: .right
-			color: gx.gray
+			color: gg.gray
 		})
 		// Draw time it took (debugging)
-		ved.gg.draw_text(x + width, y + ved.cfg.line_height, ved.debug_info, gx.TextCfg{
+		ved.gg.draw_text(x + width, y + ved.cfg.line_height, ved.debug_info, gg.TextCfg{
 			...ved.cfg.txt_cfg
 			align: .right
-			color: gx.green
+			color: gg.green
 		})
 	}
 }
@@ -128,8 +128,7 @@ fn (mut ved Ved) get_v_build_cmd() ?string {
 	file_name := ved.view.path
 	build_file := ved.get_build_file_location() or { return none }
 	mut v_build_cmd := if build_file == '' { 'v .' } else { os.read_file(build_file) or {
-			return none
-		} }
+			return none} }
 	words := v_build_cmd.fields()
 	mut dir_to_build := words[words.len - 1]
 	module_name := get_module_name_from_file(ved.view.lines)

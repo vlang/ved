@@ -1,6 +1,6 @@
 module main
 
-import gx
+import gg
 import os
 
 fn (mut ved Ved) draw() {
@@ -136,10 +136,10 @@ fn (mut ved Ved) draw() {
 	if ved.error_line != '' {
 		ved.gg.draw_rect_filled(0, ved.win_height - ved.cfg.line_height, ved.win_width,
 			ved.cfg.line_height, ved.cfg.errorbgcolor)
-		ved.gg.draw_text(3, ved.win_height - ved.cfg.line_height, ved.error_line, gx.TextCfg{
+		ved.gg.draw_text(3, ved.win_height - ved.cfg.line_height, ved.error_line, gg.TextCfg{
 			size:  ved.cfg.text_size
-			color: gx.white
-			align: gx.align_left
+			color: gg.white
+			align: gg.align_left
 		})
 	}
 	if ved.cfg.show_file_tree {
@@ -185,7 +185,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		// Breakpoint red circle
 		if view.breakpoints.contains(j) {
 			ved.gg.draw_circle_filled(split_x + 3, y + ved.cfg.line_height / 2 - 1, 5,
-				gx.red)
+				gg.red)
 		}
 		// Breakpoint yellow line
 		if ved.mode == .debugger && ved.cur_split == i && ved.debugger.output.line_nr != 0
