@@ -7,6 +7,9 @@ import os
 import strings
 import gg
 
+// View represents a single editor pane or "view", holding the state for an open file buffer.
+// This includes the file path, content (lines), cursor position (x, y),
+// scroll position (from), and other view-specific settings.
 struct View {
 mut:
 	padding_left int
@@ -30,6 +33,7 @@ mut:
 	breakpoints  []int // line numbers with breakpoints
 }
 
+// new_view creates and initializes a new `View` instance.
 fn (ved &Ved) new_view() View {
 	res := View{
 		padding_left: 0
@@ -50,6 +54,8 @@ fn (ved &Ved) new_view() View {
 
 // `mut res := word.clone()` ==>
 // ['mut' 'res' 'word' 'clone']
+// get_clean_words extracts a list of words from a line.
+// A "word" is considered a contiguous sequence of alphanumeric characters and underscores.
 fn get_clean_words(line string) []string {
 	mut res := []string{}
 	mut i := 0
@@ -71,6 +77,9 @@ fn get_clean_words(line string) []string {
 	return res
 }
 
+// open_file opens a file at the given `path`, loads its contents into the view's buffer,
+// and optionally moves the cursor to `line_nr`. It also updates the editor's state,
+// such as the list of open files and syntax highlighting settings.
 fn (mut view View) open_file(path string, line_nr int) {
 	println('open file "${path}"')
 	if path == '' {
@@ -170,11 +179,15 @@ fn (mut view View) open_file(path string, line_nr int) {
 	// go view.ved.write_changes_in_file_every_5s()
 }
 
+// reopen reloads the content of the file currently associated with the view from disk.
+// This is useful for discarding changes or updating the view after external modifications.
 fn (mut view View) reopen() {
 	view.open_file(view.path, 0)
 	view.changed = false
 }
 
+// save_file saves the current content of the view's buffer to its associated file on disk.
+// It then triggers an asynchronous file formatting process.
 fn (mut view View) save_file() {
 	if view.path == '' {
 		return
@@ -199,6 +212,8 @@ fn (mut view View) save_file() {
 	}
 }
 
+// format_file asynchronously runs an external formatting command (like `v fmt`, `goimports`, `prettier`)
+// on the view's file. After formatting, it reloads the file to reflect the changes.
 fn (mut view View) format_file() {
 	view.ved.load_config2()
 	if view.ved.cfg.disable_fmt {
@@ -229,6 +244,7 @@ fn (mut view View) format_file() {
 	// println('_line[0].len=$line0_.len')
 }
 
+// line returns the content of the current line (at cursor position `y`) as a string.
 fn (view &View) line() string {
 	if view.y < 0 || view.y >= view.lines.len {
 		return ''
@@ -236,10 +252,12 @@ fn (view &View) line() string {
 	return view.lines[view.y]
 }
 
+// uline returns the content of the current line as a slice of runes, suitable for multi-byte character manipulation.
 fn (view &View) uline() []rune {
 	return view.line().runes()
 }
 
+// char returns the character (as an integer rune) at the current cursor position (`x`).
 fn (view &View) char() int {
 	line := view.line()
 	if line.len > 0 && view.x < line.len {
@@ -248,6 +266,7 @@ fn (view &View) char() int {
 	return 0
 }
 
+// set_line replaces the content of the current line with `newline`.
 fn (mut view View) set_line(newline string) {
 	if view.y < 0 { // Basic sanity check
 		return
@@ -263,11 +282,13 @@ fn (mut view View) set_line(newline string) {
 	view.changed = true
 }
 
+// set_y sets the vertical position (line number) of the cursor.
 fn (mut view View) set_y(new_y int) {
 	view.y = new_y
 	view.ved.update_cur_fn_name()
 }
 
+// j moves the cursor down one line, handling scrolling and maintaining horizontal position. (Vim: `j`)
 fn (mut view View) j() {
 	if view.lines.len == 0 {
 		return
@@ -305,6 +326,7 @@ fn (mut view View) j() {
 	}
 }
 
+// k moves the cursor up one line, handling scrolling and maintaining horizontal position. (Vim: `k`)
 fn (mut view View) k() {
 	if view.y >= view.lines.len {
 		view.y = view.lines.len - 1
@@ -340,14 +362,17 @@ fn (mut view View) k() {
 	}
 }
 
+// shift_h moves the cursor to the first visible line on the screen (the top of the current page). (Vim: `H`)
 fn (mut view View) shift_h() {
 	view.set_y(view.from)
 }
 
+// move_to_page_bot moves the cursor to the last visible line on the screen (the bottom of the current page). (Vim: `L`)
 fn (mut view View) move_to_page_bot() {
 	view.set_y(view.from + view.page_height - 1)
 }
 
+// l moves the cursor one character to the right. (Vim: `l`)
 fn (mut view View) l() {
 	line := view.line()
 	if view.x < line.len {
@@ -355,6 +380,7 @@ fn (mut view View) l() {
 	}
 }
 
+// h moves the cursor one character to the left. (Vim: `h`)
 fn (mut view View) h() {
 	if view.x > 0 {
 		view.x--
@@ -366,6 +392,7 @@ fn (mut view View) h() {
 	}
 }
 
+// shift_g moves the cursor to the last line of the file. (Vim: `G`)
 fn (mut view View) shift_g() {
 	view.set_y(view.lines.len - 1)
 	view.from = view.y - view.page_height + 1
@@ -374,12 +401,14 @@ fn (mut view View) shift_g() {
 	}
 }
 
+// shift_a appends a space at the end of the current line. (Similar to Vim: `A`)
 fn (mut view View) shift_a() {
 	line := view.line()
 	view.set_line('${line} ')
 	view.x = view.uline().len - 1
 }
 
+// shift_i moves the cursor to the first non-whitespace character of the current line. (Vim: `^` or `I`)
 fn (mut view View) shift_i() {
 	view.x = 0
 	for view.char() == view.ved.cfg.tab {
@@ -387,11 +416,13 @@ fn (mut view View) shift_i() {
 	}
 }
 
+// gg moves the cursor to the first line of the file. (Vim: `gg`)
 fn (mut view View) gg() {
 	view.from = 0
 	view.set_y(0)
 }
 
+// shift_f scrolls the view down by one page. (Vim: `Ctrl+F`)
 fn (mut view View) shift_f() {
 	view.from += view.page_height
 	if view.from >= view.lines.len {
@@ -400,6 +431,7 @@ fn (mut view View) shift_f() {
 	view.set_y(view.from)
 }
 
+// shift_b scrolls the view up by one page. (Vim: `Ctrl+B`)
 fn (mut view View) shift_b() {
 	view.from -= view.page_height
 	if view.from < 0 {
@@ -408,6 +440,7 @@ fn (mut view View) shift_b() {
 	view.set_y(view.from)
 }
 
+// dd deletes the current line and copies it to the yank buffer. (Vim: `dd`)
 fn (mut view View) dd() {
 	if view.lines.len == 0 {
 		return
@@ -424,6 +457,7 @@ fn (mut view View) dd() {
 	view.changed = true
 }
 
+// shift_right indents the current line or the visually selected lines by one level. (Vim: `>`)
 fn (mut view View) shift_right() {
 	// No selection, shift current line
 	if view.vstart == -1 {
@@ -436,6 +470,7 @@ fn (mut view View) shift_right() {
 	}
 }
 
+// shift_left un-indents the current line or the visually selected lines by one level. (Vim: `<`)
 fn (mut view View) shift_left() {
 	if view.vstart == -1 {
 		line := view.line()
@@ -454,6 +489,7 @@ fn (mut view View) shift_left() {
 	}
 }
 
+// delete_char deletes the character currently under the cursor. (Vim: `x`)
 fn (mut v View) delete_char() {
 	u := v.uline()
 	if u.len < 1 || v.x >= u.len {
@@ -468,6 +504,7 @@ fn (mut v View) delete_char() {
 	}
 }
 
+// shift_c deletes from the cursor to the end of the line and returns the deleted text. (Similar to Vim: `C`)
 fn (mut view View) shift_c() string {
 	line := view.line()
 	s := line[..view.x]
@@ -477,6 +514,7 @@ fn (mut view View) shift_c() string {
 	return deleted
 }
 
+// insert_text inserts the given string `s` at the current cursor position.
 fn (mut view View) insert_text(s string) {
 	line := view.line()
 	if line.len == 0 {
@@ -507,6 +545,7 @@ fn (mut view View) insert_text(s string) {
 	}
 }
 
+// backspace handles a backspace key press, deleting the character before the cursor or joining lines if at the beginning of a line.
 fn (mut view View) backspace() {
 	if view.x == 0 {
 		if view.ved.cfg.backspace_go_up && view.y > 0 {
@@ -533,10 +572,12 @@ fn (mut view View) backspace() {
 	}
 }
 
+// yy yanks (copies) the current line into the yank buffer. (Vim: `yy`)
 fn (mut view View) yy() {
 	view.ved.ylines = [view.line()]
 }
 
+// p pastes the content of the yank buffer on new lines below the current cursor position. (Vim: `p`)
 fn (mut view View) p() {
 	for line in view.ved.ylines {
 		view.o()
@@ -544,10 +585,12 @@ fn (mut view View) p() {
 	}
 }
 
+// shift_o opens a new, indented line above the current line. (Vim: `O`)
 fn (mut view View) shift_o() {
 	view.o_generic(0)
 }
 
+// o opens a new, indented line below the current line. (Vim: `o`)
 fn (mut view View) o() {
 	view.o_generic(1)
 }
@@ -583,6 +626,7 @@ fn (mut view View) o_generic(delta int) {
 	view.changed = true
 }
 
+// enter handles an enter key press in insert mode, splitting the current line at the cursor position.
 fn (mut view View) enter() {
 	// Create new line
 	// And move everything to the right of the cursor to it
@@ -619,6 +663,7 @@ fn (mut view View) enter() {
 	view.x = 0
 }
 
+// join joins the current line with the line below it. (Vim: `J`)
 fn (mut view View) join() {
 	if view.y == view.lines.len - 1 {
 		return
@@ -634,6 +679,7 @@ fn (mut view View) join() {
 	// view.prev_cmd = "J"
 }
 
+// y_visual yanks (copies) the visually selected lines into the yank buffer.
 fn (mut v View) y_visual() {
 	mut ylines := []string{}
 	vtop, vbot := if v.vstart < v.vend { v.vstart, v.vend } else { v.vend, v.vstart }
@@ -650,6 +696,7 @@ fn (mut v View) y_visual() {
 	v.vend = -1
 }
 
+// d_visual deletes the visually selected lines and copies them to the yank buffer.
 fn (mut view View) d_visual() {
 	vtop := if view.vstart < view.vend { view.vstart } else { view.vend }
 	view.y_visual()
@@ -665,6 +712,7 @@ fn (mut view View) d_visual() {
 	view.k()
 }
 
+// cw changes the word under the cursor: deletes it and enters insert mode. (Vim: `cw`)
 fn (mut view View) cw() {
 	mut ved := view.ved
 	ved.prev_insert = ''
@@ -676,6 +724,7 @@ fn (mut view View) cw() {
 }
 
 // returns the removed word
+// dw deletes the word under the cursor. If `del_whitespace` is true, trailing whitespace is also deleted. (Vim: `dw`)
 fn (mut view View) dw(del_whitespace bool) { // string {
 	mut ved := view.ved
 	typ := is_alpha(u8(view.char()))
@@ -706,6 +755,7 @@ fn (mut view View) dw(del_whitespace bool) { // string {
 }
 
 // returns the removed word
+// db deletes the word backwards from the cursor position. (Vim: `db`)
 fn (mut view View) db(del_whitespace bool) { // string {
 	mut ved := view.ved
 	typ := is_alpha(u8(view.char()))
@@ -741,6 +791,7 @@ fn (mut view View) db(del_whitespace bool) { // string {
 
 // TODO COPY PASTA
 // same as cw but deletes underscores
+// ce changes the word/token under the cursor. Similar to `cw` but may use a different definition of a "word".
 fn (mut view View) ce() {
 	mut ved := view.ved
 	view.de()
@@ -748,6 +799,7 @@ fn (mut view View) ce() {
 	view.ved.set_insert()
 }
 
+// w moves the cursor forward to the beginning of the next word. (Vim: `w`)
 fn (mut view View) w() {
 	line := view.line()
 	typ := is_alpha_underscore(view.char())
@@ -761,6 +813,7 @@ fn (mut view View) w() {
 	}
 }
 
+// b moves the cursor backward to the beginning of the previous word. (Vim: `b`)
 fn (mut view View) b() {
 	// line := view.line()
 	// Go to start of prev word
@@ -774,6 +827,7 @@ fn (mut view View) b() {
 	}
 }
 
+// de deletes from the cursor to the end of the current word/token. (Vim: `de`)
 fn (mut view View) de() {
 	mut ved := view.ved
 	typ := is_alpha_underscore(view.char())
@@ -790,6 +844,8 @@ fn (mut view View) de() {
 }
 
 // delete all characters before and after the cursor inside '', "", () etc
+// ci "Change inside". Deletes the text within a surrounding delimiter (like quotes or parentheses)
+// based on the `key` pressed, and enters insert mode. (Vim: `ci'`)
 fn (mut view View) ci(key gg.KeyCode) {
 	mut ved := view.ved
 	line := view.line()
@@ -820,6 +876,7 @@ fn (mut view View) ci(key gg.KeyCode) {
 	// view.dw()
 }
 
+// zz centers the current line vertically on the screen. (Vim: `zz`)
 fn (mut view View) zz() {
 	view.from = view.y - view.ved.page_height / 2
 	if view.from < 0 {
@@ -827,12 +884,14 @@ fn (mut view View) zz() {
 	}
 }
 
+// r replaces the single character under the cursor with the character(s) in `s`. (Vim: `r`)
 fn (mut view View) r(s string) {
 	view.delete_char()
 	view.insert_text(s)
 	view.x--
 }
 
+// tt toggles to the previously active view/file.
 fn (mut view View) tt() {
 	if view.prev_path == '' {
 		return
@@ -842,6 +901,7 @@ fn (mut view View) tt() {
 	view.open_file(view.prev_path, 0)
 }
 
+// move_to_line jumps the cursor and view to a specific `line` number.
 fn (mut view View) move_to_line(line int) {
 	view.prev_y = view.y
 	view.from = line
@@ -850,6 +910,7 @@ fn (mut view View) move_to_line(line int) {
 }
 
 // Fit lines  into 80 chars
+// gq reflows (formats) the visually selected paragraph to a fixed width. (Vim: `gq`)
 fn (mut view View) gq() {
 	/*
 	mut ved := view.ved
@@ -877,6 +938,7 @@ fn (mut view View) gq() {
 }
 
 // ctrl+a - increase number by one
+// super_a finds the first number on the current line and increases it by `diff`. (Vim: `Ctrl+A` for +1)
 fn (mut view View) super_a(diff int) {
 	line := view.line()
 	mut num_start_pos := -1
@@ -896,18 +958,22 @@ fn (mut view View) super_a(diff int) {
 	view.set_line(new_line)
 }
 
+// is_alpha checks if a byte represents an alphanumeric character (`a-z`, `A-Z`, `0-9`).
 fn is_alpha(r u8) bool {
 	return (r >= `a` && r <= `z`) || (r >= `A` && r <= `Z`) || (r >= `0` && r <= `9`)
 }
 
+// is_whitespace checks if a byte represents a whitespace character (space or tab).
 fn is_whitespace(r u8) bool {
 	return r == ` ` || r == `\t`
 }
 
+// is_alpha_underscore checks if an integer (rune) represents an alphanumeric character, an underscore, a hash, or a dollar sign.
 fn is_alpha_underscore(r int) bool {
 	return is_alpha(u8(r)) || u8(r) == `_` || u8(r) == `#` || u8(r) == `$`
 }
 
+// break_text splits a single string `s` into an array of strings, ensuring no line exceeds `max` characters.
 fn break_text(s string, max int) []string {
 	mut lines := []string{}
 	mut start := 0
