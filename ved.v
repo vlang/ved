@@ -23,13 +23,14 @@ const config_path = os.join_path(settings_dir, 'conf.toml')
 const config_path2 = os.join_path(settings_dir, 'config.json')
 const max_nr_workspaces = 10
 
-// Represents a file found during a Ctrl+P search
+// CtrlPResult represents a file found during a Ctrl+P search.
 struct CtrlPResult {
 	file_path      string // Relative path within its workspace
 	workspace_path string
 	display_name   string // Pre-formatted name for display
 }
 
+// Ved is the main application struct, holding the entire editor state.
 @[heap]
 struct Ved {
 mut:
@@ -93,12 +94,13 @@ mut:
 	tree Tree // for rendering file tree on the left
 }
 
-// From parsed workspace/path/.ved json file
+// Workspace holds configuration loaded from a workspace/path/.ved json file
 struct Workspace {
 	grep_file_extensions []string
 	// path string
 }
 
+// EditorMode defines the different modes the editor can be in, similar to Vim.
 enum EditorMode {
 	normal       = 0
 	insert       = 1
@@ -109,6 +111,7 @@ enum EditorMode {
 	debugger     = 6
 }
 
+// ViSize represents the dimensions (width and height) of a view or the window.
 struct ViSize {
 	width  int
 	height int
@@ -128,6 +131,7 @@ const fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
 const args = os.args.clone()
 const is_window = '-window' in args
 
+// get_screen_size returns the dimensions of the screen.
 fn get_screen_size() (int, int) {
 	mut size := gg.screen_size()
 	println('AAA SIZE=${size}')
@@ -280,6 +284,7 @@ fn main() {
 	ved.gg.run()
 }
 
+// split_width calculates and returns the width of a single editor split.
 fn (ved &Ved) split_width() int {
 	mut split_width := ved.win_width / ved.nr_splits // + 60
 	if split_width < 300 {
@@ -288,6 +293,7 @@ fn (ved &Ved) split_width() int {
 	return split_width
 }
 
+// frame is the main drawing function called by the gg library on every frame.
 fn frame(mut ved Ved) {
 	// if !ved.refresh {
 	// return
@@ -308,6 +314,7 @@ fn (ved &Ved) is_in_blog() bool {
 }
 */
 
+// git_commit commits the current changes in the workspace with the message from the query input.
 fn (ved &Ved) git_commit() {
 	text := ved.query
 	dir := ved.workspace
@@ -315,6 +322,7 @@ fn (ved &Ved) git_commit() {
 	// os.system('gitter $dir')
 }
 
+// ctrl_n provides basic word completion by finding the next word in the current buffer that starts with the word under the cursor.
 fn (mut ved Ved) ctrl_n() {
 	line := ved.view.line()
 	mut i := ved.view.x - 1
@@ -341,7 +349,7 @@ fn (mut ved Ved) ctrl_n() {
 	}
 }
 
-// Find current word under cursor
+// word_under_cursor finds and returns the complete word currently under the text cursor.
 fn (ved &Ved) word_under_cursor() string {
 	line := ved.view.line()
 	// First go left
@@ -367,7 +375,7 @@ fn (ved &Ved) word_under_cursor() string {
 	return word
 }
 
-// used only when pressing dot in insert mode and showing the autocomplete window
+// word_under_cursor_no_right finds and returns the word from the start of the word to the cursor position. Used for autocompletion triggers.
 fn (ved &Ved) word_under_cursor_no_right() string {
 	line := ved.view.line()
 	mut start := ved.view.x - 1
@@ -383,12 +391,14 @@ fn (ved &Ved) word_under_cursor_no_right() string {
 	return word
 }
 
+// star implements the '*' key functionality from Vim: search for the word under the cursor.
 fn (mut ved Ved) star() {
 	ved.search_query = ved.word_under_cursor()
 	ved.search(.forward)
 }
 
 // switch between { and } etc
+// pct implements the '%' key functionality from Vim: jump to the matching bracket, brace, or parenthesis.
 fn (mut ved Ved) pct() {
 	mut line := ved.view.line()
 	if ved.view.x >= line.len {
@@ -469,6 +479,7 @@ fn (mut ved Ved) pct() {
 	}
 }
 
+// update_view updates the active view pointer (`ved.view`) to point to the current split.
 fn (mut ved Ved) update_view() {
 	$if debug {
 		println('update view len=${ved.views.len}')
@@ -478,12 +489,14 @@ fn (mut ved Ved) update_view() {
 	}
 }
 
+// set_insert switches the editor to Insert mode.
 fn (mut ved Ved) set_insert() {
 	ved.mode = .insert
 	ved.prev_insert = ''
 	ved.just_switched = true
 }
 
+// exit_visual switches the editor from Visual mode back to Normal mode and clears the selection.
 fn (mut ved Ved) exit_visual() {
 	println('exit visual')
 	ved.mode = .normal
@@ -492,7 +505,7 @@ fn (mut ved Ved) exit_visual() {
 	view.vend = -1
 }
 
-// repeat previous command
+// dot implements the '.' key functionality from Vim: repeat the last change command.
 fn (mut ved Ved) dot() {
 	prev_cmd := ved.prev_cmd
 	match prev_cmd {
@@ -529,6 +542,7 @@ fn (mut ved Ved) dot() {
 	}
 }
 
+// next_split switches focus to the next split.
 fn (mut ved Ved) next_split() {
 	ved.cur_split++
 	if ved.cur_split % ved.nr_splits == 0 {
@@ -538,6 +552,7 @@ fn (mut ved Ved) next_split() {
 	ved.update_view()
 }
 
+// prev_split switches focus to the previous split.
 fn (mut ved Ved) prev_split() {
 	if ved.cur_split % ved.nr_splits == 0 {
 		ved.cur_split += ved.nr_splits - 1
@@ -548,6 +563,7 @@ fn (mut ved Ved) prev_split() {
 	ved.update_view()
 }
 
+// open_workspace switches to the workspace at the given index.
 fn (mut ved Ved) open_workspace(idx int) {
 	//$if debug {
 	println('open workspace(${idx})')
@@ -581,6 +597,7 @@ fn (mut ved Ved) open_workspace(idx int) {
 	// ved.get_git_diff()
 }
 
+// add_workspace adds a new workspace to the editor and creates the necessary views for it.
 fn (mut ved Ved) add_workspace(path string) {
 	//$if debug {
 	println('add_workspace("${path}")')
@@ -603,17 +620,20 @@ fn (mut ved Ved) add_workspace(path string) {
 	}
 }
 
+// short_space returns a shortened version of a workspace path for display purposes.
 fn short_space(workspace string) string {
 	pos := workspace.last_index(os.path_separator) or { return workspace }
 	return workspace[pos + 1..].limit(10)
 }
 
+// move_to_line moves the view to a specific line number.
 fn (mut ved Ved) move_to_line(n int) {
 	ved.prev_y = ved.view.y
 	ved.view.from = n
 	ved.view.set_y(n)
 }
 
+// save_session saves the list of open files, their cursor positions, and the list of workspaces to disk.
 fn (ved &Ved) save_session() {
 	println('saving session...')
 	mut f := os.create(session_path) or { panic('fail') }
@@ -635,11 +655,12 @@ fn (ved &Ved) save_session() {
 	f_workspace.close()
 }
 
-// TODO fix vals[0].int()
+// toi is a helper function to convert a string to an i64.
 fn toi(s string) i64 {
 	return s.i64()
 }
 
+// save_timer saves the current task and timer state to disk.
 fn (ved &Ved) save_timer() {
 	mut f := os.create(timer_path) or { return }
 	f.writeln('task=${ved.cur_task}') or { panic(err) }
@@ -656,6 +677,7 @@ fn (ved &Ved) save_timer() {
 	f.close()
 }
 
+// load_timer loads the task and timer state from disk.
 fn (mut ved Ved) load_timer() {
 	// task=do work
 	// task_start=1223212221
@@ -686,6 +708,7 @@ fn (mut ved Ved) load_timer() {
 	// ved.timer.started = ved.timer.start_unix != 0
 }
 
+// load_session loads the last saved session, including workspaces and open files.
 fn (mut ved Ved) load_session() {
 	println('load session "${session_path}"')
 	paths := os.read_lines(session_path) or { return }
@@ -693,6 +716,7 @@ fn (mut ved Ved) load_session() {
 	ved.load_views(paths)
 }
 
+// load_views opens files and sets their cursor positions based on the saved session data.
 fn (mut ved Ved) load_views(paths []string) {
 	for i := 0; i < paths.len && i < ved.views.len; i++ {
 		// println('loading path')
@@ -715,6 +739,7 @@ fn (mut ved Ved) load_views(paths []string) {
 	}
 }
 
+// get_git_diff fetches the short git diff status for the current workspace.
 fn (ved &Ved) get_git_diff() {
 	/*
 	return
@@ -740,6 +765,7 @@ fn (ved &Ved) get_git_diff() {
 	*/
 }
 
+// get_git_diff_full fetches the full git diff, displays it in a new split, and opens git log if there is no diff.
 fn (ved &Ved) get_git_diff_full() string {
 	dir := ved.workspace
 	os.system('git -C ${dir} diff > ${dir}/out')
@@ -756,6 +782,7 @@ fn (ved &Ved) get_git_diff_full() string {
 	return 's'
 }
 
+// open_blog creates and/or opens a new blog post file for the current date.
 fn (mut ved Ved) open_blog() {
 	now := time.now()
 	path := os.join_path(codeblog_path, '${now.year}', '${now.month:02d}', '${now.day:02d}')
@@ -783,6 +810,7 @@ fn (mut ved Ved) open_blog() {
 	}
 }
 
+// get_last_view returns a reference to the last view within the current workspace.
 fn (ved &Ved) get_last_view() &View {
 	pos := (ved.workspace_idx + 1) * ved.nr_splits - 1
 	eprintln('> ${@METHOD} pos: ${pos}')
@@ -791,10 +819,12 @@ fn (ved &Ved) get_last_view() &View {
 	}
 }
 
+// last_view_idx returns the index of the last view within the current workspace.
 fn (ved &Ved) last_view_idx() int {
 	return (ved.workspace_idx + 1) * ved.nr_splits - 1
 }
 
+// save_changed_files iterates through all open views and saves any that have been modified.
 fn (mut ved Ved) save_changed_files() {
 	for i, view in ved.views {
 		if view.changed {
@@ -803,6 +833,7 @@ fn (mut ved Ved) save_changed_files() {
 	}
 }
 
+// get_build_file_location finds the location of the build script for the current workspace.
 fn (mut ved Ved) get_build_file_location() ?string {
 	dir := ved.workspace
 	mut build_file := '${dir}/build'
@@ -815,6 +846,7 @@ fn (mut ved Ved) get_build_file_location() ?string {
 	return build_file
 }
 
+// go_to_error parses a compiler error message, opens the corresponding file if necessary, and jumps to the error location.
 fn (mut ved Ved) go_to_error(line string, error_details string) {
 	ved.error_line = line.after('error: ')
 	ved.error_line += '    ' + error_details
@@ -879,6 +911,7 @@ fn (mut ved Ved) go_to_error(line string, error_details string) {
 	}
 }
 
+// loop is the main background loop of the editor, responsible for periodic refreshes and tasks.
 fn (mut ved Ved) loop() {
 	for {
 		ved.refresh = true
@@ -893,6 +926,7 @@ fn (mut ved Ved) loop() {
 	}
 }
 
+// key_u is a custom keybinding that runs the current test file or builds the application.
 fn (mut ved Ved) key_u() {
 	// Run a single test file
 	if ved.view.path.ends_with('_test.v') {
@@ -903,6 +937,7 @@ fn (mut ved Ved) key_u() {
 	}
 }
 
+// segfault_sigaction is the signal handler for segmentation faults, attempting to save work before exiting.
 fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	println('crash!')
 	/*
@@ -925,6 +960,7 @@ fn segfault_sigaction(signal int, si voidptr, arg voidptr) {
 	exit(1)
 }
 
+// handle_segfault sets up the custom signal handler for segmentation faults.
 fn (ved &Ved) handle_segfault() {
 	$if windows {
 		return
@@ -941,6 +977,7 @@ fn (ved &Ved) handle_segfault() {
 	*/
 }
 
+// task_minutes calculates and returns the number of minutes spent on the current task.
 fn (ved &Ved) task_minutes() int {
 	mut seconds := ved.now.unix() - ved.task_start_unix
 	if ved.task_start_unix <= 0 {
@@ -949,6 +986,7 @@ fn (ved &Ved) task_minutes() int {
 	return int(seconds / 60)
 }
 
+// git_pull performs a `git pull --rebase` in the current workspace directory.
 fn (mut ved Ved) git_pull() {
 	os.system('git -C "${ved.workspace}" pull --rebase')
 	ved.mode = .normal
@@ -960,6 +998,7 @@ const text_scale = 1.2
 const max_text_size = 24
 const min_text_size = 18
 
+// increase_font changes the editor's font size and recalculates related UI metrics.
 fn (mut ved Ved) increase_font(delta int) {
 	// println('INCREASE_FONT(${delta})')
 	// println('text_size=${ved.cfg.text_size}')
@@ -1011,6 +1050,7 @@ fn (mut ved Ved) increase_font(delta int) {
 	// println(ved.cfg)
 }
 
+// calc_nr_splits_from_text_size adjusts the number of visible splits based on the current font size to maintain readability.
 fn (mut ved Ved) calc_nr_splits_from_text_size() {
 	if ved.cfg.text_size > 20 && ved.nr_splits > 2 {
 		ved.nr_splits = 2
@@ -1019,10 +1059,12 @@ fn (mut ved Ved) calc_nr_splits_from_text_size() {
 	}
 }
 
+// filter_ascii_colors removes ANSI color escape codes from a string.
 fn filter_ascii_colors(s string) string {
 	return s.replace_each(['[22m', '', '[35m', '', '[39m', '', '[1m', '', '[31m', ''])
 }
 
+// get_nr_splits_from_screen_size determines the default number of splits based on the screen width.
 fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 	println('screen_width=${width}')
 	mut nr_splits := 3
@@ -1040,12 +1082,14 @@ fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 	return nr_splits
 }
 
+// get_splits_from_to returns the starting and ending indices of the views belonging to the current workspace.
 fn (ved &Ved) get_splits_from_to() (int, int) {
 	from := ved.workspace_idx * ved.nr_splits
 	to := from + ved.nr_splits
 	return from, to
 }
 
+// update_cur_fn_name finds the name of the function the cursor is currently in and updates the state to display it in the top bar.
 fn (mut ved Ved) update_cur_fn_name() {
 	if !(ved.view.path.ends_with('.v') || ved.view.path.ends_with('.go')) {
 		ved.cur_fn_name = ''
@@ -1075,6 +1119,7 @@ fn (mut ved Ved) update_cur_fn_name() {
 	}
 }
 
+// read_grep_file_exts reads the .ved configuration file from each workspace to determine which file extensions to include in a directory-wide search.
 fn read_grep_file_exts(workspaces []string) map[string][]string {
 	mut res := map[string][]string{}
 	for w in workspaces {
@@ -1096,7 +1141,8 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 	return res
 }
 
-// Helper to get files for a specific workspace (similar to load_git_tree but targeted)
+// get_files_for_workspace lists all files for a given workspace path, preferably using `git ls-files`.
+// (similar to load_git_tree but targeted)
 // TODO: Caching? For now, load every time.
 fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
 	if ws_path == '' {
