@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2023 Alexander Medvednikov. All rights reserved.
+// Copyright (c) 2019-2025 Alexander Medvednikov. All rights reserved.
 // Use of this source code is governed by a GPL license
 // that can be found in the LICENSE file.
 module main
@@ -907,34 +907,6 @@ fn (mut view View) move_to_line(line int) {
 	view.from = line
 	view.set_y(line)
 	view.zz()
-}
-
-// Fit lines  into 80 chars
-// gq reflows (formats) the visually selected paragraph to a fixed width. (Vim: `gq`)
-fn (mut view View) gq() {
-	/*
-	mut ved := view.ved
-	if ved.mode != .visual {
-		return
-	}
-	view.y_visual()
-	max := ved.max_chars(0)
-	// Join all selected lines into a single string
-	joined := ved.ylines.join('\n')
-	// Delete what we selected
-	for yline in ved.ylines {
-		if yline == '' {
-			continue
-		}
-		view.lines.delete(view.y)
-	}
-	new_lines := break_text(joined, max - 1)
-	for line in new_lines {
-		view.insert_text(line)
-		view.o()
-	}
-	ved.mode = .normal
-	*/
 }
 
 // ctrl+a - increase number by one
