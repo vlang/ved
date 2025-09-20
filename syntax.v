@@ -4,7 +4,7 @@
 module main
 
 import os
-import json
+import x.json2
 
 const builtin_v_syntax_file_content = $embed_file('syntax/v.syntax').to_string()
 
@@ -18,7 +18,7 @@ struct Syntax {
 
 fn (mut ved Ved) load_syntaxes() {
 	println('loading syntax files...')
-	vsyntax := json.decode(Syntax, builtin_v_syntax_file_content) or {
+	vsyntax := json2.decode[Syntax](builtin_v_syntax_file_content) or {
 		panic('the builtin syntax file "${builtin_v_syntax_file_content}" can not be decoded ${err}')
 	}
 	ved.syntaxes << vsyntax
@@ -28,7 +28,7 @@ fn (mut ved Ved) load_syntaxes() {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'
 		}
-		syntax := json.decode(Syntax, fcontent) or {
+		syntax := json2.decode[Syntax](fcontent) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			Syntax{}
 		}

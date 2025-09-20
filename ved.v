@@ -8,7 +8,7 @@ import os
 import time
 import uiold
 import clipboard
-import json
+import x.json2
 
 const exe_dir = os.dir(os.executable())
 const home_dir = os.home_dir()
@@ -1131,7 +1131,7 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 			println(err)
 			continue
 		}
-		x := json.decode(Workspace, f) or {
+		x := json2.decode[Workspace](f) or {
 			println(err)
 			continue
 		}

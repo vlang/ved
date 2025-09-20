@@ -6,7 +6,7 @@ module main
 import os
 import gg
 // import toml
-import json
+import x.json2
 
 // The different kinds of cursors
 enum Cursor {
@@ -312,7 +312,7 @@ fn (mut config Config) set_red() {
 
 fn (mut ved Ved) load_config2() {
 	if os.exists(config_path2) {
-		if conf2 := json.decode(Config, os.read_file(config_path2) or { return }) {
+		if conf2 := json2.decode[Config](os.read_file(config_path2) or { return }) {
 			println('AXAXAXAXA ${conf2}')
 			ved.cfg = conf2
 			/*
@@ -338,5 +338,5 @@ fn (mut ved Ved) save_config2() {
 		char_width:  ved.cfg.char_width
 	}
 	*/
-	os.write_file(config_path2, json.encode_pretty(ved.cfg)) or { panic(err) }
+	os.write_file(config_path2, json2.encode(ved.cfg, prettify: true)) or { panic(err) }
 }
