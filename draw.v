@@ -241,24 +241,34 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 
 		if view.hl_on {
 			// Handle multi page /**/
-			start_comment_pos := s.index(mcomment.start1.str() + mcomment.start2.str()) or { -1 }
-			end_comment_pos := s.index(mcomment.end1.str() + mcomment.end2.str()) or { -1 }
+			// Find the position of start and end comment delimiters on the current line.
+			// This now uses the string-based delimiters from the Mcomment struct.
+			start_comment_pos := s.index(mcomment.start) or { -1 }
+			end_comment_pos := s.index(mcomment.end) or { -1 }
+
+			// This logic handles rendering for a line that starts inside a multi-line comment.
 			if current_is_ml_comment {
-				if end_comment_pos != -1 { // Comment ends on this line
-					// Draw comment part
-					comment_part := s[..end_comment_pos + 2]
+				if end_comment_pos != -1 { // The multi-line comment ends on this line.
+					// Draw the part of the line that is inside the comment.
+					// The slice now uses `mcomment.end.len` for an accurate length.
+					comment_part := s[..end_comment_pos + mcomment.end.len]
 					ved.gg.draw_text(line_x, y, comment_part, ved.cfg.comment_cfg)
-					// Draw rest normally
-					normal_part := s[end_comment_pos + 2..]
+
+					// Draw the rest of the line (after the comment) using standard syntax highlighting.
+					normal_part := s[end_comment_pos + mcomment.end.len..]
 					if normal_part.len > 0 {
-						normal_part_x := line_x + comment_part.len * ved.cfg.char_width // Adjust based on actual rendered width if needed
+						// Calculate the starting x-position for the text after the comment.
+						normal_part_x := line_x + comment_part.len * ved.cfg.char_width
 						ved.draw_text_line_standard_syntax(normal_part_x, y, normal_part,
 							ext)
 					}
-					current_is_ml_comment = false // Update state for next line
-				} else { // Entire line is inside the comment
+
+					// Update the state since the comment block is now closed.
+					current_is_ml_comment = false
+				} else { // The entire line is still inside the comment.
+					// Draw the whole line with the comment color.
 					ved.gg.draw_text(line_x, y, s, ved.cfg.comment_cfg)
-					// current_is_ml_comment remains true
+					// The state `current_is_ml_comment` remains true for the next line.
 				}
 			} else { // current_is_ml_comment is false
 				if start_comment_pos != -1
