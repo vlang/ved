@@ -312,17 +312,14 @@ fn (mut view View) j() {
 	// println(view.ved.cfg.tab_size)
 	if nr_tabs2 > nr_tabs1 {
 		view.x -= (nr_tabs2 - nr_tabs1) * view.ved.cfg.tab_size - 1
-		if view.x < 0 {
-			view.x = 0
-		}
 	}
 	// Line below is shorter, move to the end of it
 	if view.x > line.len - 1 {
 		view.prev_x = view.x
 		view.x = line.len - 1
-		if view.x < 0 {
-			view.x = 0
-		}
+	}
+	if view.x < 0 {
+		view.x = 0
 	}
 }
 
