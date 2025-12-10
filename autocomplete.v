@@ -221,7 +221,7 @@ fn (mut ved Ved) get_line_info() {
 
 // called when pressing Enter
 fn (mut ved Ved) insert_suggested_field() {
-	if true {
+	if unsafe { true } {
 		return
 	}
 	if ved.autocomplete_info.vars.len == 0 {

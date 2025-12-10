@@ -135,7 +135,7 @@ const is_window = '-window' in args
 fn get_screen_size() (int, int) {
 	mut size := gg.screen_size()
 	println('AAA SIZE=${size}')
-	if true {
+	if unsafe { true } {
 		// exit(0)
 	}
 	if size.width == 0 || size.height == 0 {
@@ -1076,7 +1076,7 @@ fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 	}
 	max_split_width := ved.cfg.char_width * 110
 	println('MAX=${max_split_width}')
-	if false {
+	if unsafe { false } {
 		exit(1)
 	}
 	return nr_splits
