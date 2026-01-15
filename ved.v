@@ -109,6 +109,7 @@ enum EditorMode {
 	timer        = 4
 	autocomplete = 5
 	debugger     = 6
+	visual_block = 7 // cmd+v
 }
 
 // ViSize represents the dimensions (width and height) of a view or the window.

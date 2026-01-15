@@ -22,16 +22,38 @@ fn (mut ved Ved) draw() {
 	line_width := split_width - ved.view.padding_left - 10
 	ved.gg.draw_rect_filled(line_x, y, line_width, ved.cfg.line_height, ved.cfg.vcolor)
 	// V selection
-	mut v_from := ved.view.vstart + 1
-	mut v_to := ved.view.vend + 1
-	if view.vend < view.vstart {
-		// Swap start and end if we go beyond the start
-		v_from = ved.view.vend + 1
-		v_to = ved.view.vstart + 1
-	}
-	for yy := v_from; yy <= v_to; yy++ {
-		ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height, line_width,
-			ved.cfg.line_height, ved.cfg.vcolor)
+	if ved.mode == .visual {
+		mut v_from := ved.view.vstart + 1
+		mut v_to := ved.view.vend + 1
+		if view.vend < view.vstart {
+			// Swap start and end if we go beyond the start
+			v_from = ved.view.vend + 1
+			v_to = ved.view.vstart + 1
+		}
+		for yy := v_from; yy <= v_to; yy++ {
+			ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height,
+				line_width, ved.cfg.line_height, ved.cfg.vcolor)
+		}
+	} else if ved.mode == .visual_block {
+		mut v_from := ved.view.vstart
+		mut v_to := ved.view.vend
+		if v_to < v_from {
+			v_from, v_to = v_to, v_from
+		}
+		x_min := if ved.view.vx < ved.view.x { ved.view.vx } else { ved.view.x }
+		x_max := if ved.view.vx > ved.view.x { ved.view.vx } else { ved.view.x }
+		for yy := v_from; yy <= v_to; yy++ {
+			if yy < ved.view.from || yy >= ved.view.from + ved.page_height {
+				continue
+			}
+			// line := view.lines[yy]
+			// TODO handle tabs
+			start_off := x_min * ved.cfg.char_width
+			width := (x_max - x_min + 1) * ved.cfg.char_width
+			y_pos := (yy - ved.view.from) * ved.cfg.line_height + ved.cfg.line_height
+			ved.gg.draw_rect_filled(line_x + start_off, y_pos, width, ved.cfg.line_height,
+				ved.cfg.vcolor)
+		}
 	}
 	// Black title background
 	ved.gg.draw_rect_filled(0, 0, ved.win_width, ved.cfg.line_height, ved.cfg.title_color)

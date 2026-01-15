@@ -24,6 +24,7 @@ mut:
 	page_height  int
 	vstart       int
 	vend         int // visual borders
+	vx           int // for cmd+v visual block mode
 	changed      bool
 	error_y      int
 	ved          &Ved = unsafe { nil }
@@ -707,6 +708,32 @@ fn (mut view View) d_visual() {
 		view.y += 1
 	}
 	view.k()
+}
+
+fn (mut view View) d_visual_block() {
+	vtop, vbot := if view.vstart < view.vend {
+		view.vstart, view.vend
+	} else {
+		view.vend, view.vstart
+	}
+	xtop, xbot := if view.vx < view.x { view.vx, view.x } else { view.x, view.vx }
+	for i := vtop; i <= vbot; i++ {
+		if i >= view.lines.len {
+			continue
+		}
+		line := view.lines[i]
+		runes := line.runes()
+		if xtop >= runes.len {
+			continue
+		}
+		end := if xbot + 1 > runes.len { runes.len } else { xbot + 1 }
+		left := runes[..xtop]
+		right := runes[end..]
+		view.lines[i] = left.string() + right.string()
+	}
+	view.changed = true
+	view.ved.exit_visual()
+	view.x = xtop
 }
 
 // cw changes the word under the cursor: deletes it and enters insert mode. (Vim: `cw`)

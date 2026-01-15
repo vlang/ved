@@ -105,6 +105,7 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 	match ved.mode {
 		.normal { ved.key_normal(key, mod) }
 		.visual { ved.key_visual(key, mod) } // Pass full mod
+		.visual_block { ved.key_visual(key, mod) }
 		.insert { ved.key_insert(key, mod) }
 		.query { ved.key_query(key, super) }
 		.timer { ved.timer.key_down(key, super) }
@@ -461,7 +462,12 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 			}
 		}
 		.v {
-			ved.mode = .visual
+			if super {
+				ved.mode = .visual_block
+				view.vx = view.x
+			} else {
+				ved.mode = .visual
+			}
 			view.vstart = view.y
 			view.vend = view.y
 		}
@@ -697,7 +703,11 @@ fn (mut ved Ved) key_visual(key gg.KeyCode, mod gg.Modifier) {
 			ved.mode = .normal
 		}
 		.d {
-			view.d_visual()
+			if ved.mode == .visual_block {
+				view.d_visual_block()
+			} else {
+				view.d_visual()
+			}
 			ved.mode = .normal
 		}
 		.q {
