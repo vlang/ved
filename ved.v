@@ -73,6 +73,7 @@ mut:
 	char_width         int
 	gg_lines           []string
 	gg_pos             int
+	gg_scroll          int // scroll offset for grep/ctrlp results
 	cfg                Config
 	cb                 &clipboard.Clipboard = unsafe { nil }
 	open_paths         [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']

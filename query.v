@@ -117,6 +117,10 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						if ved.gg_pos >= ved.gg_lines.len {
 							ved.gg_pos = ved.gg_lines.len - 1
 						}
+						// Scroll down if selection goes below visible area
+						if ved.gg_pos >= ved.gg_scroll + max_grep_lines {
+							ved.gg_scroll = ved.gg_pos - max_grep_lines + 1
+						}
 					}
 					.ctrlp {
 						ved.gg_pos++
@@ -126,6 +130,10 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						}
 						if ved.gg_pos < 0 && ved.ctrlp_results.len > 0 { // Handle empty case
 							ved.gg_pos = 0
+						}
+						// Scroll down if selection goes below visible area
+						if ved.gg_pos >= ved.gg_scroll + nr_ctrlp_results {
+							ved.gg_scroll = ved.gg_pos - nr_ctrlp_results + 1
 						}
 					}
 					.search {
@@ -149,6 +157,10 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						ved.gg_pos--
 						if ved.gg_pos < 0 {
 							ved.gg_pos = 0
+						}
+						// Scroll up if selection goes above visible area
+						if ved.gg_pos < ved.gg_scroll {
+							ved.gg_scroll = ved.gg_pos
 						}
 					}
 					.search {
@@ -220,6 +232,7 @@ fn (mut ved Ved) load_git_tree() {
 	ved.query = '' // Reset query when loading tree
 	ved.ctrlp_results = [] // Reset ctrlp results as well
 	ved.gg_pos = -1
+	ved.gg_scroll = 0 // Reset scroll offset
 
 	mut dir := ved.workspace
 	if dir == '' {
@@ -262,6 +275,7 @@ fn (mut ved Ved) load_git_tree() {
 fn (mut ved Ved) filter_ctrlp_results() {
 	ved.ctrlp_results = [] // Clear previous results
 	ved.gg_pos = -1 // Reset selection
+	ved.gg_scroll = 0 // Reset scroll offset
 	query_lower := ved.query.to_lower()
 
 	// 1. Search current workspace
@@ -407,12 +421,13 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 
 	match kind {
 		.ctrlp {
-			// Iterate over the pre-filtered results
-			for i, result in ved.ctrlp_results {
+			// Iterate over the pre-filtered results starting from scroll offset
+			for i := ved.gg_scroll; i < ved.ctrlp_results.len; i++ {
 				// Stop drawing if we exceed the display limit
 				if j >= nr_ctrlp_results {
 					break
 				}
+				result := ved.ctrlp_results[i]
 				yy := line_y_start + (ved.cfg.line_height + line_padding) * j
 				if i == ved.gg_pos { // Use index `i` for selection highlight
 					ved.gg.draw_rect_filled(x, yy, width, ved.cfg.line_height + line_padding,
@@ -423,19 +438,25 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 			}
 		}
 		.grep {
-			for i, s in ved.gg_lines {
+			// Start from scroll offset
+			for i := ved.gg_scroll; i < ved.gg_lines.len; i++ {
 				if j >= max_grep_lines { // Use grep limit
 					break
 				}
+				s := ved.gg_lines[i]
 				yy := line_y_start + (ved.cfg.line_height + line_padding) * j
 				if i == ved.gg_pos {
 					ved.gg.draw_rect_filled(x, yy, width, ved.cfg.line_height + line_padding,
 						ved.cfg.vcolor) // Use passed width
 				}
-				pos := s.index(':') or { continue }
+				pos := s.index(':') or {
+					j++
+					continue
+				}
 				path := s[..pos].limit(55)
 				pos2 := s.index_after(':', pos + 1) or { -1 }
 				if pos2 == -1 || pos2 >= s.len - 1 {
+					j++
 					continue
 				}
 				text := s[pos2 + 1..].trim_space().limit(100)
@@ -547,6 +568,7 @@ fn (mut ved Ved) ctrlj_open() {
 fn (mut ved Ved) git_grep() {
 	ved.gg_pos = 0 // select the first result for faster switching to the right file =
 	// (especially if there's only one result)
+	ved.gg_scroll = 0 // Reset scroll offset
 	query := ved.search_query.replace('$', '\\\$')
 	s := os.execute('git -C "${ved.workspace}" grep -F -n "${query}"')
 	if s.exit_code == -1 {
