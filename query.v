@@ -313,8 +313,29 @@ fn (mut ved Ved) filter_ctrlp_results() {
 		}
 	}
 
-	// Optionally sort results here if needed (e.g., by length, alphabetically)
-	// ved.ctrlp_results.sort(...)
+	// Sort results by open count (most opened first)
+	ved.ctrlp_results.sort_with_compare(fn [ved] (a &CtrlPResult, b &CtrlPResult) int {
+		// Build full paths for lookup
+		path_a := os.join_path(a.workspace_path, a.file_path)
+		path_b := os.join_path(b.workspace_path, b.file_path)
+
+		count_a := ved.file_open_count[path_a]
+		count_b := ved.file_open_count[path_b]
+
+		// Sort descending by count (higher count first)
+		if count_a > count_b {
+			return -1
+		} else if count_a < count_b {
+			return 1
+		}
+		// If same count, sort by path length (shorter first)
+		if a.file_path.len < b.file_path.len {
+			return -1
+		} else if a.file_path.len > b.file_path.len {
+			return 1
+		}
+		return 0
+	})
 }
 
 fn (mut ved Ved) is_git_tree() bool {

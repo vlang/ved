@@ -6,4 +6,4 @@
 
 + ctrl p/git grep scroll
 - ctrl p prioritize most used files (place on top)
-- ^.v filter in git grep
++ ^.v filter in git grep

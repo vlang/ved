@@ -102,6 +102,8 @@ fn (mut view View) open_file(path string, line_nr int) {
 	}
 	mut ved := view.ved
 	ved.set_current_syntax_idx(os.file_ext(path))
+	// Track file open count for ctrl+p prioritization
+	ved.file_open_count[path] = ved.file_open_count[path] + 1
 	// if os.exists(view.short_path) &&
 	if view.short_path !in ['out', ''] && view.short_path !in ved.open_paths[ved.workspace_idx] {
 		if ved.open_paths[ved.workspace_idx].len == 0 {

@@ -19,6 +19,7 @@ const session_path = os.join_path(settings_dir, 'session')
 const workspaces_path = os.join_path(settings_dir, 'workspaces')
 const timer_path = os.join_path(settings_dir, 'timer')
 const tasks_path = os.join_path(settings_dir, 'tasks')
+const file_stats_path = os.join_path(settings_dir, 'file_stats')
 const config_path = os.join_path(settings_dir, 'conf.toml')
 const config_path2 = os.join_path(settings_dir, 'config.json')
 const max_nr_workspaces = 10
@@ -69,6 +70,7 @@ mut:
 	cur_task           string
 	words              []string
 	file_y_pos         map[string]int // to save current line for each file s
+	file_open_count    map[string]int // track how many times each file has been opened
 	refresh            bool = true
 	char_width         int
 	gg_lines           []string
@@ -276,6 +278,7 @@ fn main() {
 	ved.grep_file_exts = read_grep_file_exts(ved.workspaces)
 	ved.load_session()
 	ved.load_timer()
+	ved.load_file_stats()
 	ved.init_tree()
 	println('first_launch=${first_launch}')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
@@ -655,6 +658,28 @@ fn (ved &Ved) save_session() {
 		f_workspace.writeln(workspace) or { panic(err) }
 	}
 	f_workspace.close()
+	ved.save_file_stats()
+}
+
+// save_file_stats saves file open counts to disk.
+fn (ved &Ved) save_file_stats() {
+	mut f := os.create(file_stats_path) or { return }
+	for path, count in ved.file_open_count {
+		f.writeln('${path}:${count}') or { continue }
+	}
+	f.close()
+}
+
+// load_file_stats loads file open counts from disk.
+fn (mut ved Ved) load_file_stats() {
+	lines := os.read_lines(file_stats_path) or { return }
+	for line in lines {
+		parts := line.split(':')
+		if parts.len != 2 {
+			continue
+		}
+		ved.file_open_count[parts[0]] = parts[1].int()
+	}
 }
 
 // toi is a helper function to convert a string to an i64.
