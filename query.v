@@ -288,11 +288,6 @@ fn (mut ved Ved) filter_ctrlp_results() {
 				workspace_path: current_ws_path
 				display_name:   file_path
 			}
-			// Limit results early?
-			// Stop adding results once we reach the display limit to avoid unnecessary processing
-			if ved.ctrlp_results.len >= nr_ctrlp_results {
-				return
-			}
 		}
 	}
 
@@ -312,10 +307,6 @@ fn (mut ved Ved) filter_ctrlp_results() {
 						file_path:      file_path_trimmed
 						workspace_path: ws_path
 						display_name:   '${file_path_trimmed} (${short_ws_name})'
-					}
-					// Limit results early?
-					if ved.ctrlp_results.len >= nr_ctrlp_results {
-						return
 					}
 				}
 			}
