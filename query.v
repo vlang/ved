@@ -560,8 +560,29 @@ fn (mut ved Ved) git_grep() {
 	ved.gg_pos = 0 // select the first result for faster switching to the right file =
 	// (especially if there's only one result)
 	ved.gg_scroll = 0 // Reset scroll offset
-	query := ved.search_query.replace('$', '\\\$')
-	s := os.execute('git -C "${ved.workspace}" grep -F -n "${query}"')
+
+	// Parse extension filter: ^.ext query
+	mut query := ved.search_query
+	mut ext_filter := ''
+
+	if query.starts_with('^.') {
+		// Extract extension and query
+		parts := query.split(' ')
+		if parts.len >= 2 {
+			ext_filter = parts[0][2..] // Remove ^.
+			query = parts[1..].join(' ') // Rest is the actual query
+		}
+	}
+
+	query = query.replace('$', '\\\$')
+
+	// Build git grep command with optional extension filter
+	mut cmd := 'git -C "${ved.workspace}" grep -F -n "${query}"'
+	if ext_filter != '' {
+		cmd += ' -- "*.${ext_filter}"'
+	}
+
+	s := os.execute(cmd)
 	if s.exit_code == -1 {
 		return
 	}

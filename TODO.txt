@@ -2,3 +2,8 @@
 - use ui.textbox
 - print error message on the actual line
 - remember line pos for each file on t
+
+
++ ctrl p/git grep scroll
+- ctrl p prioritize most used files (place on top)
+- ^.v filter in git grep
