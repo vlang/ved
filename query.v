@@ -401,6 +401,30 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
 
+	// Draw counter for ctrlp and grep (e.g., "1/25")
+	if ved.query_type == .ctrlp || ved.query_type == .grep {
+		mut total := 0
+		mut current := 0
+		if ved.query_type == .ctrlp {
+			total = ved.ctrlp_results.len
+			current = ved.gg_pos + 1
+		} else if ved.query_type == .grep {
+			total = ved.gg_lines.len
+			current = ved.gg_pos + 1
+		}
+		// Only show if we have results
+		if total > 0 && current > 0 {
+			counter_text := '${current}/${total}'
+			counter_x := x + width - 10 - counter_text.len * ved.cfg.char_width
+			ved.gg.draw_text2(
+				x:     counter_x
+				y:     y
+				text:  counter_text
+				color: gg.white
+			)
+		}
+	}
+
 	query_to_draw := if ved.query_type in [.search, .search_in_folder, .grep] {
 		ved.search_query
 	} else {
