@@ -98,6 +98,8 @@ fn key_down(key gg.KeyCode, mod gg.Modifier, mut ved Ved) {
 			ved.exit_visual()
 		}
 		ved.mode = .normal
+		ved.prev_cmd = ''
+		ved.prev_key = .invalid
 	}
 	// Reset error line
 	ved.view.error_y = -1
@@ -120,6 +122,9 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	shift := mod == .shift
 	// println('mod=')
 	// println(int(mod))
+	if ved.prev_cmd == 'dt' {
+		return
+	}
 	shift_and_super := int(mod) == 9
 	mut view := ved.view
 	ved.refresh = true
@@ -383,6 +388,11 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 				ved.timer.load_tasks()
 				ved.mode = .timer
 			} else {
+				if ved.prev_key == .d {
+					ved.prev_cmd = 'dt'
+					ved.just_switched = true
+					return
+				}
 				// if ved.prev_key == C.GLFW_KEY_T {
 				view.tt()
 			}
@@ -579,6 +589,12 @@ fn on_char(code u32, mut ved Ved) {
 			ved.char_query(s)
 		}
 		.normal {
+			if !ved.just_switched && ved.prev_cmd == 'dt' {
+				ved.view.dt(s)
+				ved.prev_cmd = ''
+				ved.prev_key = gg.KeyCode.invalid
+				return
+			}
 			// on char on normal only for replace with r
 			if !ved.just_switched && ved.prev_key == .r {
 				if s != 'r' {

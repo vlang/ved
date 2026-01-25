@@ -813,6 +813,29 @@ fn (mut view View) db(del_whitespace bool) { // string {
 	ved.prev_cmd = 'db'
 }
 
+// dt deletes from the cursor up to (but not including) the character `s` on the current line. (Vim: `dt`)
+fn (mut view View) dt(s string) {
+	if s == '' {
+		return
+	}
+	line := view.line()
+	runes := line.runes()
+	if view.x >= runes.len {
+		return
+	}
+	target := s.runes()[0]
+	for i := view.x; i < runes.len; i++ {
+		if runes[i] == target {
+			mut new_runes := []rune{}
+			new_runes << runes[..view.x]
+			new_runes << runes[i..]
+			view.set_line(new_runes.string())
+			view.changed = true
+			break
+		}
+	}
+}
+
 // TODO COPY PASTA
 // same as cw but deletes underscores
 // ce changes the word/token under the cursor. Similar to `cw` but may use a different definition of a "word".
