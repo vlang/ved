@@ -136,10 +136,12 @@ fn (mut ved Ved) run_file() {
 	dir := os.dir(view.path)
 	os.chdir(dir) or {}
 	out := os.execute('v run ${view.path}')
-	os.write_file('${dir}/out', out.output) or { panic(err) }
+	// out_dir := '${dir}/out'
+	out_dir := os.temp_dir() + '/ved_out'
+	os.write_file(out_dir, out.output) or { panic(err) }
 	// TODO COPYPASTA
 	mut last_view := ved.get_last_view()
-	last_view.open_file('${dir}/out', 0)
+	last_view.open_file(out_dir, 0)
 	last_view.shift_g()
 	ved.is_building = false
 	// error line
