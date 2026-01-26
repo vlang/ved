@@ -138,16 +138,21 @@ fn (mut ved Ved) key_normal(key gg.KeyCode, mod gg.Modifier) {
 	}
 	match key {
 		.enter {
-			// Full screen => window
-			// Update screen size
+			// Toggle between fullscreen and small window
 			if super {
-				println('full screen')
-				width, height := get_screen_size()
-
-				// ved.nr_splits = 1
-				ved.win_width = width
-				ved.win_height = height
-				// glfw.post_empty_event()
+				if gg.is_fullscreen() {
+					// Exit fullscreen to small window
+					gg.toggle_fullscreen()
+					ved.win_width = 770
+					ved.win_height = 480
+					ved.gg.resize(ved.win_width, ved.win_height)
+				} else {
+					// Enter fullscreen with current screen size
+					width, height := get_screen_size()
+					ved.win_width = width
+					ved.win_height = height
+					gg.toggle_fullscreen()
+				}
 			}
 		}
 		.period {
