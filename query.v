@@ -336,6 +336,17 @@ fn (mut ved Ved) filter_ctrlp_results() {
 		}
 		return 0
 	})
+
+	// Compute line counts for visible ctrlp results
+	ved.gg_file_locs = map[string]int{}
+	for result in ved.ctrlp_results {
+		full_path := os.join_path(result.workspace_path, result.file_path)
+		if full_path in ved.gg_file_locs {
+			continue
+		}
+		content := os.read_file(full_path) or { continue }
+		ved.gg_file_locs[full_path] = content.count('\n') + 1
+	}
 }
 
 fn (mut ved Ved) is_git_tree() bool {
@@ -470,6 +481,19 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 						ved.cfg.vcolor)
 				}
 				ved.gg.draw_text(x + 10, yy + line_padding / 2, result.display_name, ved.cfg.txt_cfg)
+				// Draw file LOC count on the right
+				full_path := os.join_path(result.workspace_path, result.file_path)
+				loc := ved.gg_file_locs[full_path]
+				if loc > 0 {
+					loc_str := '${loc}'
+					loc_x := x + width - 10 - loc_str.len * ved.cfg.char_width
+					ved.gg.draw_text2(
+						x:     loc_x
+						y:     yy + line_padding / 2
+						text:  loc_str
+						color: ved.cfg.comment_color
+					)
+				}
 				j++
 			}
 		}
