@@ -507,6 +507,18 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 				// Draw matching text part (adjust x position)
 				text_x := x + 10 + (path.limit(50).len + 1 + line_nr.len + 2) * ved.cfg.char_width // Approximate position
 				ved.gg.draw_text(text_x, yy + line_padding / 2, text, ved.cfg.txt_cfg)
+				// Draw file LOC count on the right
+				loc := ved.gg_file_locs[s[..pos]]
+				if loc > 0 {
+					loc_str := '${loc}'
+					loc_x := x + width - 10 - loc_str.len * ved.cfg.char_width
+					ved.gg.draw_text2(
+						x:     loc_x
+						y:     yy + line_padding / 2
+						text:  loc_str
+						color: ved.cfg.comment_color
+					)
+				}
 				j++
 			}
 		}
@@ -652,6 +664,18 @@ fn (mut ved Ved) git_grep() {
 			}
 		}
 		ved.gg_lines << line
+	}
+	// Compute line counts (wc -l) for each unique file in results
+	ved.gg_file_locs = map[string]int{}
+	for line in ved.gg_lines {
+		fpos := line.index(':') or { continue }
+		fpath := line[..fpos]
+		if fpath in ved.gg_file_locs {
+			continue
+		}
+		full_path := ved.workspace + '/' + fpath
+		content := os.read_file(full_path) or { continue }
+		ved.gg_file_locs[fpath] = content.count('\n') + 1
 	}
 }
 

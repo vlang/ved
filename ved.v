@@ -74,6 +74,7 @@ mut:
 	refresh            bool = true
 	char_width         int
 	gg_lines           []string
+	gg_file_locs       map[string]int // line counts per file for grep results
 	gg_pos             int
 	gg_scroll          int // scroll offset for grep/ctrlp results
 	cfg                Config
