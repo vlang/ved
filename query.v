@@ -447,6 +447,17 @@ fn (mut ved Ved) draw_query() {
 	cursor_x := x + 10 + query_to_draw.len * ved.cfg.char_width + 1 // cursor
 	cursor_y := y + ved.cfg.line_height + 2
 	ved.gg.draw_rect(x: cursor_x, y: cursor_y, w: 2, h: ved.cfg.line_height - 4)
+	// Draw "LoC" column header for ctrlp and grep
+	if ved.query_type in [.ctrlp, .grep] {
+		loc_header := 'LoC'
+		loc_hx := x + width - 10 - loc_header.len * ved.cfg.char_width
+		ved.gg.draw_text2(
+			x:     loc_hx
+			y:     y + ved.cfg.line_height
+			text:  loc_header
+			color: ved.cfg.comment_color
+		)
+	}
 	// Draw separator between query and files
 	if ved.query_type !in [.search, .cam, .run, .alert] { // Exclude alert too
 		ved.gg.draw_rect(
