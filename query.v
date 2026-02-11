@@ -704,13 +704,13 @@ fn (mut ved Ved) git_grep() {
 	ved.gg_file_locs = map[string]int{}
 	for line in ved.gg_lines {
 		fpos := line.index(':') or { continue }
-		fpath := line[..fpos]
-		if fpath in ved.gg_file_locs {
+		ffpath := line[..fpos]
+		if ffpath in ved.gg_file_locs {
 			continue
 		}
-		full_path := ved.workspace + '/' + fpath
+		full_path := ved.workspace + '/' + ffpath
 		content := os.read_file(full_path) or { continue }
-		ved.gg_file_locs[fpath] = content.count('\n') + 1
+		ved.gg_file_locs[ffpath] = content.count('\n') + 1
 	}
 }
 
