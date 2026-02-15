@@ -33,25 +33,49 @@ fn (mut ved Ved) build_app(extra string) {
 	}
 
 	out_file := os.join_path(dir, 'out')
-	building_cmd := 'sh ${build_file}'
-	eprintln('building with `${building_cmd}` ...')
+	eprintln('building with `sh ${build_file}` ...')
 
 	last_view_idx := ved.last_view_idx()
 
 	os.write_file(out_file, 'Building...') or { panic(err) }
 	ved.views[last_view_idx].open_file(out_file, 0)
 
-	out := os.execute(building_cmd)
-	if out.exit_code == -1 {
+	mut p := os.new_process('/bin/sh')
+	p.set_args(['-c', 'sh ' + build_file + ' 2>&1'])
+	p.set_work_folder(dir)
+	p.set_redirect_stdio()
+	p.run()
+
+	mut output := ''
+	for p.is_alive() {
+		buf := p.stdout_read()
+		if buf.len > 0 {
+			output += buf
+			os.write_file(out_file, filter_ascii_colors(output)) or { panic(err) }
+			ved.views[last_view_idx].open_file(out_file, 0)
+			ved.views[last_view_idx].shift_g()
+			ved.refresh = true
+			ved.gg.refresh_ui()
+		}
+	}
+	// Read remaining output after process exits
+	buf := p.stdout_read()
+	if buf.len > 0 {
+		output += buf
+	}
+	p.wait()
+
+	if p.code == -1 {
+		ved.is_building = false
 		return
 	}
 
-	os.write_file(out_file, filter_ascii_colors(out.output)) or { panic(err) }
+	os.write_file(out_file, filter_ascii_colors(output)) or { panic(err) }
 	ved.views[last_view_idx].open_file(out_file, 0)
 
 	ved.views[last_view_idx].shift_g()
 	// error line
-	lines := out.output.split_into_lines()
+	lines := output.split_into_lines()
 	println('lines=${lines}')
 	// lines := alines.filter(it.contains('.v:') || it.contains('.go:'))
 	mut no_errors := true // !out.output.contains('error:')
@@ -65,9 +89,9 @@ fn (mut ved Ved) build_app(extra string) {
 	mut i := 0
 	for _, line in lines {
 		if !line.contains('.v:') && !line.contains('.go:') {
-			println('skip1 ${line}')
-			i++
-			continue
+			//println('skip1 ${line}')
+			//i++
+			//continue
 		}
 		is_warning := line.contains('warning:')
 		is_notice := line.contains('notice:')
