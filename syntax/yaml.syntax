@@ -1,0 +1,7 @@
+{
+	"name": "YAML",
+	"extensions": [".yaml", ".yml"],
+	"fmt_cmd": "",
+	"keywords": ["true", "false", "null", "yes", "no", "on", "off"],
+	"literals": []
+}

@@ -1,0 +1,7 @@
+{
+	"name": "TOML",
+	"extensions": [".toml"],
+	"fmt_cmd": "",
+	"keywords": ["true", "false"],
+	"literals": []
+}

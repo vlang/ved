@@ -1,0 +1,7 @@
+{
+	"name": "JSON",
+	"extensions": [".json"],
+	"fmt_cmd": "",
+	"keywords": ["true", "false", "null"],
+	"literals": []
+}

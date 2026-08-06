@@ -184,13 +184,8 @@ fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
 	os.chdir(dir) or { return }
-	res := os.execute('zsh -ic "source ~/.zshrc; ${text}" > ${dir}/out')
-	if res.exit_code == -1 {
-	}
-	// TODO copypasted some code from build_app()
-	// mut f2 := os.create('$dir/out') or { panic('fail') }
-	// f2.writeln(out.output) or { panic(err) }
-	// f2.close()
+	res := os.execute('zsh -ic "${text}" 2>&1')
+	os.write_file('${dir}/out', filter_ascii_colors(res.output)) or { return }
 	mut last_view := ved.get_last_view()
 	last_view.open_file('${dir}/out', 0)
 }

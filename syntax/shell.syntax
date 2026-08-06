@@ -1,0 +1,17 @@
+{
+	"name": "Shell",
+	"extensions": [".sh", ".bash", ".zsh"],
+	"fmt_cmd": "shfmt -w <PATH>",
+	"keywords": [
+		"if", "then", "elif", "else", "fi",
+		"for", "while", "until", "do", "done",
+		"case", "esac", "in",
+		"function", "select", "time",
+		"return", "break", "continue",
+		"local", "export", "readonly", "declare", "typeset", "unset",
+		"source", "alias", "unalias",
+		"exit", "trap", "shift", "eval", "exec", "set",
+		"true", "false"
+	],
+	"literals": []
+}
