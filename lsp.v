@@ -97,8 +97,9 @@ fn spawn_lsp_client(command string, root_uri string) !LspClient {
 	id := c.next_request_id()
 	c.send_request(id, 'initialize', init_params)
 	result := c.wait_for_result(id) or {
-		stderr_out := c.p.stderr_slurp()
+		// Terminate before reading stderr and read it non blockingly
 		c.p.signal_term()
+		stderr_out := c.p.stderr_read()
 		c.p.close()
 		return error('initialize failed: ${err}${if stderr_out.len > 0 {
 			' | stderr: ' + stderr_out
@@ -386,11 +387,11 @@ fn (mut ved Ved) try_lsp_definition() bool {
 	client.notify_did_close(uri)
 
 	target_path := uri_to_path(loc.uri)
-	if target_path != view.path {
+	// Compare absolute forms
+	if os.abs_path(target_path) != os.abs_path(view.path) {
 		ved.view.open_file(target_path, loc.line)
-	} else {
-		ved.move_to_line(loc.line)
 	}
+	ved.move_to_line(loc.line)
 	target_line := ved.view.lines[loc.line] or { '' }
 	ved.view.x = lsp_character_to_byte_col(target_line, loc.character, client.position_encoding)
 	return true

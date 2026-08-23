@@ -35,7 +35,7 @@ fn (mut ved Ved) on_event(e &gg.Event) {
 			return
 		}
 
-		if ved.cfg.show_file_tree && ved.on_click(int(e.mouse_x), int(e.mouse_y)) {
+		if ved.cfg.show_file_tree && ved.on_click(int(e.mouse_x) / 2, int(e.mouse_y) / 2) {
 			return
 		}
 
@@ -81,7 +81,8 @@ fn (mut ved Ved) on_event(e &gg.Event) {
 		// Wow, that's a lot of math that is probably pretty hard to parse.
 		// In the future I need to separate this into several variables,
 		// and perhaps even its own function.
-		clicked_x := int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
+		clicked_x := int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 -
+			view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
 		if view.lines.len <= 0 {
 			return
 		}
