@@ -89,7 +89,7 @@ fn (mut t Tree) compute_visible_nodes() {
 	println(t.visible_nodes)
 }
 
-fn (mut t Tree) handle_click(x int, y int) {
+fn (mut t Tree) handle_click(x int, y int) ?string {
 	for pos in t.node_pos {
 		if x >= pos.x && x <= pos.x + pos.w && y >= pos.y && y <= pos.y + pos.h {
 			mut node := &t.nodes[pos.node_idx]
@@ -99,15 +99,19 @@ fn (mut t Tree) handle_click(x int, y int) {
 					t.load_children(pos.node_idx)
 				}
 				t.refresh()
+				return none
 			}
-			break
+			return node.path
 		}
 	}
+	return none
 }
 
 // Handle mouse clicks:
 fn (mut ved Ved) on_click(x int, y int) {
-	ved.tree.handle_click(x, y)
+	if path := ved.tree.handle_click(x, y) {
+		ved.view.open_file(path, 0)
+	}
 }
 
 // Initialize the tree when workspace is set:

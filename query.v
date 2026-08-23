@@ -247,21 +247,21 @@ fn (mut ved Ved) load_git_tree() {
 		}
 		ved.all_git_files = s.output.split_into_lines()
 	} else {
-		/*
-		// Get all files if not a git repo
 		mut files := []string{}
-		os.walk_with_context(dir, &files, fn (mut fs []string, f string) {
-			if f == '.' || f == '..' {
+		os.walk_with_context(dir, &files, fn [dir] (mut fs []string, full_path string) {
+			if os.is_dir(full_path) {
 				return
 			}
-			full_path := os.join_path(dir, f) // Need full path for is_file check
-			if os.is_file(full_path) {
-				// Store relative path
-				fs << f.replace(dir + os.path_separator, '')
+			rel := full_path.trim_string_left(dir).trim_string_left(os.path_separator)
+			// Skip dotfiles/dotdirs (.git, .cache, ...) anywhere in the path
+			for part in rel.split(os.path_separator) {
+				if part.starts_with('.') {
+					return
+				}
 			}
+			fs << rel
 		})
 		ved.all_git_files = files
-		*/
 	}
 	ved.all_git_files.sort_by_len()
 	// Also filter results initially when Ctrl+P is pressed
@@ -571,16 +571,15 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 // Open file on enter for Ctrl+P
 fn (mut ved Ved) ctrlp_open() {
 	println('ctrlpopen gg_pos=${ved.gg_pos}')
+	if ved.ctrlp_results.len == 0 {
+		// No results (e.g. Enter pressed before any query matched a file)
+		// nothing to open
+		return
+	}
 	if ved.gg_pos < 0 || ved.gg_pos >= ved.ctrlp_results.len {
 		println(1)
-		// Attempt to open if only one result and selection is invalid (e.g., -1)
-		// if ved.ctrlp_results.len == 1 {
 		println('set to 0')
 		ved.gg_pos = 0
-		//} else {
-		// println('invalid index')
-		// return // Invalid selection index
-		//}
 	}
 	// Get the selected result
 	selected_result := ved.ctrlp_results[ved.gg_pos]

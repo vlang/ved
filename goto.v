@@ -4,6 +4,15 @@ import os
 
 // gd
 fn (mut ved Ved) go_to_def() {
+	if ved.try_lsp_definition() {
+		return
+	}
+	ved.go_to_def_grep()
+}
+
+// go_to_def_grep is the original naive grep goto-def kept as the fallback for files with no configured LSP server,
+// an uninstalled server or a failed/timed-out request (see lsp.v).
+fn (mut ved Ved) go_to_def_grep() {
 	word := ved.word_under_cursor()
 	// println('GD "$word"')
 	queries := [') ${word}(', 'fn ${word}(']

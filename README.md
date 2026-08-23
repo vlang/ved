@@ -25,7 +25,7 @@ This will take a couple of seconds.
 ```
 git clone https://github.com/vlang/ved
 cd ved
-v .
+v -enable-globals .
 ./ved
 ```
 
@@ -35,7 +35,7 @@ By default V's built-in font rendering is used, but there's an option to use fre
 which may provide better rendering for some users:
 
 ```
-v -d use_freetype .
+v -enable-globals -d use_freetype .
 ```
 
 To use freetype, it must first be installed on your system.
@@ -208,4 +208,3 @@ x r             delete/replace character under cursor
 C-n             autocomplete
 +y              yank and copy to system clipboard
 ```
-

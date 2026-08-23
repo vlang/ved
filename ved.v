@@ -95,7 +95,8 @@ mut:
 	cur_fn_name        string              // Always displayed on the top bar
 	grep_file_exts     map[string][]string // m['workspace_path'] == ['v', 'go']
 	// debugger_output      DebuggerOutput
-	tree Tree // for rendering file tree on the left
+	tree        Tree                 // for rendering file tree on the left
+	lsp_clients map[string]LspClient // file extension -> spawned+initialized LSP server, lazy, one per session
 }
 
 // Workspace holds configuration loaded from a workspace/path/.ved json file

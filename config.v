@@ -57,8 +57,18 @@ mut:
 	red_cfg         gg.TextCfg
 	disable_mouse   bool = true
 	show_file_tree  bool
+	lsp_servers     map[string]string // file extension -> LSP server command, e.g. 'go' -> 'gopls'
 	// Config.json
 	disable_fmt bool
+}
+
+// default_lsp_servers ships active (unlike the commented-out [colors] table)
+// because a missing binary just fails soft to the grep based go_to_def
+// fallback. There's no "pins you to the wrong choice" downside here.
+const default_lsp_servers = {
+	'go': 'gopls'
+	'rs': 'rust-analyzer'
+	'py': 'pyright-langserver --stdio'
 }
 
 // Config2 is the JSON persisted *session* state: settings the user adjusts
@@ -85,6 +95,14 @@ line_height = 20
 char_width = 8
 tab_size = 4
 backspace_go_up = false
+
+# File extension -> LSP server command, used by go-to-definition. A missing
+# or uninstalled server silently falls back to ved\'s built-in grep search.
+[lsp]
+go = \'gopls\'
+rs = \'rust-analyzer\'
+py = \'pyright-langserver --stdio\'
+v = \'vls\'
 
 # Uncomment (and tweak) to override colors. Ved uses a form of base16;
 # this table applies regardless of dark_mode, so if you enable it you\'re
@@ -130,6 +148,7 @@ fn (mut config Config) set_default_values(session Config2) {
 	config.set_tab_size()
 	config.set_backspace_behaviour()
 	config.set_text_metrics(session)
+	config.set_lsp_servers()
 	// config.set_disable_mouse()
 	config.set_vcolor()
 	config.set_split()
@@ -172,6 +191,18 @@ fn (mut config Config) set_tab_size() {
 // set_backspace_behaviour reads editor.backspace_go_up from conf.toml.
 fn (mut config Config) set_backspace_behaviour() {
 	config.backspace_go_up = config.settings.value('editor.backspace_go_up').bool()
+}
+
+// set_lsp_servers reads the [lsp] table from conf.toml and merges it over default_lsp_servers, so a user can add/override
+// entries without having to repeat the ones they don't care about.
+fn (mut config Config) set_lsp_servers() {
+	mut servers := default_lsp_servers.clone()
+	if lsp_table := config.settings.value_opt('lsp') {
+		for ext, cmd in lsp_table.as_map() {
+			servers[ext] = cmd.string()
+		}
+	}
+	config.lsp_servers = servers.clone()
 }
 
 // set_text_metrics resolves text_size/line_height/char_width. The live
