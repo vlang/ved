@@ -64,11 +64,14 @@ mut:
 
 // default_lsp_servers ships active (unlike the commented-out [colors] table)
 // because a missing binary just fails soft to the grep based go_to_def
-// fallback. There's no "pins you to the wrong choice" downside here.
+// fallback. There's no "pins you to the wrong choice" downside here. This is
+// also the fallback for an existing ~/.ved/conf.toml that predates the
+// [lsp] table (see set_lsp_servers).
 const default_lsp_servers = {
 	'go': 'gopls'
 	'rs': 'rust-analyzer'
 	'py': 'pyright-langserver --stdio'
+	'v':  'vls'
 }
 
 // Config2 is the JSON persisted *session* state: settings the user adjusts

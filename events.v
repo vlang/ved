@@ -35,6 +35,10 @@ fn (mut ved Ved) on_event(e &gg.Event) {
 			return
 		}
 
+		if ved.cfg.show_file_tree && ved.on_click(int(e.mouse_x), int(e.mouse_y)) {
+			return
+		}
+
 		mut view := ved.view
 
 		mut current_line := ''

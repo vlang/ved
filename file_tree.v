@@ -89,7 +89,7 @@ fn (mut t Tree) compute_visible_nodes() {
 	println(t.visible_nodes)
 }
 
-fn (mut t Tree) handle_click(x int, y int) ?string {
+fn (mut t Tree) handle_click(x int, y int) (bool, string) {
 	for pos in t.node_pos {
 		if x >= pos.x && x <= pos.x + pos.w && y >= pos.y && y <= pos.y + pos.h {
 			mut node := &t.nodes[pos.node_idx]
@@ -99,19 +99,23 @@ fn (mut t Tree) handle_click(x int, y int) ?string {
 					t.load_children(pos.node_idx)
 				}
 				t.refresh()
-				return none
+				return true, ''
 			}
-			return node.path
+			return true, node.path
 		}
 	}
-	return none
+	return false, ''
 }
 
-// Handle mouse clicks:
-fn (mut ved Ved) on_click(x int, y int) {
-	if path := ved.tree.handle_click(x, y) {
+// on_click routes a click to the file tree. Returns true if the tree
+// consumed it (dir toggle or file open), so the caller (on_event) can skip
+// its own click to position editor handling for the same event.
+fn (mut ved Ved) on_click(x int, y int) bool {
+	hit, path := ved.tree.handle_click(x, y)
+	if path != '' {
 		ved.view.open_file(path, 0)
 	}
+	return hit
 }
 
 // Initialize the tree when workspace is set:

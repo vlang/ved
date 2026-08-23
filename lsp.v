@@ -7,6 +7,7 @@ module main
 import os
 import time
 import x.json2
+import net.urllib
 
 const lsp_request_timeout_ms = 2000
 
@@ -289,11 +290,16 @@ fn language_id_for_ext(ext string) string {
 
 fn path_to_uri(path string) string {
 	abs := if path.starts_with('/') { path } else { os.join_path(os.getwd(), path) }
-	return 'file://${abs}'
+	mut u := urllib.URL{
+		scheme: 'file'
+	}
+	u.set_path(abs) or { return 'file://${abs}' }
+	return 'file://${u.escaped_path()}'
 }
 
 fn uri_to_path(uri string) string {
-	return uri.trim_string_left('file://')
+	raw := uri.trim_string_left('file://')
+	return urllib.path_unescape(raw) or { raw }
 }
 
 // byte_col_to_lsp_character converts ved's byte offset column (see
@@ -344,7 +350,9 @@ fn (mut ved Ved) try_lsp_definition() bool {
 		return false
 	}
 
-	mut client := ved.lsp_clients[ext] or {
+	key := '${ved.workspace}:${ext}'
+
+	mut client := ved.lsp_clients[key] or {
 		spawned := spawn_lsp_client(cmd, path_to_uri(ved.workspace)) or {
 			eprintln('lsp: could not start server for .${ext}: ${err}')
 			return false
@@ -352,9 +360,16 @@ fn (mut ved Ved) try_lsp_definition() bool {
 		spawned
 	}
 	// Persist any state the client accumulates back into the session cache
-	// no matter how this function returns below.
+	// unless its process has died, in which case caching it would make every
+	// future call for this workspace/extension retrieve the same dead
+	// process and silently fall back to grep until ved restarts. Drop it
+	// instead so the next call respawns fresh.
 	defer {
-		ved.lsp_clients[ext] = client
+		if client.p.is_alive() {
+			ved.lsp_clients[key] = client
+		} else {
+			ved.lsp_clients.delete(key)
+		}
 	}
 
 	uri := path_to_uri(view.path)
