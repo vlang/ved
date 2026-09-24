@@ -236,48 +236,39 @@ fn main() {
 		}
 		ved.open_workspace(0)
 	}
-	// Open a single text file
-	else if args.len == 2 && os.is_file(args.last()) {
-		path := args[args.len - 1]
-		if !os.exists(path) {
-			println('file "${path}" does not exist')
-			exit(1)
-		}
-		println('PATH="${path}" cur_dir="${cur_dir}"')
-		if !os.is_dir(path) && !path.starts_with('-') {
-			mut workspace := os.dir(path)
-			ved.add_workspace(workspace)
-			ved.open_workspace(0)
-			ved.view.open_file(path, 0)
-		}
-	}
-	// Open multiple workspaces
-	else {
-		println('open multiple workspaces')
-		for i, arg in args {
-			println(arg)
-			if i == 0 {
-				continue
-			}
+	// Directories are opened as workspaces, everything else as files.
+	// A file that doesn't exist yet opens as a new, empty buffer.
+	mut files := []string{}
+	if args.len > 1 {
+		for arg in args[1..] {
 			if arg.starts_with('-') {
 				continue
 			}
-			// relative path
-			if !arg.starts_with('/') {
-				ved.add_workspace(cur_dir + '/' + arg)
+			path := if os.is_abs_path(arg) { arg } else { os.join_path(cur_dir, arg) }
+			if os.is_dir(path) {
+				ved.add_workspace(path)
 			} else {
-				// absolute path
-				ved.add_workspace(arg)
+				files << path
 			}
 		}
 		if ved.workspaces.len == 0 {
-			first_launch = true
-			ved.add_workspace(cur_dir)
+			if files.len > 0 {
+				ved.add_workspace(os.dir(files[0]))
+			} else {
+				first_launch = true
+				ved.add_workspace(cur_dir)
+			}
 		}
 		ved.open_workspace(0)
 	}
 	ved.grep_file_exts = read_grep_file_exts(ved.workspaces)
 	ved.load_session()
+	// Open files after the session is loaded which would replace them otherwise.
+	// One file per split, any extra files go to the last split.
+	for i, file in files {
+		split := if i < ved.nr_splits { i } else { ved.nr_splits - 1 }
+		ved.views[split].open_file(file, 0)
+	}
 	ved.load_timer()
 	ved.load_file_stats()
 	ved.init_tree()
