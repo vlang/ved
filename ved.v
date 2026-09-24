@@ -49,6 +49,7 @@ mut:
 	prev_cmd           string
 	prev_insert        string        // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files      []string      // Files for the *current* workspace only
+	all_files_partial  bool          // all_git_files was cut off at max_walked_files
 	ctrlp_results      []CtrlPResult // Filtered results for Ctrl+P across workspaces
 	top_tasks          []string
 	gg                 &gg.Context = unsafe { nil }
@@ -1172,9 +1173,9 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 // get_files_for_workspace lists all files for a given workspace path, using `git ls-files`
 // in git repos and walking the directory otherwise.
 // TODO: Caching? For now, load every time.
-fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
+fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	if ws_path == '' {
-		return []
+		return []string{}, false
 	}
 	// Check if it's a git repo first
 	mut is_git := false
@@ -1184,17 +1185,18 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
 	}
 
 	mut files := []string{}
+	mut partial := false
 	if is_git {
 		s := os.execute('git -C ${os.quoted_path(ws_path)} ls-files')
 		if s.exit_code != 0 {
-			return []
+			return []string{}, false
 		}
 		files = s.output.split_into_lines()
 	} else {
-		files = walk_workspace_files(ws_path)
+		files, partial = walk_workspace_files(ws_path)
 	}
 	files.sort_by_len()
-	return files
+	return files, partial
 }
 
 const max_walked_files = 10000
@@ -1202,11 +1204,11 @@ const max_walked_files = 10000
 // walk_workspace_files lists files under `root` relative to it, for workspaces
 // that are not git repos. Hidden entries (.git, .cache, etc.) are skipped, and the
 // walk stops after max_walked_files to keep a huge directory, such as the home
-// directory, from freezing the editor.
-fn walk_workspace_files(root string) []string {
+// directory, from freezing the editor. The returned bool reports whether it stopped early.
+fn walk_workspace_files(root string) ([]string, bool) {
 	mut files := []string{}
 	mut dirs := ['']
-	for dirs.len > 0 && files.len < max_walked_files {
+	for dirs.len > 0 {
 		dir := dirs.pop()
 		entries := os.ls(os.join_path(root, dir)) or { continue }
 		for entry in entries {
@@ -1221,9 +1223,12 @@ fn walk_workspace_files(root string) []string {
 					dirs << rel
 				}
 			} else {
+				if files.len == max_walked_files {
+					return files, true
+				}
 				files << rel
 			}
 		}
 	}
-	return files
+	return files, false
 }

@@ -238,7 +238,7 @@ fn (mut ved Ved) load_git_tree() {
 	if dir == '' {
 		dir = '.' // Should not happen if workspace is managed correctly
 	}
-	ved.all_git_files = ved.get_files_for_workspace(dir)
+	ved.all_git_files, ved.all_files_partial = ved.get_files_for_workspace(dir)
 	// Also filter results initially when Ctrl+P is pressed
 	if ved.query_type == .ctrlp {
 		ved.filter_ctrlp_results()
@@ -273,7 +273,7 @@ fn (mut ved Ved) filter_ctrlp_results() {
 				continue // Skip current workspace, already searched
 			}
 			// Get files for this other workspace (might be slow if not cached)
-			other_files := ved.get_files_for_workspace(ws_path)
+			other_files, _ := ved.get_files_for_workspace(ws_path)
 			short_ws_name := short_space(ws_path)
 			for file_path in other_files {
 				file_path_trimmed := file_path.trim_space()
@@ -365,7 +365,11 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_rect_filled(x, y, width, height, gg.white)
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
-	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
+	mut title := ved.query_type.str()
+	if ved.query_type == .ctrlp && ved.all_files_partial {
+		title += ' - partial list, first ${max_walked_files} files'
+	}
+	ved.gg.draw_text(x + 10, y, title, ved.cfg.file_name_cfg)
 
 	// Draw counter for ctrlp and grep (e.g., "1/25")
 	if ved.query_type == .ctrlp || ved.query_type == .grep {
