@@ -1169,8 +1169,8 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 	return res
 }
 
-// get_files_for_workspace lists all files for a given workspace path, preferably using `git ls-files`.
-// (similar to load_git_tree but targeted)
+// get_files_for_workspace lists all files for a given workspace path, using `git ls-files`
+// in git repos and walking the directory otherwise.
 // TODO: Caching? For now, load every time.
 fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
 	if ws_path == '' {
@@ -1183,30 +1183,47 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
 		is_git = out_git_check.output.trim_space() == 'true'
 	}
 
+	mut files := []string{}
 	if is_git {
-		s := os.execute('git -C ${ws_path} ls-files')
-		if s.exit_code == -1 {
-			return []string{}
+		s := os.execute('git -C ${os.quoted_path(ws_path)} ls-files')
+		if s.exit_code != 0 {
+			return []
 		}
-		mut files := s.output.split_into_lines()
-		files.sort_by_len()
-		return files
+		files = s.output.split_into_lines()
 	} else {
-		/*
-		// Fallback to walking the directory if not a git repo
-		mut files := []string{}
-		os.walk_with_context(ws_path, &files, fn (mut fs []string, f string) {
-			if f == '.' || f == '..' {
-				return
-			}
-			if os.is_file(f) {
-				// Store path relative to the workspace
-				fs << f.replace(ws_path + os.path_separator, '')
-			}
-		})
-		files.sort_by_len()
-		return files
-		*/
+		files = walk_workspace_files(ws_path)
 	}
-	return []
+	files.sort_by_len()
+	return files
+}
+
+const max_walked_files = 10000
+
+// walk_workspace_files lists files under `root` relative to it, for workspaces
+// that are not git repos. Hidden entries (.git, .cache, etc.) are skipped, and the
+// walk stops after max_walked_files to keep a huge directory, such as the home
+// directory, from freezing the editor.
+fn walk_workspace_files(root string) []string {
+	mut files := []string{}
+	mut dirs := ['']
+	for dirs.len > 0 && files.len < max_walked_files {
+		dir := dirs.pop()
+		entries := os.ls(os.join_path(root, dir)) or { continue }
+		for entry in entries {
+			if entry.starts_with('.') {
+				continue
+			}
+			rel := if dir == '' { entry } else { os.join_path(dir, entry) }
+			path := os.join_path(root, rel)
+			if os.is_dir(path) {
+				// Symlinked directories can form cycles.
+				if !os.is_link(path) {
+					dirs << rel
+				}
+			} else {
+				files << rel
+			}
+		}
+	}
+	return files
 }
