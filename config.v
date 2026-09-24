@@ -9,7 +9,7 @@ import gg
 import x.json2
 
 // The different kinds of cursors
-enum Cursor {
+enum CursorStyle {
 	block
 	beam
 	variable
@@ -21,7 +21,7 @@ struct Config {
 mut:
 	// settings        toml.Doc
 	dark_mode       bool
-	cursor_style    Cursor
+	cursor_style    CursorStyle
 	text_size       int = min_text_size
 	line_height     int = 20
 	char_width      int = 8
