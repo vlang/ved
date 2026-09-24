@@ -86,6 +86,13 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if path == '' {
 		return
 	}
+	lines := os.read_lines(path) or {
+		if os.exists(path) {
+			view.ved.error_line = 'cannot open ${path}: ${err.msg()}'
+			return
+		}
+		[]string{}
+	}
 	// This path is in current workspace? Trim it. /code/v/file.v => file.v
 	if path.starts_with(view.ved.workspace + '/') {
 		view.short_path = path[view.ved.workspace.len..]
@@ -116,14 +123,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 		view.ved.file_y_pos[view.path] = view.y
 		view.prev_path = view.path
 	}
-	/*
-	mut lines := []string{}
-	if rlines := os.read_lines(path) {
-		lines = rlines
-	}
 	view.lines = lines
-	*/
-	view.lines = os.read_lines(path) or { []string{} }
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -217,12 +217,35 @@ fn (mut view View) save_file() {
 }
 
 fn write_lines(path string, lines []string) ! {
-	mut file := os.create(path)!
-	defer {
-		file.close()
-	}
+	// Resolve symlinks, so that the link's target is updated instead of the link
+	// being replaced by a regular file.
+	target := os.real_path(path)
+	tmp := os.join_path(os.dir(target), '.${os.file_name(target)}.ved-tmp')
+	mut file := os.create(tmp)!
+	mut size := u64(0)
 	for line in lines {
-		file.writeln(line)!
+		file.writeln(line) or {
+			file.close()
+			os.rm(tmp) or {}
+			return err
+		}
+		size += u64(line.len + 1)
+	}
+	file.close()
+	// close() doesn't report errors from flushing buffered data, so verify that everything reached the file before replacing it.
+	if os.file_size(tmp) != size {
+		os.rm(tmp) or {}
+		return error('short write to ${tmp}')
+	}
+	if st := os.stat(target) {
+		os.chmod(tmp, int(st.mode & 0o7777)) or {
+			os.rm(tmp) or {}
+			return err
+		}
+	}
+	os.mv(tmp, target, overwrite: true) or {
+		os.rm(tmp) or {}
+		return err
 	}
 }
 
