@@ -201,17 +201,28 @@ fn (mut view View) save_file() {
 	println('lines.len=${view.lines.len}')
 	// line0 := view.lines[0]
 	// println('line[0].len=$line0.len')
-	mut file := os.create(path) or { panic('fail') }
-	for line in view.lines {
-		file.writeln(line.trim_right(' \t')) or { panic(err) }
+	// On failure, keep the buffer untouched: the reopen below would replace
+	// the unsaved edits with whatever is on disk.
+	write_lines(path, view.lines) or {
+		view.ved.error_line = 'cannot save ${path}: ${err.msg()}'
+		return
 	}
-	file.close()
 	spawn view.format_file()
 	// If another split has the same file open, update it
 	for mut v in view.ved.views {
 		if v.path == view.path {
 			v.reopen()
 		}
+	}
+}
+
+fn write_lines(path string, lines []string) ! {
+	mut file := os.create(path)!
+	defer {
+		file.close()
+	}
+	for line in lines {
+		file.writeln(line)!
 	}
 }
 
