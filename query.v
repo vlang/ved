@@ -177,19 +177,25 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 			}
 		}
 		.tab {
-			// TODO COPY PASTA - adapt for ctrlp if needed
+			// Like .down but wraps around to the first result
 			if ved.mode == .query {
 				match ved.query_type {
 					.grep {
 						ved.gg_pos++
 						if ved.gg_pos >= ved.gg_lines.len {
-							ved.gg_pos = 0 // wrap around? or stop?
+							ved.gg_pos = 0
+							ved.gg_scroll = 0
+						} else if ved.gg_pos >= ved.gg_scroll + max_grep_lines {
+							ved.gg_scroll = ved.gg_pos - max_grep_lines + 1
 						}
 					}
 					.ctrlp {
 						ved.gg_pos++
 						if ved.gg_pos >= ved.ctrlp_results.len {
-							ved.gg_pos = 0 // wrap around? or stop?
+							ved.gg_pos = 0
+							ved.gg_scroll = 0
+						} else if ved.gg_pos >= ved.gg_scroll + nr_ctrlp_results {
+							ved.gg_scroll = ved.gg_pos - nr_ctrlp_results + 1
 						}
 					}
 					else {}
