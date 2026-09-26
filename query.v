@@ -367,7 +367,7 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	mut title := ved.query_type.str()
 	if ved.query_type == .ctrlp && ved.all_files_partial {
-		title += ' - partial list, first ${max_walked_files} files'
+		title += ' - partial list'
 	}
 	ved.gg.draw_text(x + 10, y, title, ved.cfg.file_name_cfg)
 

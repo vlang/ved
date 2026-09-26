@@ -49,7 +49,7 @@ mut:
 	prev_cmd           string
 	prev_insert        string        // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files      []string      // Files for the *current* workspace only
-	all_files_partial  bool          // all_git_files was cut off at max_walked_files
+	all_files_partial  bool          // the walk for all_git_files stopped at max_walked_entries
 	ctrlp_results      []CtrlPResult // Filtered results for Ctrl+P across workspaces
 	top_tasks          []string
 	gg                 &gg.Context = unsafe { nil }
@@ -1199,15 +1199,17 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	return files, partial
 }
 
-const max_walked_files = 10000
+const max_walked_entries = 10000
 
 // walk_workspace_files lists files under `root` relative to it, for workspaces
 // that are not git repos. Hidden entries (.git, .cache, etc.) are skipped, and the
-// walk stops after max_walked_files to keep a huge directory, such as the home
-// directory, from freezing the editor. The returned bool reports whether it stopped early.
+// walk stops after examining max_walked_entries entries to keep a huge directory,
+// such as the home directory, from freezing the editor. The returned bool reports
+// whether it stopped early.
 fn walk_workspace_files(root string) ([]string, bool) {
 	mut files := []string{}
 	mut dirs := ['']
+	mut budget := max_walked_entries
 	for dirs.len > 0 {
 		dir := dirs.pop()
 		entries := os.ls(os.join_path(root, dir)) or { continue }
@@ -1215,18 +1217,28 @@ fn walk_workspace_files(root string) ([]string, bool) {
 			if entry.starts_with('.') {
 				continue
 			}
+			if budget == 0 {
+				return files, true
+			}
+			budget--
 			rel := if dir == '' { entry } else { os.join_path(dir, entry) }
 			path := os.join_path(root, rel)
-			if os.is_dir(path) {
-				// Symlinked directories can form cycles.
-				if !os.is_link(path) {
-					dirs << rel
+			// stat() follows symlinks, broken ones are skipped.
+			st := os.stat(path) or { continue }
+			match st.get_filetype() {
+				.directory {
+					// Symlinked directories can form cycles.
+					if !os.is_link(path) {
+						dirs << rel
+					}
 				}
-			} else {
-				if files.len == max_walked_files {
-					return files, true
+				.regular {
+					files << rel
 				}
-				files << rel
+				else {
+					// FIFOs, sockets and devices. Ctrl+P reads every listed file to
+					// count its lines and reading these can block the editor.
+				}
 			}
 		}
 	}
