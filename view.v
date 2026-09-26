@@ -86,6 +86,13 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if path == '' {
 		return
 	}
+	lines := os.read_lines(path) or {
+		if os.exists(path) {
+			view.ved.error_line = 'cannot open ${path}: ${err.msg()}'
+			return
+		}
+		[]string{}
+	}
 	// This path is in current workspace? Trim it. /code/v/file.v => file.v
 	if path.starts_with(view.ved.workspace + '/') {
 		view.short_path = path[view.ved.workspace.len..]
@@ -116,14 +123,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 		view.ved.file_y_pos[view.path] = view.y
 		view.prev_path = view.path
 	}
-	/*
-	mut lines := []string{}
-	if rlines := os.read_lines(path) {
-		lines = rlines
-	}
 	view.lines = lines
-	*/
-	view.lines = os.read_lines(path) or { []string{} }
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -213,16 +213,6 @@ fn (mut view View) save_file() {
 		if v.path == view.path {
 			v.reopen()
 		}
-	}
-}
-
-fn write_lines(path string, lines []string) ! {
-	mut file := os.create(path)!
-	defer {
-		file.close()
-	}
-	for line in lines {
-		file.writeln(line)!
 	}
 }
 
