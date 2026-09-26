@@ -675,11 +675,9 @@ fn (ved &Ved) save_file_stats() {
 fn (mut ved Ved) load_file_stats() {
 	lines := os.read_lines(file_stats_path) or { return }
 	for line in lines {
-		parts := line.split(':')
-		if parts.len != 2 {
-			continue
-		}
-		ved.file_open_count[parts[0]] = parts[1].int()
+		// Split on the last ':', the path itself can contain one (C:\Users\...).
+		i := line.last_index(':') or { continue }
+		ved.file_open_count[line[..i]] = line[i + 1..].int()
 	}
 }
 
@@ -757,10 +755,10 @@ fn (mut ved Ved) load_views(paths []string) {
 		}
 		if path.contains(':') {
 			// myfile.v:23
-			// can contain line numbers from the previous session, parse them and go to them
-			vals := path.split(':')
-			path = vals[0]
-			line_nr = vals[1].int()
+			// can contain line numbers from the previous session, parse them and go to them.
+			// Split on the last ':'
+			line_nr = path.all_after_last(':').int()
+			path = path.all_before_last(':')
 		}
 		// view.open_file(path)
 		ved.views[i].open_file(path, line_nr)
