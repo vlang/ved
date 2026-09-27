@@ -89,9 +89,9 @@ fn (mut ved Ved) build_app(extra string) {
 	mut i := 0
 	for _, line in lines {
 		if !line.contains('.v:') && !line.contains('.go:') {
-			//println('skip1 ${line}')
-			//i++
-			//continue
+			// println('skip1 ${line}')
+			// i++
+			// continue
 		}
 		is_warning := line.contains('warning:')
 		is_notice := line.contains('notice:')

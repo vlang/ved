@@ -130,8 +130,8 @@ fn (mut t Timer) draw() {
 		t.gg.draw_rect_filled(f32(x), f32(y), f32(hour_width), f32(height), task.color)
 		t.gg.draw_text(int(x) + hour_width + 10, int(y) + 5, task.name + ' ' + task.duration,
 			gg.TextCfg{
-			color: task.color
-		})
+				color: task.color
+			})
 		if task.productive {
 			total += task.duration_min
 		}

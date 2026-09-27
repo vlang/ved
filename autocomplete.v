@@ -127,8 +127,13 @@ fn (mut ved Ved) get_v_build_cmd() ?string {
 	// file_name := os.base(ved.view.path)
 	file_name := ved.view.path
 	build_file := ved.get_build_file_location() or { return none }
-	mut v_build_cmd := if build_file == '' { 'v .' } else { os.read_file(build_file) or {
-			return none} }
+	mut v_build_cmd := if build_file == '' {
+		'v .'
+	} else {
+		os.read_file(build_file) or {
+			return none
+		}
+	}
 	words := v_build_cmd.fields()
 	mut dir_to_build := words[words.len - 1]
 	module_name := get_module_name_from_file(ved.view.lines)
