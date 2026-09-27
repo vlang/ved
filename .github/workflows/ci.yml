@@ -8,14 +8,14 @@ on:
 
 jobs:
   code-formatting:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout V
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: vlang/v
       - name: Checkout ved
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: ved
       - name: Build V
@@ -26,16 +26,16 @@ jobs:
         run: v fmt -verify ved/
 
   check-ubuntu:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout V
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: vlang/v
       - name: Build V
         run: make && ./v symlink -githubci
       - name: Checkout ved
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: ved
       - name: Install dependencies
@@ -53,11 +53,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout V
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: vlang/v
       - name: Checkout ved
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: ved
       - name: Build V
@@ -72,16 +72,16 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout V
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: vlang/v
       - name: Checkout ved
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: ved
       - name: Build V
         run: |
-          .\make.bat -gcc
+          .\makev.bat -msvc
           .\v.exe symlink -githubci
       - name: Build ved
         run: |
