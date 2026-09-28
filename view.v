@@ -147,6 +147,12 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if view.lines.len == 0 {
 		view.lines << ''
 	}
+	switched := path != view.path
+	if switched {
+		view.x = 0
+		view.y = 0
+		view.from = 0
+	}
 	view.path = path
 	// view.short_path = path.replace(view.ved.workspace, '')
 	// Calc padding_left
@@ -155,10 +161,14 @@ fn (mut view View) open_file(path string, line_nr int) {
 	view.padding_left = s.len * ved.cfg.char_width + 8
 	view.ved.save_session()
 	// Go to old y for this file
-	y := view.ved.file_y_pos[view.path]
+	mut y := view.ved.file_y_pos[view.path]
+	// The file may have shrunk since the position was saved.
+	if y >= view.lines.len {
+		y = view.lines.len - 1
+	}
 	if y > 0 {
 		view.set_y(y)
-		if path != view.path {
+		if switched {
 			view.zz()
 		}
 	}
