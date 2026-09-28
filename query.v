@@ -244,32 +244,7 @@ fn (mut ved Ved) load_git_tree() {
 	if dir == '' {
 		dir = '.' // Should not happen if workspace is managed correctly
 	}
-	if ved.is_git_tree() {
-		// Cache all git files for the current workspace
-		s := os.execute('git -C ${dir} ls-files')
-		if s.exit_code == -1 {
-			ved.all_git_files = []
-			return
-		}
-		ved.all_git_files = s.output.split_into_lines()
-	} else {
-		/*
-		// Get all files if not a git repo
-		mut files := []string{}
-		os.walk_with_context(dir, &files, fn (mut fs []string, f string) {
-			if f == '.' || f == '..' {
-				return
-			}
-			full_path := os.join_path(dir, f) // Need full path for is_file check
-			if os.is_file(full_path) {
-				// Store relative path
-				fs << f.replace(dir + os.path_separator, '')
-			}
-		})
-		ved.all_git_files = files
-		*/
-	}
-	ved.all_git_files.sort_by_len()
+	ved.all_git_files, ved.all_files_partial = ved.get_files_for_workspace(dir)
 	// Also filter results initially when Ctrl+P is pressed
 	if ved.query_type == .ctrlp {
 		ved.filter_ctrlp_results()
@@ -304,7 +279,7 @@ fn (mut ved Ved) filter_ctrlp_results() {
 				continue // Skip current workspace, already searched
 			}
 			// Get files for this other workspace (might be slow if not cached)
-			other_files := ved.get_files_for_workspace(ws_path)
+			other_files, _ := ved.get_files_for_workspace(ws_path)
 			short_ws_name := short_space(ws_path)
 			for file_path in other_files {
 				file_path_trimmed := file_path.trim_space()
@@ -344,17 +319,6 @@ fn (mut ved Ved) filter_ctrlp_results() {
 	})
 
 	ved.gg_file_locs = map[string]int{}
-}
-
-fn (mut ved Ved) is_git_tree() bool {
-	path := if ved.workspace == '' { '.' } else { ved.workspace }
-
-	out := os.execute('git -C "${path}" rev-parse --is-inside-work-tree')
-	if out.exit_code != -1 {
-		return out.output.trim_space() == 'true' // Ensure comparison is robust
-	}
-
-	return false
 }
 
 fn (q QueryType) str() string {
@@ -407,7 +371,11 @@ fn (mut ved Ved) draw_query() {
 	ved.gg.draw_rect_filled(x, y, width, height, gg.white)
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
-	ved.gg.draw_text(x + 10, y, ved.query_type.str(), ved.cfg.file_name_cfg)
+	mut title := ved.query_type.str()
+	if ved.query_type == .ctrlp && ved.all_files_partial {
+		title += ' - partial list'
+	}
+	ved.gg.draw_text(x + 10, y, title, ved.cfg.file_name_cfg)
 
 	// Draw counter for ctrlp and grep (e.g., "1/25")
 	if ved.query_type == .ctrlp || ved.query_type == .grep {
@@ -577,16 +545,11 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 // Open file on enter for Ctrl+P
 fn (mut ved Ved) ctrlp_open() {
 	println('ctrlpopen gg_pos=${ved.gg_pos}')
+	if ved.ctrlp_results.len == 0 {
+		return
+	}
 	if ved.gg_pos < 0 || ved.gg_pos >= ved.ctrlp_results.len {
-		println(1)
-		// Attempt to open if only one result and selection is invalid (e.g., -1)
-		// if ved.ctrlp_results.len == 1 {
-		println('set to 0')
 		ved.gg_pos = 0
-		//} else {
-		// println('invalid index')
-		// return // Invalid selection index
-		//}
 	}
 	// Get the selected result
 	selected_result := ved.ctrlp_results[ved.gg_pos]
