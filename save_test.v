@@ -61,17 +61,25 @@ fn test_concurrent_saves() {
 	p := os.join_path(root, 'c.txt')
 	a := []string{len: 2000, init: 'aaaaaaaaaaaaaaaa${index}'}
 	b := []string{len: 3000, init: 'bbbbbbbbbbbbbbbb${index}'}
-	mut threads := []thread !{}
+	mut threads := []thread int{}
 	for i in 0 .. 8 {
 		lines := if i % 2 == 0 { a } else { b }
-		threads << spawn fn (p string, lines []string) ! {
+		threads << spawn fn (p string, lines []string) int {
+			mut failed := 0
 			for _ in 0 .. 20 {
-				write_lines(p, lines)!
+				write_lines(p, lines) or { failed++ }
 			}
+			return failed
 		}(p, lines)
 	}
+	mut failed := 0
 	for t in threads {
-		t.wait()!
+		failed += t.wait()
+	}
+	$if windows {
+		assert failed < 8 * 20
+	} $else {
+		assert failed == 0
 	}
 	content := os.read_file(p)!
 	assert content == a.join_lines() + '\n' || content == b.join_lines() + '\n'
@@ -83,9 +91,9 @@ fn test_private_file_stays_private() {
 		p := os.join_path(root, 'secret.txt')
 		os.write_file(p, 'old\n')!
 		os.chmod(p, 0o600)!
-		tmp, fd := create_temp_file(p, 0o600)!
+		tmp, fd := create_temp_file(p, 0o600, []u8{})!
 		assert os.stat(tmp)!.mode & 0o777 == 0o600
-		write_and_close(fd, []u8{})!
+		finish_temp_file(fd, tmp, []u8{}, none)!
 		os.rm(tmp)!
 		write_lines(p, ['new'])!
 		assert os.stat(p)!.mode & 0o777 == 0o600
@@ -98,6 +106,78 @@ fn test_private_file_stays_private() {
 		write_lines(fresh, ['x'])!
 		assert os.stat(fresh)!.mode & 0o777 == 0o644
 	}
+}
+
+fn test_owner_and_group_are_kept() {
+	$if !windows {
+		p := os.join_path(root, 'shared.txt')
+		os.write_file(p, 'old\n')!
+		st := os.stat(p)!
+		groups := os.execute('id -G').output.fields().map(it.u32())
+		other := groups.filter(it != st.gid)
+		if other.len == 0 {
+			eprintln('skipping: the user is in a single group')
+			return
+		}
+		os.chown(p, int(st.uid), int(other[0]))!
+		os.chmod(p, 0o640)!
+		write_lines(p, ['new'])!
+		after := os.stat(p)!
+		assert after.uid == st.uid
+		assert after.gid == other[0]
+		assert after.mode & 0o777 == 0o640
+		assert os.read_file(p)! == 'new\n'
+	}
+}
+
+fn test_windows_dacl_is_kept() {
+	$if windows {
+		p := os.join_path(root, 'private.txt')
+		os.write_file(p, 'old\n')!
+		set_dacl(p, 'D:P(A;;FA;;;WD)')
+		before := dacl_string(p)
+		assert before.starts_with('D:P')
+		tmp, fd := create_temp_file(p, 0o600, security_descriptor(p)!)!
+		assert dacl_string(tmp) == before
+		finish_temp_file(fd, tmp, []u8{}, none)!
+		os.rm(tmp)!
+		write_lines(p, ['new'])!
+		assert dacl_string(p) == before
+		assert os.read_file(p)! == 'new\n'
+	}
+}
+
+$if windows && !tinyc {
+	#include <sddl.h>
+}
+
+fn C.ConvertStringSecurityDescriptorToSecurityDescriptorW(s &u16, rev u32, sd &voidptr, size &u32) bool
+fn C.ConvertSecurityDescriptorToStringSecurityDescriptorW(sd voidptr, rev u32, info u32, s &&u16, len &u32) bool
+fn C.SetFileSecurityW(name &u16, info u32, sd voidptr) bool
+fn C.LocalFree(mem voidptr) voidptr
+
+fn set_dacl(path string, sddl string) {
+	$if windows {
+		mut sd := unsafe { nil }
+		assert C.ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.to_wide(), 1, &sd,
+			unsafe { nil })
+		assert C.SetFileSecurityW(path.replace('/', '\\').to_wide(), u32(C.DACL_SECURITY_INFORMATION),
+			sd)
+		C.LocalFree(sd)
+	}
+}
+
+fn dacl_string(path string) string {
+	$if windows {
+		sd := security_descriptor(path) or { panic(err) }
+		mut s := &u16(unsafe { nil })
+		assert C.ConvertSecurityDescriptorToStringSecurityDescriptorW(sd.data, 1, u32(C.DACL_SECURITY_INFORMATION),
+			&s, unsafe { nil })
+		res := unsafe { string_from_wide(s) }
+		C.LocalFree(s)
+		return res
+	}
+	return ''
 }
 
 fn test_symlink_target_is_updated() {
