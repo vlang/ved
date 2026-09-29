@@ -49,6 +49,7 @@ mut:
 	prev_cmd           string
 	prev_insert        string        // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files      []string      // Files for the *current* workspace only
+	all_files_partial  bool          // the walk for all_git_files stopped at max_walked_entries
 	ctrlp_results      []CtrlPResult // Filtered results for Ctrl+P across workspaces
 	top_tasks          []string
 	gg                 &gg.Context = unsafe { nil }
@@ -236,48 +237,39 @@ fn main() {
 		}
 		ved.open_workspace(0)
 	}
-	// Open a single text file
-	else if args.len == 2 && os.is_file(args.last()) {
-		path := args[args.len - 1]
-		if !os.exists(path) {
-			println('file "${path}" does not exist')
-			exit(1)
-		}
-		println('PATH="${path}" cur_dir="${cur_dir}"')
-		if !os.is_dir(path) && !path.starts_with('-') {
-			mut workspace := os.dir(path)
-			ved.add_workspace(workspace)
-			ved.open_workspace(0)
-			ved.view.open_file(path, 0)
-		}
-	}
-	// Open multiple workspaces
-	else {
-		println('open multiple workspaces')
-		for i, arg in args {
-			println(arg)
-			if i == 0 {
-				continue
-			}
+	// Directories are opened as workspaces, everything else as files.
+	// A file that doesn't exist yet opens as a new, empty buffer.
+	mut files := []string{}
+	if args.len > 1 {
+		for arg in args[1..] {
 			if arg.starts_with('-') {
 				continue
 			}
-			// relative path
-			if !arg.starts_with('/') {
-				ved.add_workspace(cur_dir + '/' + arg)
+			path := if os.is_abs_path(arg) { arg } else { os.join_path(cur_dir, arg) }
+			if os.is_dir(path) {
+				ved.add_workspace(path)
 			} else {
-				// absolute path
-				ved.add_workspace(arg)
+				files << path
 			}
 		}
 		if ved.workspaces.len == 0 {
-			first_launch = true
-			ved.add_workspace(cur_dir)
+			if files.len > 0 {
+				ved.add_workspace(os.dir(files[0]))
+			} else {
+				first_launch = true
+				ved.add_workspace(cur_dir)
+			}
 		}
 		ved.open_workspace(0)
 	}
 	ved.grep_file_exts = read_grep_file_exts(ved.workspaces)
 	ved.load_session()
+	// Open files after the session is loaded which would replace them otherwise.
+	// One file per split, any extra files go to the last split.
+	for i, file in files {
+		split := if i < ved.nr_splits { i } else { ved.nr_splits - 1 }
+		ved.views[split].open_file(file, 0)
+	}
 	ved.load_timer()
 	ved.load_file_stats()
 	ved.init_tree()
@@ -1167,12 +1159,12 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 	return res
 }
 
-// get_files_for_workspace lists all files for a given workspace path, preferably using `git ls-files`.
-// (similar to load_git_tree but targeted)
+// get_files_for_workspace lists all files for a given workspace path, using `git ls-files`
+// in git repos and walking the directory otherwise.
 // TODO: Caching? For now, load every time.
-fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
+fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	if ws_path == '' {
-		return []
+		return []string{}, false
 	}
 	// Check if it's a git repo first
 	mut is_git := false
@@ -1181,30 +1173,63 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) []string {
 		is_git = out_git_check.output.trim_space() == 'true'
 	}
 
+	mut files := []string{}
+	mut partial := false
 	if is_git {
-		s := os.execute('git -C ${ws_path} ls-files')
-		if s.exit_code == -1 {
-			return []string{}
+		s := os.execute('git -C ${os.quoted_path(ws_path)} ls-files')
+		if s.exit_code != 0 {
+			return []string{}, false
 		}
-		mut files := s.output.split_into_lines()
-		files.sort_by_len()
-		return files
+		files = s.output.split_into_lines()
 	} else {
-		/*
-		// Fallback to walking the directory if not a git repo
-		mut files := []string{}
-		os.walk_with_context(ws_path, &files, fn (mut fs []string, f string) {
-			if f == '.' || f == '..' {
-				return
-			}
-			if os.is_file(f) {
-				// Store path relative to the workspace
-				fs << f.replace(ws_path + os.path_separator, '')
-			}
-		})
-		files.sort_by_len()
-		return files
-		*/
+		files, partial = walk_workspace_files(ws_path)
 	}
-	return []
+	files.sort_by_len()
+	return files, partial
+}
+
+const max_walked_entries = 10000
+
+// walk_workspace_files lists files under `root` relative to it, for workspaces
+// that are not git repos. Hidden entries (.git, .cache, etc.) are skipped, and the
+// walk stops after examining max_walked_entries entries to keep a huge directory,
+// such as the home directory, from freezing the editor. The returned bool reports
+// whether it stopped early.
+fn walk_workspace_files(root string) ([]string, bool) {
+	mut files := []string{}
+	mut dirs := ['']
+	mut budget := max_walked_entries
+	for dirs.len > 0 {
+		dir := dirs.pop()
+		entries := os.ls(os.join_path(root, dir)) or { continue }
+		for entry in entries {
+			if entry.starts_with('.') {
+				continue
+			}
+			if budget == 0 {
+				return files, true
+			}
+			budget--
+			rel := if dir == '' { entry } else { os.join_path(dir, entry) }
+			path := os.join_path(root, rel)
+			// stat() follows symlinks, broken ones are skipped.
+			st := os.stat(path) or { continue }
+			match st.get_filetype() {
+				.directory {
+					// Symlinked directories can form cycles.
+					if !os.is_link(path) {
+						dirs << rel
+					}
+				}
+				.regular {
+					files << rel
+				}
+				else {
+					// FIFOs, sockets and devices. Ctrl+P reads every listed file to
+					// count its lines and reading these can block the editor.
+				}
+			}
+		}
+	}
+	return files, false
 }
