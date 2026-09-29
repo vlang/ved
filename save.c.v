@@ -33,6 +33,9 @@ fn write_lines(path string, lines []string) ! {
 	if st := os.stat(target) {
 		orig = st
 	}
+	if orig != none && !os.is_writable(target) {
+		return error('${path} is read-only')
+	}
 	// The copy of an existing file must never be more accessible than the original,
 	// not even while it is being written: on Windows it is created with the original's
 	// security descriptor, elsewhere as 0600 until it gets the original's owner and mode.

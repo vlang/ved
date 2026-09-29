@@ -130,6 +130,27 @@ fn test_owner_and_group_are_kept() {
 	}
 }
 
+fn test_read_only_file_is_not_replaced() {
+	$if !windows {
+		// root can write to any file.
+		if os.getuid() == 0 {
+			return
+		}
+	}
+	p := os.join_path(root, 'readonly.txt')
+	os.write_file(p, 'keep\n')!
+	os.chmod(p, 0o444)!
+	defer {
+		os.chmod(p, 0o644) or {}
+	}
+	write_lines(p, ['new']) or {
+		assert os.read_file(p)! == 'keep\n'
+		assert temp_files() == []
+		return
+	}
+	assert false, 'saving a read-only file should fail'
+}
+
 fn test_windows_dacl_is_kept() {
 	$if windows {
 		p := os.join_path(root, 'private.txt')
