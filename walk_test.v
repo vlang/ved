@@ -61,6 +61,40 @@ fn test_special_files_are_skipped() {
 	assert files == ['a.v']
 }
 
+fn test_unreadable_folders_make_the_walk_partial() {
+	$if windows {
+		return
+	}
+	// root can read anything.
+	if os.getuid() == 0 {
+		return
+	}
+	d := fresh_dir('unreadable')
+	os.write_file(os.join_path(d, 'a.v'), '')!
+	// Can't be listed at all.
+	closed := os.join_path(d, 'closed')
+	os.mkdir(closed)!
+	os.write_file(os.join_path(closed, 'hidden_from_walk.v'), '')!
+	os.chmod(closed, 0)!
+	defer {
+		os.chmod(closed, 0o755) or {}
+	}
+	files, partial := walk_workspace_files(d)
+	assert files == ['a.v']
+	assert partial
+	os.chmod(closed, 0o755)!
+	// Can be listed, but not entered: every entry's stat fails.
+	os.chmod(closed, 0o644)!
+	files2, partial2 := walk_workspace_files(d)
+	assert files2 == ['a.v']
+	assert partial2
+	os.chmod(closed, 0o755)!
+	// Readable again: complete.
+	files3, partial3 := walk_workspace_files(d)
+	assert files3.len == 2
+	assert !partial3
+}
+
 fn test_entry_budget() {
 	d := fresh_dir('many')
 	for i in 0 .. max_walked_entries {
@@ -73,6 +107,82 @@ fn test_entry_budget() {
 	files2, partial2 := walk_workspace_files(d)
 	assert files2.len <= max_walked_entries
 	assert partial2
+}
+
+fn test_file_names_are_kept_exactly() {
+	$if windows {
+		return
+	}
+	names := [' lead.v', 'trail.v ', 'new\nline.v']
+	plain := fresh_dir('exact_plain')
+	for name in names {
+		os.write_file(os.join_path(plain, name), '')!
+	}
+	mut walked, _ := walk_workspace_files(plain)
+	walked.sort()
+	mut want := names.clone()
+	want.sort()
+	assert walked == want
+	if os.find_abs_path_of_executable('git') or { '' } == '' {
+		eprintln('skipping the git part: git is not installed')
+		return
+	}
+	repo := fresh_dir('exact_git')
+	for name in names {
+		os.write_file(os.join_path(repo, name), '')!
+	}
+	q := os.quoted_path(repo)
+	assert os.execute('git -C ${q} init -q && git -C ${q} add -A').exit_code == 0
+	mut ved := &Ved{
+		workspace: repo
+	}
+	mut listed, _ := ved.get_files_for_workspace(repo)
+	listed.sort()
+	assert listed == want
+	ved.all_git_files = listed
+	ved.query = 'LEAD'
+	ved.filter_ctrlp_results()
+	assert ved.ctrlp_results.map(it.file_path) == [' lead.v']
+}
+
+fn test_ctrlp_partial_other_workspace() {
+	current := fresh_dir('ctrlp_current')
+	os.write_file(os.join_path(current, 'here.v'), '')!
+	other := fresh_dir('ctrlp_other')
+	for i in 0 .. max_walked_entries + 1 {
+		os.write_file(os.join_path(other, 'f${i}.txt'), '')!
+	}
+	mut ved := &Ved{
+		workspace:  current
+		workspaces: [current, other]
+	}
+	ved.all_git_files, ved.all_files_partial = ved.get_files_for_workspace(current)
+	ved.query = 'f1'
+	ved.filter_ctrlp_results()
+	assert ved.ctrlp_results.len > 0
+	assert ved.ctrlp_partial
+	assert !ved.all_files_partial
+	ved.query = 'here'
+	ved.filter_ctrlp_results()
+	assert ved.ctrlp_results.map(it.file_path) == ['here.v']
+	assert !ved.ctrlp_partial
+}
+
+fn test_failed_git_listing_is_partial() {
+	if os.find_abs_path_of_executable('git') or { '' } == '' {
+		eprintln('skipping: git is not installed')
+		return
+	}
+	repo := fresh_dir('corrupt_index')
+	os.write_file(os.join_path(repo, 'a.v'), '')!
+	q := os.quoted_path(repo)
+	assert os.execute('git -C ${q} init -q && git -C ${q} add a.v').exit_code == 0
+	// Still a repository, but git ls-files fails.
+	os.write_file(os.join_path(repo, '.git', 'index'), 'garbage')!
+	ved := &Ved{}
+	files, partial := ved.get_files_for_workspace(repo)
+	assert files == []string{}
+	assert partial
 }
 
 fn test_switch_from_git_to_non_git_workspace() {

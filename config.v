@@ -60,6 +60,7 @@ mut:
 	show_file_tree  bool
 	// Config.json
 	disable_fmt bool
+	atomic_save bool // save through a temporary file that replaces the original
 }
 
 /*
