@@ -159,7 +159,7 @@ fn (mut ved Ved) run_file() {
 	// dir := ospath.dir(view.path)
 	dir := os.dir(view.path)
 	os.chdir(dir) or {}
-	out := os.execute('v run ${view.path}')
+	out := os.exec(['v', 'run', view.path])
 	// out_dir := '${dir}/out'
 	out_dir := os.temp_dir() + '/ved_out'
 	os.write_file(out_dir, out.output) or { panic(err) }
@@ -184,9 +184,8 @@ fn (ved &Ved) run_zsh() {
 	text := ved.query
 	dir := ved.workspace
 	os.chdir(dir) or { return }
-	res := os.execute('zsh -ic "source ~/.zshrc; ${text}" > ${dir}/out')
-	if res.exit_code == -1 {
-	}
+	res := os.exec(['zsh', '-ic', 'source ~/.zshrc; ${text}'])
+	os.write_file('${dir}/out', res.output) or { return }
 	// TODO copypasted some code from build_app()
 	// mut f2 := os.create('$dir/out') or { panic('fail') }
 	// f2.writeln(out.output) or { panic(err) }

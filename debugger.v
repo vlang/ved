@@ -38,7 +38,7 @@ fn (mut ved Ved) run_debugger(breakpoints []int) {
 		println('Debugger only works with V files for now')
 		return
 	}
-	os.system('v -w -g -o /tmp/a ${ved.view.path}')
+	os.system_args(['v', '-w', '-g', '-o', '/tmp/a', ved.view.path])
 	ved.debugger = new_debugger('/tmp/a')
 	ved.debugger.run()
 

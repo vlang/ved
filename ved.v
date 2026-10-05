@@ -317,7 +317,7 @@ fn (ved &Ved) is_in_blog() bool {
 fn (ved &Ved) git_commit() {
 	text := ved.query
 	dir := ved.workspace
-	os.system('git -C ${dir} commit -am "${text}"')
+	os.system_args(['git', '-C', dir, 'commit', '-am', text])
 	// os.system('gitter $dir')
 }
 
@@ -794,14 +794,16 @@ fn (ved &Ved) get_git_diff() {
 // get_git_diff_full fetches the full git diff, displays it in a new split, and opens git log if there is no diff.
 fn (ved &Ved) get_git_diff_full() string {
 	dir := ved.workspace
-	os.system('git -C ${dir} diff > ${dir}/out')
+	diff := os.exec(['git', '-C', dir, 'diff'])
+	os.write_file('${dir}/out', diff.output) or { return '' }
 	mut last_view := ved.get_last_view()
 	last_view.open_file('${dir}/out', 0)
 	// nothing commited (diff = 0), shot git log)
 	if last_view.lines.len < 2 {
 		// os.system('echo "no diff\n" > $dir/out')
-		os.system('git -C ${dir} log -n 40 --pretty=format:"%ad %s" ' +
-			'--simplify-merges --date=format:"%Y-%m-%d %H:%M  "> ${dir}/out')
+		log := os.exec(['git', '-C', dir, 'log', '-n', '40', '--pretty=format:%ad %s',
+			'--simplify-merges', '--date=format:%Y-%m-%d %H:%M  '])
+		os.write_file('${dir}/out', log.output) or { return '' }
 		last_view.open_file('${dir}/out', 0)
 	}
 	last_view.gg()
@@ -821,7 +823,7 @@ fn (mut ved Ved) open_blog() {
 		os.mkdir(parent_dir) or { panic(err) }
 	}
 	if !os.exists(path) {
-		os.system('touch ${path}')
+		os.write_file(path, '') or { panic(err) }
 	}
 	mut last_view := ved.get_last_view()
 	last_view.open_file(path, 0)
@@ -918,7 +920,7 @@ fn (mut ved Ved) go_to_error(line string, error_details string) {
 	}
 	println('file with error not found (not open), running git ls-files')
 	// File with the error is not open right now, do it
-	s := os.execute('git -C ${ved.workspace} ls-files')
+	s := os.exec(['git', '-C', ved.workspace, 'ls-files'])
 	if s.exit_code == -1 {
 		return
 	}
@@ -1014,7 +1016,7 @@ fn (ved &Ved) task_minutes() int {
 
 // git_pull performs a `git pull --rebase` in the current workspace directory.
 fn (mut ved Ved) git_pull() {
-	os.system('git -C "${ved.workspace}" pull --rebase')
+	os.system_args(['git', '-C', ved.workspace, 'pull', '--rebase'])
 	ved.mode = .normal
 	ved.gg.refresh_ui()
 }
@@ -1176,7 +1178,7 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	}
 	// Check if it's a git repo first
 	mut is_git := false
-	out_git_check := os.execute('git -C "${ws_path}" rev-parse --is-inside-work-tree')
+	out_git_check := os.exec(['git', '-C', ws_path, 'rev-parse', '--is-inside-work-tree'])
 	if out_git_check.exit_code != -1 {
 		is_git = out_git_check.output.trim_space() == 'true'
 	}
@@ -1184,7 +1186,7 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	mut files := []string{}
 	mut partial := false
 	if is_git {
-		s := os.execute('git -C ${os.quoted_path(ws_path)} ls-files -z')
+		s := os.exec(['git', '-C', ws_path, 'ls-files', '-z'])
 		if s.exit_code != 0 {
 			return []string{}, true
 		}
