@@ -177,7 +177,7 @@ fn test_owner_and_group_are_kept() {
 		p := os.join_path(root, 'shared.txt')
 		os.write_file(p, 'old\n')!
 		st := os.stat(p)!
-		groups := os.execute('id -G').output.fields().map(it.u32())
+		groups := os.exec(['id', '-G']).output.fields().map(it.u32())
 		other := groups.filter(it != st.gid)
 		if other.len == 0 {
 			eprintln('skipping: the user is in a single group')
@@ -247,7 +247,7 @@ fn test_file_capabilities_are_dropped_like_a_normal_write() {
 		for p in [replaced, in_place] {
 			os.write_file(p, 'echo old\n')!
 			os.chmod(p, 0o755)!
-			if os.execute('setcap cap_net_raw+ep ${os.quoted_path(p)}').exit_code != 0 {
+			if os.exec(['setcap', 'cap_net_raw+ep', p]).exit_code != 0 {
 				eprintln('skipping: setcap is not available or the filesystem has no capabilities')
 				return
 			}
@@ -264,8 +264,7 @@ fn test_acl_and_xattrs_are_kept() {
 		p := os.join_path(root, 'acl.txt')
 		os.write_file(p, 'old\n')!
 		os.chmod(p, 0o640)!
-		q := os.quoted_path(p)
-		if os.execute('setfacl -m u:65534:r-- ${q}').exit_code != 0 {
+		if os.exec(['setfacl', '-m', 'u:65534:r--', p]).exit_code != 0 {
 			eprintln('skipping: setfacl is not available or the filesystem has no ACLs')
 			return
 		}
@@ -274,11 +273,11 @@ fn test_acl_and_xattrs_are_kept() {
 			eprintln('skipping: the filesystem has no user extended attributes')
 			return
 		}
-		acl_before := os.execute('getfacl -c ${q}').output
+		acl_before := os.exec(['getfacl', '-c', p]).output
 		mode_before := os.stat(p)!.mode & 0o7777
 		write_lines_atomic(p, ['new'])!
 		assert os.read_file(p)! == 'new\n'
-		assert os.execute('getfacl -c ${q}').output == acl_before
+		assert os.exec(['getfacl', '-c', p]).output == acl_before
 		assert os.stat(p)!.mode & 0o7777 == mode_before
 		assert read_xattr(p, -1, 'user.ved_test')!.bytestr() == value
 	}
@@ -288,16 +287,15 @@ fn test_inode_flags_are_kept() {
 	$if linux {
 		p := os.join_path(root, 'nodump.txt')
 		os.write_file(p, 'old\n')!
-		q := os.quoted_path(p)
-		if os.execute('chattr +dA ${q}').exit_code != 0 {
+		if os.exec(['chattr', '+dA', p]).exit_code != 0 {
 			eprintln('skipping: chattr is not available or the filesystem has no inode flags')
 			return
 		}
-		flags_before := os.execute('lsattr ${q}').output.fields()[0]
+		flags_before := os.exec(['lsattr', p]).output.fields()[0]
 		assert flags_before.contains('d') && flags_before.contains('A')
 		write_lines_atomic(p, ['new'])!
 		assert os.read_file(p)! == 'new\n'
-		assert os.execute('lsattr ${q}').output.fields()[0] == flags_before
+		assert os.exec(['lsattr', p]).output.fields()[0] == flags_before
 	}
 }
 
@@ -307,17 +305,16 @@ fn test_inherited_acl_is_not_added() {
 		os.mkdir(d)!
 		p := os.join_path(d, 'plain.txt')
 		os.write_file(p, 'old\n')!
-		qd := os.quoted_path(d)
-		qp := os.quoted_path(p)
-		if os.execute('setfacl -d -m u:65534:rw- ${qd} && setfacl -b ${qp}').exit_code != 0 {
+		if os.exec(['setfacl', '-d', '-m', 'u:65534:rw-', d]).exit_code != 0
+			|| os.exec(['setfacl', '-b', p]).exit_code != 0 {
 			eprintln('skipping: setfacl is not available or the filesystem has no ACLs')
 			return
 		}
 		os.chmod(p, 0o640)!
-		acl_before := os.execute('getfacl -c ${qp}').output
+		acl_before := os.exec(['getfacl', '-c', p]).output
 		assert !acl_before.contains('65534')
 		write_lines_atomic(p, ['new'])!
-		assert os.execute('getfacl -c ${qp}').output == acl_before
+		assert os.exec(['getfacl', '-c', p]).output == acl_before
 		assert os.stat(p)!.mode & 0o7777 == 0o640
 	}
 }

@@ -131,8 +131,8 @@ fn test_file_names_are_kept_exactly() {
 	for name in names {
 		os.write_file(os.join_path(repo, name), '')!
 	}
-	q := os.quoted_path(repo)
-	assert os.execute('git -C ${q} init -q && git -C ${q} add -A').exit_code == 0
+	assert os.exec(['git', '-C', repo, 'init', '-q']).exit_code == 0
+	assert os.exec(['git', '-C', repo, 'add', '-A']).exit_code == 0
 	mut ved := &Ved{
 		workspace: repo
 	}
@@ -175,8 +175,8 @@ fn test_failed_git_listing_is_partial() {
 	}
 	repo := fresh_dir('corrupt_index')
 	os.write_file(os.join_path(repo, 'a.v'), '')!
-	q := os.quoted_path(repo)
-	assert os.execute('git -C ${q} init -q && git -C ${q} add a.v').exit_code == 0
+	assert os.exec(['git', '-C', repo, 'init', '-q']).exit_code == 0
+	assert os.exec(['git', '-C', repo, 'add', 'a.v']).exit_code == 0
 	// Still a repository, but git ls-files fails.
 	os.write_file(os.join_path(repo, '.git', 'index'), 'garbage')!
 	ved := &Ved{}
