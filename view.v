@@ -245,18 +245,21 @@ fn (mut view View) format_file() {
 	}
 	path := view.path
 	// Run formatters
-	fmt_cmd := view.ved.syntaxes[view.ved.current_syntax_idx].fmt_cmd.replace('<PATH>',
-		os.quoted_path(path))
+	fmt_cmd := view.ved.syntaxes[view.ved.current_syntax_idx].fmt_cmd.fields().map(it.replace('<PATH>',
+		path))
 	if path.ends_with('.go') {
 		println('running goimports')
-		os.system('goimports -w "${path}"')
+		os.system_args(['goimports', '-w', path])
 	} else if path.ends_with('.scss') {
 		css := path.replace('.scss', '.css')
-		os.system('sassc "${path}" > "${css}"')
+		res := os.exec(['sassc', path])
+		if res.exit_code == 0 {
+			os.write_file(css, res.output) or {}
+		}
 	} else if path.ends_with('.js') {
-		os.system('prettier --use-tabs -w "${path}"')
-	} else if fmt_cmd != '' {
-		os.system(fmt_cmd)
+		os.system_args(['prettier', '--use-tabs', '-w', path])
+	} else if fmt_cmd.len > 0 {
+		os.system_args(fmt_cmd)
 	}
 	view.reopen()
 	// update git diff
