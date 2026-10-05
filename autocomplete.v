@@ -122,19 +122,19 @@ fn (ved &Ved) draw_autocomplete_window() {
 	}
 }
 
-fn (mut ved Ved) get_v_build_cmd() ?string {
+fn (mut ved Ved) get_v_build_cmd() ?[]string {
 	line_nr := ved.view.y + 1
 	// file_name := os.base(ved.view.path)
 	file_name := ved.view.path
 	build_file := ved.get_build_file_location() or { return none }
-	mut v_build_cmd := if build_file == '' {
+	build_cmd := if build_file == '' {
 		'v .'
 	} else {
 		os.read_file(build_file) or {
 			return none
 		}
 	}
-	words := v_build_cmd.fields()
+	words := build_cmd.fields()
 	mut dir_to_build := words[words.len - 1]
 	module_name := get_module_name_from_file(ved.view.lines)
 	if ved.view.path.contains('${module_name}/') {
@@ -145,8 +145,7 @@ fn (mut ved Ved) get_v_build_cmd() ?string {
 	full_dir_to_build := dir_to_build
 	println('NNNdir_to_build="${full_dir_to_build}"')
 
-	v_build_cmd = 'v -line-info "${file_name}:${line_nr}" ' + full_dir_to_build
-	return v_build_cmd
+	return ['v', '-line-info', '${file_name}:${line_nr}', full_dir_to_build]
 }
 
 // Calls `v -line-info "a.v:16" a.v`, parses output
@@ -155,14 +154,14 @@ fn (mut ved Ved) get_line_info() {
 	// cmd := 'v -line-info "${file_name}:${line_nr}" .' // ${ved.view.path}'
 	v_build_cmd := ved.get_v_build_cmd() or { return }
 	t := time.now()
-	resp := os.execute(v_build_cmd) // or {
+	resp := os.exec(v_build_cmd) // or {
 	time_diff := time.since(t)
 	ved.debug_info = time_diff.str()
 	// println('FAILED TO RUN V -line-info')
 	// return
 	//}
 	println('v_build_cmd=')
-	println(v_build_cmd)
+	println(v_build_cmd.join(' '))
 	println('RESP=')
 	println(resp.output)
 	if resp.output.contains('not found among those parsed') {

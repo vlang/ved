@@ -636,15 +636,13 @@ fn (mut ved Ved) git_grep() {
 		}
 	}
 
-	query = query.replace('$', '\\\$')
-
 	// Build git grep command with optional extension filter
-	mut cmd := 'git -C "${ved.workspace}" grep -F -n "${query}"'
+	mut cmd := ['git', '-C', ved.workspace, 'grep', '-F', '-n', '-e', query]
 	if ext_filter != '' {
-		cmd += ' -- "*.${ext_filter}"'
+		cmd << ['--', '*.${ext_filter}']
 	}
 
-	s := os.execute(cmd)
+	s := os.exec(cmd)
 	if s.exit_code == -1 {
 		return
 	}

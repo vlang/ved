@@ -79,8 +79,8 @@ fn test_switch_from_git_to_non_git_workspace() {
 	git_dir := fresh_dir('repo with space')
 	os.write_file(os.join_path(git_dir, 'tracked.v'), '')!
 	os.write_file(os.join_path(git_dir, 'untracked.v'), '')!
-	q := os.quoted_path(git_dir)
-	assert os.execute('git -C ${q} init -q && git -C ${q} add tracked.v').exit_code == 0
+	assert os.exec(['git', '-C', git_dir, 'init', '-q']).exit_code == 0
+	assert os.exec(['git', '-C', git_dir, 'add', 'tracked.v']).exit_code == 0
 	plain_dir := fresh_dir('plain')
 	os.write_file(os.join_path(plain_dir, 'plain.v'), '')!
 
