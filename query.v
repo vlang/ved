@@ -258,11 +258,11 @@ fn (mut ved Ved) filter_ctrlp_results() {
 	ved.gg_pos = -1 // Reset selection
 	ved.gg_scroll = 0 // Reset scroll offset
 	query_lower := ved.query.to_lower()
+	ved.ctrlp_partial = ved.all_files_partial
 
 	// 1. Search current workspace
 	current_ws_path := ved.workspace
-	for file_ in ved.all_git_files { // all_git_files should hold current workspace files
-		file_path := file_.trim_space()
+	for file_path in ved.all_git_files { // all_git_files should hold current workspace files
 		if file_path.to_lower().contains(query_lower) {
 			ved.ctrlp_results << CtrlPResult{
 				file_path:      file_path
@@ -279,15 +279,17 @@ fn (mut ved Ved) filter_ctrlp_results() {
 				continue // Skip current workspace, already searched
 			}
 			// Get files for this other workspace (might be slow if not cached)
-			other_files, _ := ved.get_files_for_workspace(ws_path)
+			other_files, partial := ved.get_files_for_workspace(ws_path)
+			if partial {
+				ved.ctrlp_partial = true
+			}
 			short_ws_name := short_space(ws_path)
 			for file_path in other_files {
-				file_path_trimmed := file_path.trim_space()
-				if file_path_trimmed.to_lower().contains(query_lower) {
+				if file_path.to_lower().contains(query_lower) {
 					ved.ctrlp_results << CtrlPResult{
-						file_path:      file_path_trimmed
+						file_path:      file_path
 						workspace_path: ws_path
-						display_name:   '${file_path_trimmed} (${short_ws_name})'
+						display_name:   '${file_path} (${short_ws_name})'
 					}
 				}
 			}
@@ -372,7 +374,7 @@ fn (mut ved Ved) draw_query() {
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
 	mut title := ved.query_type.str()
-	if ved.query_type == .ctrlp && ved.all_files_partial {
+	if ved.query_type == .ctrlp && ved.ctrlp_partial {
 		title += ' - partial list'
 	}
 	ved.gg.draw_text(x + 10, y, title, ved.cfg.file_name_cfg)
@@ -598,7 +600,7 @@ fn (mut ved Ved) ctrlj_open() {
 		return
 	}
 
-	selected_relative_path := filtered_paths[ved.gg_pos].trim_space()
+	selected_relative_path := filtered_paths[ved.gg_pos]
 
 	if selected_relative_path == '' {
 		return

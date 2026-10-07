@@ -50,6 +50,7 @@ mut:
 	prev_insert        string        // for `.` (re-enter the text that was just entered via cw etc)
 	all_git_files      []string      // Files for the *current* workspace only
 	all_files_partial  bool          // the walk for all_git_files stopped at max_walked_entries
+	ctrlp_partial      bool          // the current Ctrl+P search saw a partial file list
 	ctrlp_results      []CtrlPResult // Filtered results for Ctrl+P across workspaces
 	top_tasks          []string
 	gg                 &gg.Context = unsafe { nil }
@@ -643,6 +644,10 @@ fn (ved &Ved) save_session() {
 		if view.path == 'out' {
 			continue
 		}
+		if view.path.contains('\n') {
+			f.writeln(':0') or { panic(err) }
+			continue
+		}
 		f.writeln('${view.path}:${view.y}') or { panic(err) }
 	}
 	f.close()
@@ -658,6 +663,9 @@ fn (ved &Ved) save_session() {
 fn (ved &Ved) save_file_stats() {
 	mut f := os.create(file_stats_path) or { return }
 	for path, count in ved.file_open_count {
+		if path.contains('\n') {
+			continue
+		}
 		f.writeln('${path}:${count}') or { continue }
 	}
 	f.close()
@@ -1178,11 +1186,11 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	mut files := []string{}
 	mut partial := false
 	if is_git {
-		s := os.exec(['git', '-C', ws_path, 'ls-files'])
+		s := os.exec(['git', '-C', ws_path, 'ls-files', '-z'])
 		if s.exit_code != 0 {
-			return []string{}, false
+			return []string{}, true
 		}
-		files = s.output.split_into_lines()
+		files = s.output.split('\0').filter(it != '')
 	} else {
 		files, partial = walk_workspace_files(ws_path)
 	}
@@ -1196,14 +1204,18 @@ const max_walked_entries = 10000
 // that are not git repos. Hidden entries (.git, .cache, etc.) are skipped, and the
 // walk stops after examining max_walked_entries entries to keep a huge directory,
 // such as the home directory, from freezing the editor. The returned bool reports
-// whether it stopped early.
+// whether files may be missing: the walk stopped early or something couldn't be read.
 fn walk_workspace_files(root string) ([]string, bool) {
 	mut files := []string{}
 	mut dirs := ['']
 	mut budget := max_walked_entries
+	mut partial := false
 	for dirs.len > 0 {
 		dir := dirs.pop()
-		entries := os.ls(os.join_path(root, dir)) or { continue }
+		entries := os.ls(os.join_path(root, dir)) or {
+			partial = true
+			continue
+		}
 		for entry in entries {
 			if entry.starts_with('.') {
 				continue
@@ -1214,8 +1226,12 @@ fn walk_workspace_files(root string) ([]string, bool) {
 			budget--
 			rel := if dir == '' { entry } else { os.join_path(dir, entry) }
 			path := os.join_path(root, rel)
-			// stat() follows symlinks, broken ones are skipped.
-			st := os.stat(path) or { continue }
+			st := os.stat(path) or {
+				if !os.is_link(path) {
+					partial = true
+				}
+				continue
+			}
 			match st.get_filetype() {
 				.directory {
 					// Symlinked directories can form cycles.
@@ -1233,5 +1249,5 @@ fn walk_workspace_files(root string) ([]string, bool) {
 			}
 		}
 	}
-	return files, false
+	return files, partial
 }

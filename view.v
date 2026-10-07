@@ -86,6 +86,10 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if path == '' {
 		return
 	}
+	lines := load_lines(path) or {
+		view.ved.error_line = 'cannot open ${path}: ${err.msg()}'
+		return
+	}
 	// This path is in current workspace? Trim it. /code/v/file.v => file.v
 	if path.starts_with(view.ved.workspace + '/') {
 		view.short_path = path[view.ved.workspace.len..]
@@ -116,14 +120,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 		view.ved.file_y_pos[view.path] = view.y
 		view.prev_path = view.path
 	}
-	/*
-	mut lines := []string{}
-	if rlines := os.read_lines(path) {
-		lines = rlines
-	}
 	view.lines = lines
-	*/
-	view.lines = os.read_lines(path) or { []string{} }
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -195,8 +192,8 @@ fn (mut view View) open_file(path string, line_nr int) {
 // reopen reloads the content of the file currently associated with the view from disk.
 // This is useful for discarding changes or updating the view after external modifications.
 fn (mut view View) reopen() {
+	// open_file clears `changed` only when the file could be read, so unsaved edits stay marked.
 	view.open_file(view.path, 0)
-	view.changed = false
 }
 
 // save_file saves the current content of the view's buffer to its associated file on disk.
@@ -213,7 +210,8 @@ fn (mut view View) save_file() {
 	// println('line[0].len=$line0.len')
 	// On failure, keep the buffer untouched: the reopen below would replace
 	// the unsaved edits with whatever is on disk.
-	write_lines(path, view.lines) or {
+	save := if view.ved.cfg.atomic_save { write_lines_atomic } else { write_lines }
+	save(path, view.lines) or {
 		view.ved.error_line = 'cannot save ${path}: ${err.msg()}'
 		return
 	}
@@ -223,16 +221,6 @@ fn (mut view View) save_file() {
 		if v.path == view.path {
 			v.reopen()
 		}
-	}
-}
-
-fn write_lines(path string, lines []string) ! {
-	mut file := os.create(path)!
-	defer {
-		file.close()
-	}
-	for line in lines {
-		file.writeln(line)!
 	}
 }
 

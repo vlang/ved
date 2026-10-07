@@ -22,13 +22,11 @@ fn (mut ved Ved) go_to_def() {
 		ved.load_git_tree()
 	}
 	for query in queries {
-		for file_ in ved.all_git_files {
-			mut file := file_.to_lower()
-			file = file.trim_space()
-			if !file.ends_with('.v') {
+		for name in ved.all_git_files {
+			if !name.to_lower().ends_with('.v') {
 				continue
 			}
-			file = '${ved.workspace}/${file}'
+			file := os.join_path(ved.workspace, name)
 			lines := os.read_lines(file) or { continue }
 			// println('trying file $file with $lines.len lines')
 			for j, line in lines {
