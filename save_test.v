@@ -336,6 +336,21 @@ fn test_line_endings_are_kept() {
 	assert os.read_file(p)! == 'a\r\nchanged\r\nadded\r\n'
 }
 
+fn test_mixed_line_endings_are_kept() {
+	p := os.join_path(root, 'mixed.txt')
+	text := 'a\r\nb\nc\r\n'
+	os.write_file(p, text)!
+	lines, format := load_lines(p)!
+	assert !format.crlf
+	assert lines == ['a\r', 'b', 'c\r']
+	write_lines(p, lines, format)!
+	assert os.read_file(p)! == text
+	write_lines_atomic(p, lines, format)!
+	assert os.read_file(p)! == text
+	write_lines(p, ['a\r', 'b', 'c\r', 'd'], format)!
+	assert os.read_file(p)! == 'a\r\nb\nc\r\nd\n'
+}
+
 fn test_load_lines() {
 	missing, missing_format := load_lines(os.join_path(root, 'does_not_exist.txt'))!
 	assert missing == []string{}

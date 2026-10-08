@@ -71,7 +71,6 @@ struct LineFormat {
 }
 
 // load_lines reads the lines of the file at path and how they end.
-// The first line break decides between CRLF and LF.
 fn load_lines(path string) !([]string, LineFormat) {
 	text := os.read_file(path) or {
 		os.stat(path) or {
@@ -87,8 +86,8 @@ fn load_lines(path string) !([]string, LineFormat) {
 			final_newline: false
 		}
 	}
-	first := text.index_u8(`\n`)
-	crlf := first > 0 && text[first - 1] == `\r`
+	breaks := text.count('\n')
+	crlf := breaks > 0 && text.count('\r\n') == breaks
 	final_newline := text.ends_with('\n')
 	mut lines := (if final_newline { text[..text.len - 1] } else { text }).split('\n')
 	if crlf {
