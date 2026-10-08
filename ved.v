@@ -1170,7 +1170,7 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 }
 
 // get_files_for_workspace lists all files for a given workspace path, using `git ls-files`
-// in git repos and walking the directory otherwise.
+// in git repos (tracked and untracked but not ignored) and walking the directory otherwise.
 // TODO: Caching? For now, load every time.
 fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	if ws_path == '' {
@@ -1186,7 +1186,8 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	mut files := []string{}
 	mut partial := false
 	if is_git {
-		s := os.exec(['git', '-C', ws_path, 'ls-files', '-z'])
+		s := os.exec(['git', '-C', ws_path, 'ls-files', '-z', '--cached', '--others',
+			'--exclude-standard'])
 		if s.exit_code != 0 {
 			return []string{}, true
 		}

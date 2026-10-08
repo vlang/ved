@@ -189,6 +189,8 @@ fn test_switch_from_git_to_non_git_workspace() {
 	git_dir := fresh_dir('repo with space')
 	os.write_file(os.join_path(git_dir, 'tracked.v'), '')!
 	os.write_file(os.join_path(git_dir, 'untracked.v'), '')!
+	os.write_file(os.join_path(git_dir, 'ignored.v'), '')!
+	os.write_file(os.join_path(git_dir, '.gitignore'), 'ignored.v\n')!
 	assert os.exec(['git', '-C', git_dir, 'init', '-q']).exit_code == 0
 	assert os.exec(['git', '-C', git_dir, 'add', 'tracked.v']).exit_code == 0
 	plain_dir := fresh_dir('plain')
@@ -198,7 +200,9 @@ fn test_switch_from_git_to_non_git_workspace() {
 		workspace: git_dir
 	}
 	ved.load_git_tree()
-	assert ved.all_git_files == ['tracked.v']
+	mut listed := ved.all_git_files.clone()
+	listed.sort()
+	assert listed == ['.gitignore', 'tracked.v', 'untracked.v']
 	ved.workspace = plain_dir
 	ved.load_git_tree()
 	assert ved.all_git_files == ['plain.v']
