@@ -21,6 +21,7 @@ mut:
 	short_path   string
 	prev_path    string // for tt
 	lines        []string
+	line_format  LineFormat // line endings of the file, kept when saving
 	page_height  int
 	vstart       int
 	vend         int // visual borders
@@ -86,7 +87,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if path == '' {
 		return
 	}
-	lines := load_lines(path) or {
+	lines, line_format := load_lines(path) or {
 		view.ved.error_line = 'cannot open ${path}: ${err.msg()}'
 		return
 	}
@@ -121,6 +122,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 		view.prev_path = view.path
 	}
 	view.lines = lines
+	view.line_format = line_format
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -211,7 +213,7 @@ fn (mut view View) save_file() {
 	// On failure, keep the buffer untouched: the reopen below would replace
 	// the unsaved edits with whatever is on disk.
 	save := if view.ved.cfg.atomic_save { write_lines_atomic } else { write_lines }
-	save(path, view.lines) or {
+	save(path, view.lines, view.line_format) or {
 		view.ved.error_line = 'cannot save ${path}: ${err.msg()}'
 		return
 	}

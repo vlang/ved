@@ -2,7 +2,6 @@ module main
 
 import os
 import rand
-import strings
 
 fn C.fsync(fd i32) i32
 fn C.fchown(fd i32, owner u32, group u32) i32
@@ -64,31 +63,68 @@ mut:
 	inherit_handle i32
 }
 
-fn load_lines(path string) ![]string {
-	return os.read_lines(path) or {
+// LineFormat is how a file ends its lines.
+@[params]
+struct LineFormat {
+	crlf          bool // lines end with \r\n instead of \n
+	final_newline bool = true // the last line ends with a line break too
+}
+
+// load_lines reads the lines of the file at path and how they end.
+// The first line break decides between CRLF and LF.
+fn load_lines(path string) !([]string, LineFormat) {
+	text := os.read_file(path) or {
 		os.stat(path) or {
 			if err.code() == C.ENOENT {
-				return []string{}
+				return []string{}, LineFormat{}
 			}
 			return err
 		}
 		return err
 	}
+	if text == '' {
+		return []string{}, LineFormat{
+			final_newline: false
+		}
+	}
+	first := text.index_u8(`\n`)
+	crlf := first > 0 && text[first - 1] == `\r`
+	final_newline := text.ends_with('\n')
+	mut lines := (if final_newline { text[..text.len - 1] } else { text }).split('\n')
+	if crlf {
+		for i, line in lines {
+			if line.ends_with('\r') {
+				lines[i] = line[..line.len - 1]
+			}
+		}
+	}
+	return lines, LineFormat{
+		crlf:          crlf
+		final_newline: final_newline
+	}
+}
+
+// encode_lines joins lines into file contents with the line endings of format.
+fn encode_lines(lines []string, format LineFormat) string {
+	if lines.len == 0 {
+		return ''
+	}
+	sep := if format.crlf { '\r\n' } else { '\n' }
+	text := lines.join(sep)
+	return if format.final_newline { text + sep } else { text }
 }
 
 // write_lines writes lines directly into the file at path.
-fn write_lines(path string, lines []string) ! {
+fn write_lines(path string, lines []string, format LineFormat) ! {
 	mut file := os.create(path)!
 	defer {
 		file.close()
 	}
-	for line in lines {
-		file.writeln(line)!
-	}
+	file.write_string(encode_lines(lines, format))!
 }
 
 // write_lines_atomic writes lines to a temporary file and replaces the file at path with it.
-fn write_lines_atomic(path string, lines []string) ! {
+fn write_lines_atomic(path string, lines []string, format LineFormat) ! {
 	target := resolve_links(path) or { return error('cannot resolve ${path}: ${err.msg()}') }
 	mut orig := ?os.Stat(none)
 	if st := os.stat(target) {
@@ -115,12 +151,7 @@ fn write_lines_atomic(path string, lines []string) ! {
 	}
 	perm := if orig == none { 0o666 } else { 0o600 }
 	tmp, fd := create_temp_file(target, perm, sd)!
-	mut sb := strings.new_builder(4096)
-	for line in lines {
-		sb.write_string(line)
-		sb.write_u8(`\n`)
-	}
-	finish_temp_file(fd, tmp, target, sb, orig) or {
+	finish_temp_file(fd, tmp, target, encode_lines(lines, format).bytes(), orig) or {
 		os.rm(tmp) or {}
 		return err
 	}

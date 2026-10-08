@@ -319,11 +319,31 @@ fn test_inherited_acl_is_not_added() {
 	}
 }
 
+fn test_line_endings_are_kept() {
+	p := os.join_path(root, 'endings.txt')
+	for text in ['a\r\nb\r\n', 'a\r\nb', 'a\nb\n', 'a\nb', 'one line', '', '\r\n', 'a\n\nb\n'] {
+		os.write_file(p, text)!
+		lines, format := load_lines(p)!
+		write_lines(p, lines, format)!
+		assert os.read_file(p)! == text
+		write_lines_atomic(p, lines, format)!
+		assert os.read_file(p)! == text
+	}
+	// An edited CRLF file is still saved with CRLF.
+	os.write_file(p, 'a\r\nb\r\n')!
+	_, format := load_lines(p)!
+	write_lines(p, ['a', 'changed', 'added'], format)!
+	assert os.read_file(p)! == 'a\r\nchanged\r\nadded\r\n'
+}
+
 fn test_load_lines() {
-	assert load_lines(os.join_path(root, 'does_not_exist.txt'))! == []string{}
+	missing, missing_format := load_lines(os.join_path(root, 'does_not_exist.txt'))!
+	assert missing == []string{}
+	assert missing_format == LineFormat{}
 	p := os.join_path(root, 'lines.txt')
 	os.write_file(p, 'a\nb\n')!
-	assert load_lines(p)! == ['a', 'b']
+	lines, _ := load_lines(p)!
+	assert lines == ['a', 'b']
 	$if !windows {
 		if os.getuid() == 0 {
 			return
