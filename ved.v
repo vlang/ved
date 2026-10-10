@@ -129,14 +129,14 @@ Usage: ved [options] [files]
 
 Options:
   -h, --help              Display this information.
-  -window <window-name>   Launch in a window.
+  -fullscreen             Launch in fullscreen.
   -dark                   Launch in dark mode.
   -two_splits
 '
 
 const fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
 const args = os.args.clone()
-const is_window = '-window' in args
+const is_fullscreen = '-fullscreen' in args
 
 // get_screen_size returns the dimensions of the screen.
 fn get_screen_size() (int, int) {
@@ -194,10 +194,17 @@ fn main() {
 
 	ved.load_syntaxes()
 
+	// windowed by default, 770x480 is the size the fullscreen toggle goes back to
+	mut win_width := width
+	mut win_height := height
+	if !is_fullscreen {
+		win_width = 770
+		win_height = 480
+	}
 	ved.gg = gg.new_context(
-		width:         width
-		height:        height // borderless_window: !is_window
-		fullscreen:    !is_window
+		width:         win_width
+		height:        win_height
+		fullscreen:    is_fullscreen
 		window_title:  'Ved'
 		create_window: true
 		user_data:     ved
@@ -210,7 +217,9 @@ fn main() {
 		font_path:     fpath
 		ui_mode:       true
 	)
-	println('full screen=${!is_window}')
+	ved.win_width = win_width
+	ved.win_height = win_height
+	println('full screen=${is_fullscreen}')
 	ved.timer = new_timer(mut ved.gg)
 	ved.load_all_tasks()
 	// TODO linux and windows
@@ -1099,7 +1108,7 @@ fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 	if '-two_splits' in args || width < 1800 {
 		nr_splits = 2
 	}
-	if is_window || '-laptop' in args {
+	if !is_fullscreen || '-laptop' in args {
 		nr_splits = 1
 	}
 	max_split_width := ved.cfg.char_width * 110
