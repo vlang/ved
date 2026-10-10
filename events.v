@@ -3,9 +3,20 @@ module main
 import os
 import gg
 
+// gg passes the user data first for on_event, event_fn takes it last.
+// Using on_event with the wrong signature made `e` point at the Ved struct.
+fn ved_event(e &gg.Event, data voidptr) {
+	mut ved := unsafe { &Ved(data) }
+	ved.on_event(e)
+}
+
 fn (mut ved Ved) on_event(e &gg.Event) {
 	// println('on_event ${ved.win_width}')
 	ved.refresh = true
+	if e.typ == .resized {
+		ved.win_width = e.window_width
+		ved.win_height = e.window_height
+	}
 	/*
 	// TODO change win height/width only on cmd + enter (exit full screen etc)
 	mut size := gg.screen_size()
