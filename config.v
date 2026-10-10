@@ -255,9 +255,9 @@ fn (mut config Config) set_red() {
 // load_config2 loads config.json, then conf.toml on top of it. It runs again after
 // every save, so changes to either file apply without a restart.
 fn (mut ved Ved) load_config2() {
+	ved.cfg = Config{}
 	mut zoom_saved := false
-	if os.exists(config_path2) {
-		text := os.read_file(config_path2) or { return }
+	if text := os.read_file(config_path2) {
 		if conf2 := json2.decode[Config](text) {
 			ved.cfg = conf2
 			saved := json2.decode[json2.Any](text) or { json2.Any(map[string]json2.Any{}) }
@@ -278,6 +278,10 @@ fn (mut ved Ved) load_config2() {
 		map[string]gg.Color{}
 	}
 	ved.cfg.set_default_values()
+	// gg keeps its own copy of the background color and doesn't exist yet on the first load.
+	if !isnil(ved.gg) {
+		ved.gg.set_bg_color(ved.cfg.bgcolor)
+	}
 }
 
 // apply_toml_editor applies the settings of the [editor] table in conf.toml.
