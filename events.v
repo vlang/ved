@@ -40,64 +40,47 @@ fn (mut ved Ved) on_event(e &gg.Event) {
 		}
 	}
 
-	// FIXME: The rounding math here cause the Y coord to be unintuitive sometimes.
 	if e.typ == .mouse_down {
 		if ved.cfg.disable_mouse {
 			return
 		}
 
-		mut view := ved.view
-
-		mut current_line := ''
-		if view.y > 0 && view.y < view.lines.len {
-			current_line = view.lines[view.y]
-		}
-		current_line_split := current_line.split('\t')
-		mut leading_tabs := 0
-		for i := 0; i < current_line_split.len; i++ {
-			if current_line_split[i] == '' {
-				leading_tabs++
-			}
-		}
-
-		// Focus the pane currently under the cursor before continuing
+		// GG supplies logical coordinates, the same units used to draw the splits.
+		sw := ved.split_width()
+		from, _ := ved.get_splits_from_to()
 		for i := 0; i < ved.nr_splits; i++ {
-			sw := ved.split_width()
-			starting_x := 2 * i * sw
-			ending_x := 2 * (i + 1) * sw
-
-			if e.mouse_x > starting_x && e.mouse_x < ending_x {
-				ved.cur_split = i
+			if e.mouse_x >= i * sw && e.mouse_x < (i + 1) * sw {
+				ved.cur_split = from + i
 				ved.update_view()
+				break
 			}
 		}
 
-		clicked_y := int((e.mouse_y / ved.cfg.line_height - 1.5) / 2) + ved.view.from
-		if clicked_y >= view.lines.len {
-			if view.lines.len == 0 {
-				view.set_y(0)
-			} else {
-				view.set_y(view.lines.len - 1)
-			}
-		} else if clicked_y < 0 {
-			view.set_y(1)
-		} else {
-			view.set_y(clicked_y)
-		}
-
-		// Wow, that's a lot of math that is probably pretty hard to parse.
-		// In the future I need to separate this into several variables,
-		// and perhaps even its own function.
-		clicked_x := int(((e.mouse_x - ved.cur_split * ved.split_width() * 2 - view.padding_left) / ved.cfg.char_width) / 2 - 3 - leading_tabs * 3)
-		if view.lines.len <= 0 {
+		// Use the newly focused view's scroll offset, padding, and line contents.
+		mut view := ved.view
+		if view.lines.len == 0 {
+			view.set_y(0)
+			view.x = 0
 			return
 		}
-		if clicked_x > view.lines[view.y].len {
-			view.x = view.lines[view.y].len
-		} else if clicked_x < 0 {
-			view.x = 0
+		clicked_y := int(e.mouse_y / ved.cfg.line_height) - 1 + view.from
+		view.set_y(int_max(0, int_min(clicked_y, view.lines.len - 1)))
+
+		// Text starts after the line-number gutter. Leading tabs occupy tab_size cells.
+		line_x := (ved.cur_split - from) * sw + view.padding_left + 10
+		column := int_max(0, int((e.mouse_x - line_x) / ved.cfg.char_width))
+		line := view.line()
+		mut leading_tabs := 0
+		for c in line {
+			if c != `\t` {
+				break
+			}
+			leading_tabs++
+		}
+		view.x = if column < leading_tabs * ved.cfg.tab_size {
+			column / ved.cfg.tab_size
 		} else {
-			view.x = clicked_x
+			int_min(line.runes().len, column - leading_tabs * (ved.cfg.tab_size - 1))
 		}
 	}
 }
