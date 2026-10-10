@@ -2,6 +2,7 @@ module main
 
 import os
 import rand
+import strings
 
 fn C.fsync(fd i32) i32
 fn C.fchown(fd i32, owner u32, group u32) i32
@@ -66,11 +67,14 @@ mut:
 // LineFormat is how a file ends its lines.
 @[params]
 struct LineFormat {
-	crlf          bool // lines end with \r\n instead of \n
+mut:
+	crlf          bool // new lines end with \r\n instead of \n
 	final_newline bool = true // the last line ends with a line break too
+	line_crlf     []bool // line i ends with \r\n; lines past its end use crlf
 }
 
-// load_lines reads the lines of the file at path and how they end.
+// load_lines reads the lines of the file at path and how they end. Each line keeps its
+// own ending. A file with mixed line endings is saved back the same way.
 fn load_lines(path string) !([]string, LineFormat) {
 	text := os.read_file(path) or {
 		os.stat(path) or {
@@ -86,31 +90,38 @@ fn load_lines(path string) !([]string, LineFormat) {
 			final_newline: false
 		}
 	}
-	breaks := text.count('\n')
-	crlf := breaks > 0 && text.count('\r\n') == breaks
 	final_newline := text.ends_with('\n')
 	mut lines := (if final_newline { text[..text.len - 1] } else { text }).split('\n')
-	if crlf {
-		for i, line in lines {
-			if line.ends_with('\r') {
-				lines[i] = line[..line.len - 1]
-			}
+	mut line_crlf := []bool{len: lines.len}
+	for i, line in lines {
+		if line.ends_with('\r') && (i < lines.len - 1 || final_newline) {
+			lines[i] = line[..line.len - 1]
+			line_crlf[i] = true
 		}
+	}
+	crlf := text.count('\r\n') * 2 > text.count('\n')
+	if !final_newline {
+		line_crlf[lines.len - 1] = crlf
 	}
 	return lines, LineFormat{
 		crlf:          crlf
 		final_newline: final_newline
+		line_crlf:     line_crlf
 	}
 }
 
 // encode_lines joins lines into file contents with the line endings of format.
 fn encode_lines(lines []string, format LineFormat) string {
-	if lines.len == 0 {
-		return ''
+	mut sb := strings.new_builder(lines.len * 32)
+	for i, line in lines {
+		sb.write_string(line)
+		if i == lines.len - 1 && !format.final_newline {
+			break
+		}
+		crlf := if i < format.line_crlf.len { format.line_crlf[i] } else { format.crlf }
+		sb.write_string(if crlf { '\r\n' } else { '\n' })
 	}
-	sep := if format.crlf { '\r\n' } else { '\n' }
-	text := lines.join(sep)
-	return if format.final_newline { text + sep } else { text }
+	return sb.str()
 }
 
 // write_lines writes lines directly into the file at path.

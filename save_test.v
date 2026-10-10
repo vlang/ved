@@ -2,6 +2,7 @@ module main
 
 import os
 import rand
+import gg
 
 fn C.umask(mask u32) u32
 
@@ -341,14 +342,51 @@ fn test_mixed_line_endings_are_kept() {
 	text := 'a\r\nb\nc\r\n'
 	os.write_file(p, text)!
 	lines, format := load_lines(p)!
-	assert !format.crlf
-	assert lines == ['a\r', 'b', 'c\r']
+	assert lines == ['a', 'b', 'c']
 	write_lines(p, lines, format)!
 	assert os.read_file(p)! == text
 	write_lines_atomic(p, lines, format)!
 	assert os.read_file(p)! == text
-	write_lines(p, ['a\r', 'b', 'c\r', 'd'], format)!
-	assert os.read_file(p)! == 'a\r\nb\nc\r\nd\n'
+
+	mut ved := new_test_ved()
+	mut view := ved.view
+	view.open_file(p, 0)
+	view.x = 1
+	view.insert_text('X')
+	view.set_y(1)
+	view.join()
+	view.set_y(1)
+	view.o()
+	view.set_line('d')
+	write_lines(p, view.lines, view.line_format)!
+	assert os.read_file(p)! == 'aX\r\nbc\nd\r\n'
+}
+
+fn test_cursor_stays_in_a_buffer_that_shrinks_on_save() {
+	p := os.join_path(root, 'empty.txt')
+	os.write_file(p, '')!
+	mut ved := new_test_ved()
+	mut view := ved.view
+	view.open_file(p, 0)
+	view.enter()
+	assert view.lines == ['', '']
+	assert view.y == 1
+	write_lines(p, view.lines, view.line_format)!
+	view.reopen()
+	assert view.lines == ['']
+	assert view.y == 0
+	view.dd()
+}
+
+fn new_test_ved() &Ved {
+	mut ved := &Ved{
+		gg:         &gg.Context{}
+		open_paths: [][]string{len: max_nr_workspaces}
+	}
+	ved.view = &View{
+		ved: ved
+	}
+	return ved
 }
 
 fn test_load_lines() {
