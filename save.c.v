@@ -64,31 +64,77 @@ mut:
 	inherit_handle i32
 }
 
-fn load_lines(path string) ![]string {
-	return os.read_lines(path) or {
+// LineFormat is how a file ends its lines.
+@[params]
+struct LineFormat {
+mut:
+	crlf          bool // new lines end with \r\n instead of \n
+	final_newline bool = true // the last line ends with a line break too
+	line_crlf     []bool // line i ends with \r\n; lines past its end use crlf
+}
+
+// load_lines reads the lines of the file at path and how they end. Each line keeps its
+// own ending. A file with mixed line endings is saved back the same way.
+fn load_lines(path string) !([]string, LineFormat) {
+	text := os.read_file(path) or {
 		os.stat(path) or {
 			if err.code() == C.ENOENT {
-				return []string{}
+				return []string{}, LineFormat{}
 			}
 			return err
 		}
 		return err
 	}
+	if text == '' {
+		return []string{}, LineFormat{
+			final_newline: false
+		}
+	}
+	final_newline := text.ends_with('\n')
+	mut lines := (if final_newline { text[..text.len - 1] } else { text }).split('\n')
+	mut line_crlf := []bool{len: lines.len}
+	for i, line in lines {
+		if line.ends_with('\r') && (i < lines.len - 1 || final_newline) {
+			lines[i] = line[..line.len - 1]
+			line_crlf[i] = true
+		}
+	}
+	crlf := text.count('\r\n') * 2 > text.count('\n')
+	if !final_newline {
+		line_crlf[lines.len - 1] = crlf
+	}
+	return lines, LineFormat{
+		crlf:          crlf
+		final_newline: final_newline
+		line_crlf:     line_crlf
+	}
+}
+
+// encode_lines joins lines into file contents with the line endings of format.
+fn encode_lines(lines []string, format LineFormat) string {
+	mut sb := strings.new_builder(lines.len * 32)
+	for i, line in lines {
+		sb.write_string(line)
+		if i == lines.len - 1 && !format.final_newline {
+			break
+		}
+		crlf := if i < format.line_crlf.len { format.line_crlf[i] } else { format.crlf }
+		sb.write_string(if crlf { '\r\n' } else { '\n' })
+	}
+	return sb.str()
 }
 
 // write_lines writes lines directly into the file at path.
-fn write_lines(path string, lines []string) ! {
+fn write_lines(path string, lines []string, format LineFormat) ! {
 	mut file := os.create(path)!
 	defer {
 		file.close()
 	}
-	for line in lines {
-		file.writeln(line)!
-	}
+	file.write_string(encode_lines(lines, format))!
 }
 
 // write_lines_atomic writes lines to a temporary file and replaces the file at path with it.
-fn write_lines_atomic(path string, lines []string) ! {
+fn write_lines_atomic(path string, lines []string, format LineFormat) ! {
 	target := resolve_links(path) or { return error('cannot resolve ${path}: ${err.msg()}') }
 	mut orig := ?os.Stat(none)
 	if st := os.stat(target) {
@@ -115,12 +161,7 @@ fn write_lines_atomic(path string, lines []string) ! {
 	}
 	perm := if orig == none { 0o666 } else { 0o600 }
 	tmp, fd := create_temp_file(target, perm, sd)!
-	mut sb := strings.new_builder(4096)
-	for line in lines {
-		sb.write_string(line)
-		sb.write_u8(`\n`)
-	}
-	finish_temp_file(fd, tmp, target, sb, orig) or {
+	finish_temp_file(fd, tmp, target, encode_lines(lines, format).bytes(), orig) or {
 		os.rm(tmp) or {}
 		return err
 	}
