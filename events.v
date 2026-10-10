@@ -6,6 +6,10 @@ import gg
 fn (mut ved Ved) on_event(e &gg.Event) {
 	// println('on_event ${ved.win_width}')
 	ved.refresh = true
+	if e.typ == .resized {
+		ved.win_width = e.window_width
+		ved.win_height = e.window_height
+	}
 	/*
 	// TODO change win height/width only on cmd + enter (exit full screen etc)
 	mut size := gg.screen_size()
