@@ -40,6 +40,9 @@ mut:
 	nr_splits          int
 	page_height        int
 	views              []View
+	saved_views        [][]string // Preserve saved splits hidden by a smaller window.
+	loading_session    bool
+	invalid_session    bool
 	cur_split          int
 	view               &View = unsafe { nil }
 	mode               EditorMode
@@ -235,8 +238,9 @@ fn main() {
 		cur_dir = cur_dir.replace('/ved.app/Contents/Resources', '')
 	}
 	mut first_launch := false
-	if args.len == 1 {
-		// No args, open previous saved workspaces.
+	file_args := args[1..].filter(!it.starts_with('-'))
+	if file_args.len == 0 {
+		// With no paths (including flags-only launches), restore the saved workspaces.
 		if workspaces := os.read_lines(workspaces_path) {
 			for workspace in workspaces {
 				ved.add_workspace(workspace)
@@ -250,11 +254,8 @@ fn main() {
 	// Directories are opened as workspaces, everything else as files.
 	// A file that doesn't exist yet opens as a new, empty buffer.
 	mut files := []string{}
-	if args.len > 1 {
-		for arg in args[1..] {
-			if arg.starts_with('-') {
-				continue
-			}
+	if file_args.len > 0 {
+		for arg in file_args {
 			path := if os.is_abs_path(arg) { arg } else { os.join_path(cur_dir, arg) }
 			if os.is_dir(path) {
 				ved.add_workspace(path)
@@ -643,21 +644,13 @@ fn (mut ved Ved) move_to_line(n int) {
 
 // save_session saves the list of open files, their cursor positions, and the list of workspaces to disk.
 fn (ved &Ved) save_session() {
+	if ved.loading_session || ved.invalid_session {
+		return
+	}
 	println('saving session...')
 	mut f := os.create(session_path) or { panic('fail') }
-	for _, view in ved.views {
-		// println('saving view #${i} ${view.path}')
-		// if view.path == '' {
-		// continue
-		// }
-		if view.path == 'out' {
-			continue
-		}
-		if view.path.contains('\n') {
-			f.writeln(':0') or { panic(err) }
-			continue
-		}
-		f.writeln('${view.path}:${view.y}') or { panic(err) }
+	for line in ved.session_lines() {
+		f.writeln(line) or { panic(err) }
 	}
 	f.close()
 	mut f_workspace := os.create(workspaces_path) or { panic(err) }
@@ -666,6 +659,42 @@ fn (ved &Ved) save_session() {
 	}
 	f_workspace.close()
 	ved.save_file_stats()
+}
+
+// Font changes can alter the visible split count without reallocating the views.
+// Session grouping follows the allocated panes, rather than their display count.
+fn (ved &Ved) allocated_splits() int {
+	if ved.workspaces.len > 0 && ved.views.len % ved.workspaces.len == 0 {
+		return ved.views.len / ved.workspaces.len
+	}
+	return ved.nr_splits
+}
+
+fn (ved &Ved) session_lines() []string {
+	allocated := ved.allocated_splits()
+	mut stride := allocated
+	for saved in ved.saved_views {
+		stride = int_max(stride, saved.len)
+	}
+	mut lines := []string{}
+	for workspace_idx, _ in ved.workspaces {
+		for split in 0 .. stride {
+			mut line := ':0'
+			view_idx := workspace_idx * allocated + split
+			if split < allocated && view_idx < ved.views.len {
+				view := ved.views[view_idx]
+				// Keep placeholders so skipping a transient buffer cannot shift workspaces.
+				if view.path != 'out' && !view.path.contains('\n') {
+					line = '${view.path}:${view.y}'
+				}
+			} else if workspace_idx < ved.saved_views.len
+				&& split < ved.saved_views[workspace_idx].len {
+				line = ved.saved_views[workspace_idx][split]
+			}
+			lines << line
+		}
+	}
+	return lines
 }
 
 // save_file_stats saves file open counts to disk.
@@ -747,30 +776,68 @@ fn (mut ved Ved) load_timer() {
 fn (mut ved Ved) load_session() {
 	println('load session "${session_path}"')
 	paths := os.read_lines(session_path) or { return }
-	println(paths)
-	ved.load_views(paths)
+	saved_workspaces := os.read_lines(workspaces_path) or {
+		ved.invalid_session = true
+		ved.error_line = 'cannot restore session workspaces: ${err}; saved session preserved'
+		return
+	}
+	ved.load_views(paths, saved_workspaces)
 }
 
 // load_views opens files and sets their cursor positions based on the saved session data.
-fn (mut ved Ved) load_views(paths []string) {
-	for i := 0; i < paths.len && i < ved.views.len; i++ {
-		// println('loading path')
-		// println(paths[i])
-		// mut view := &ved.views[i]
-		mut path := paths[i]
-		mut line_nr := 0
-		if path == '' || path.contains('=') {
+fn (mut ved Ved) load_views(paths []string, saved_workspaces []string) {
+	if saved_workspaces.len == 0 || paths.len % saved_workspaces.len != 0 {
+		// Older sessions could omit `out` buffers. Their workspace boundaries are
+		// ambiguous; leave those files intact rather than guessing and overwriting them.
+		ved.invalid_session = true
+		ved.error_line = 'cannot restore session workspace boundaries; saved session preserved'
+		return
+	}
+	saved_splits := paths.len / saved_workspaces.len
+	allocated := ved.allocated_splits()
+	workspace_idx := ved.workspace_idx
+	workspace := ved.workspace
+	cur_split := ved.cur_split
+	ved.loading_session = true
+	defer {
+		ved.loading_session = false
+		ved.workspace_idx = workspace_idx
+		ved.workspace = workspace
+		ved.cur_split = cur_split
+		ved.update_view()
+	}
+	ved.saved_views = [][]string{len: ved.workspaces.len}
+	mut used_workspaces := []bool{len: saved_workspaces.len}
+	for current_idx, current_workspace in ved.workspaces {
+		// Match the original workspace list, also preserving duplicate roots by occurrence.
+		mut saved_idx := -1
+		for i, saved_workspace in saved_workspaces {
+			if !used_workspaces[i] && saved_workspace == current_workspace {
+				saved_idx = i
+				used_workspaces[i] = true
+				break
+			}
+		}
+		if saved_idx < 0 {
 			continue
 		}
-		if path.contains(':') {
-			// myfile.v:23
-			// can contain line numbers from the previous session, parse them and go to them.
-			// Split on the last ':'
-			line_nr = path.all_after_last(':').int()
-			path = path.all_before_last(':')
+		start := saved_idx * saved_splits
+		ved.saved_views[current_idx] = paths[start..start + saved_splits].clone()
+		// open_file uses this context for relative paths and per-workspace open tabs.
+		ved.workspace_idx = current_idx
+		ved.workspace = current_workspace
+		for split in 0 .. int_min(saved_splits, allocated) {
+			mut path := paths[start + split]
+			mut line_nr := 0
+			if path.contains(':') {
+				// The last separator leaves Windows drive letters and other colons intact.
+				line_nr = path.all_after_last(':').int()
+				path = path.all_before_last(':')
+			}
+			ved.cur_split = current_idx * allocated + split
+			ved.update_view()
+			ved.views[ved.cur_split].open_file(path, line_nr)
 		}
-		// view.open_file(path)
-		ved.views[i].open_file(path, line_nr)
 	}
 }
 

@@ -28,6 +28,7 @@ enum QueryType {
 }
 
 fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
+	visible_results := int_max(1, ved.query_layout().result_limit)
 	match key {
 		.backspace {
 			ved.gg_pos = -1
@@ -118,8 +119,8 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 							ved.gg_pos = ved.gg_lines.len - 1
 						}
 						// Scroll down if selection goes below visible area
-						if ved.gg_pos >= ved.gg_scroll + max_grep_lines {
-							ved.gg_scroll = ved.gg_pos - max_grep_lines + 1
+						if ved.gg_pos >= ved.gg_scroll + visible_results {
+							ved.gg_scroll = ved.gg_pos - visible_results + 1
 						}
 					}
 					.ctrlp {
@@ -132,8 +133,8 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 							ved.gg_pos = 0
 						}
 						// Scroll down if selection goes below visible area
-						if ved.gg_pos >= ved.gg_scroll + nr_ctrlp_results {
-							ved.gg_scroll = ved.gg_pos - nr_ctrlp_results + 1
+						if ved.gg_pos >= ved.gg_scroll + visible_results {
+							ved.gg_scroll = ved.gg_pos - visible_results + 1
 						}
 					}
 					.search {
@@ -185,8 +186,8 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						if ved.gg_pos >= ved.gg_lines.len {
 							ved.gg_pos = 0
 							ved.gg_scroll = 0
-						} else if ved.gg_pos >= ved.gg_scroll + max_grep_lines {
-							ved.gg_scroll = ved.gg_pos - max_grep_lines + 1
+						} else if ved.gg_pos >= ved.gg_scroll + visible_results {
+							ved.gg_scroll = ved.gg_pos - visible_results + 1
 						}
 					}
 					.ctrlp {
@@ -194,8 +195,8 @@ fn (mut ved Ved) key_query(key gg.KeyCode, super bool) {
 						if ved.gg_pos >= ved.ctrlp_results.len {
 							ved.gg_pos = 0
 							ved.gg_scroll = 0
-						} else if ved.gg_pos >= ved.gg_scroll + nr_ctrlp_results {
-							ved.gg_scroll = ved.gg_pos - nr_ctrlp_results + 1
+						} else if ved.gg_pos >= ved.gg_scroll + visible_results {
+							ved.gg_scroll = ved.gg_pos - visible_results + 1
 						}
 					}
 					else {}
@@ -346,30 +347,58 @@ const query_width = 700
 const nr_ctrlp_results = 20 // Max results to show for Ctrl+P
 const line_padding = 5
 
-// Search, commit, open, ctrl p
-fn (mut ved Ved) draw_query() {
-	// println('DRAW Q type=$ved.query_type')
+struct QueryLayout {
+	x            int
+	y            int
+	width        int
+	height       int
+	result_limit int
+}
+
+// Drawing and keyboard scrolling must agree on how many rows fit in the window.
+fn (ved &Ved) query_layout() QueryLayout {
 	mut width := query_width
 	mut height := 360 // Default height
+	mut max_results := 0
 
-	// Determine fixed height based on query type
 	if ved.query_type in small_queries {
 		height = 70
 	} else if ved.query_type == .grep {
-		width *= 2 // Keep grep wide
-		// Use fixed height based on max_grep_lines
-		height = (max_grep_lines + 2) * (ved.cfg.line_height + line_padding) + 15
+		width *= 2
+		max_results = max_grep_lines
 	} else if ved.query_type in [.ctrlp, .ctrlj] {
-		// Use fixed height based on nr_ctrlp_results
-		height = (nr_ctrlp_results + 2) * (ved.cfg.line_height + line_padding) + 15
+		max_results = nr_ctrlp_results
 	}
-	// Ensure minimum height
-	if height < 70 {
-		height = 70
+	row_height := ved.cfg.line_height + line_padding
+	if max_results > 0 {
+		height = (max_results + 2) * row_height + 15
 	}
+	width = int_min(width, int_max(1, ved.win_width - 20))
+	height = int_min(height, int_max(1, ved.win_height - 20))
+	results_height := height - 2 * ved.cfg.line_height - line_padding - 10
+	result_limit := int_min(max_results, int_max(0, results_height / row_height))
+	return QueryLayout{
+		x:            int_max(0, (ved.win_width - width) / 2)
+		y:            int_max(0, (ved.win_height - height) / 2)
+		width:        width
+		height:       height
+		result_limit: result_limit
+	}
+}
 
-	x := (ved.win_width - width) / 2
-	y := (ved.win_height - height) / 2
+// Search, commit, open, ctrl p
+fn (mut ved Ved) draw_query() {
+	layout := ved.query_layout()
+	x, y := layout.x, layout.y
+	width, height := layout.width, layout.height
+	// A font/window size change can shrink the list around the selected result.
+	if ved.gg_pos >= 0 && layout.result_limit > 0 {
+		if ved.gg_pos < ved.gg_scroll {
+			ved.gg_scroll = ved.gg_pos
+		} else if ved.gg_pos >= ved.gg_scroll + layout.result_limit {
+			ved.gg_scroll = ved.gg_pos - layout.result_limit + 1
+		}
+	}
 	ved.gg.draw_rect_filled(x, y, width, height, gg.white)
 	// query window title
 	ved.gg.draw_rect_filled(x, y, width, ved.cfg.line_height, ved.cfg.title_color)
@@ -436,11 +465,11 @@ fn (mut ved Ved) draw_query() {
 		)
 	}
 	// Draw files/results list
-	ved.draw_query_results(ved.query_type, x, y, width) // Pass width
+	ved.draw_query_results(ved.query_type, x, y, width, layout.result_limit)
 }
 
 // Renamed and generalized function to draw results list
-fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
+fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int, result_limit int) {
 	mut j := 0 // Index for visible item count
 	line_y_start := y + ved.cfg.line_height * 2 + line_padding // Start drawing below separator
 
@@ -449,7 +478,7 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 			// Iterate over the pre-filtered results starting from scroll offset
 			for i := ved.gg_scroll; i < ved.ctrlp_results.len; i++ {
 				// Stop drawing if we exceed the display limit
-				if j >= nr_ctrlp_results {
+				if j >= result_limit {
 					break
 				}
 				result := ved.ctrlp_results[i]
@@ -458,7 +487,6 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 					ved.gg.draw_rect_filled(x, yy, width, ved.cfg.line_height + line_padding,
 						ved.cfg.vcolor)
 				}
-				ved.gg.draw_text(x + 10, yy + line_padding / 2, result.display_name, ved.cfg.txt_cfg)
 				// Draw file LOC count on the right
 				full_path := os.join_path(result.workspace_path, result.file_path)
 				if full_path !in ved.gg_file_locs {
@@ -466,6 +494,9 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 					ved.gg_file_locs[full_path] = content.count('\n') + 1
 				}
 				loc := ved.gg_file_locs[full_path]
+				columns := query_result_columns(width, ved.cfg.char_width, loc)
+				ved.gg.draw_text(x + 10, yy + line_padding / 2, result.display_name.limit(columns),
+					ved.cfg.txt_cfg)
 				if loc > 0 {
 					loc_str := '${loc}'
 					loc_x := x + width - 10 - loc_str.len * ved.cfg.char_width
@@ -482,7 +513,7 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 		.grep {
 			// Start from scroll offset
 			for i := ved.gg_scroll; i < ved.gg_lines.len; i++ {
-				if j >= max_grep_lines { // Use grep limit
+				if j >= result_limit {
 					break
 				}
 				s := ved.gg_lines[i]
@@ -495,24 +526,12 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 					j++
 					continue
 				}
-				path := s[..pos].limit(55)
 				pos2 := s.index_after(':', pos + 1) or { -1 }
 				if pos2 == -1 || pos2 >= s.len - 1 {
 					j++
 					continue
 				}
-				text := s[pos2 + 1..].trim_space().limit(100)
 				line_nr := s[pos + 1..pos2]
-				// Draw path and line number
-				ved.gg.draw_text2(
-					x:     x + 10
-					y:     yy + line_padding / 2
-					text:  path.limit(50) + ':${line_nr}'
-					color: gg.purple
-				)
-				// Draw matching text part (adjust x position)
-				text_x := x + 10 + (path.limit(50).len + 1 + line_nr.len + 2) * ved.cfg.char_width // Approximate position
-				ved.gg.draw_text(text_x, yy + line_padding / 2, text, ved.cfg.txt_cfg)
 				// Draw file LOC count on the right
 				file_key := s[..pos]
 				if file_key !in ved.gg_file_locs {
@@ -521,6 +540,16 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 					ved.gg_file_locs[file_key] = content.count('\n') + 1
 				}
 				loc := ved.gg_file_locs[file_key]
+				columns := query_result_columns(width, ved.cfg.char_width, loc)
+				prefix, text := fit_grep_result(file_key, line_nr, s[pos2 + 1..], columns)
+				ved.gg.draw_text2(
+					x:     x + 10
+					y:     yy + line_padding / 2
+					text:  prefix
+					color: gg.purple
+				)
+				text_x := x + 10 + (prefix.len + 2) * ved.cfg.char_width
+				ved.gg.draw_text(text_x, yy + line_padding / 2, text, ved.cfg.txt_cfg)
 				if loc > 0 {
 					loc_str := '${loc}'
 					loc_x := x + width - 10 - loc_str.len * ved.cfg.char_width
@@ -542,6 +571,19 @@ fn (mut ved Ved) draw_query_results(kind QueryType, x int, y int, width int) {
 			// No list for other query types
 		}
 	}
+}
+
+fn query_result_columns(width int, char_width int, loc int) int {
+	loc_columns := if loc > 0 { loc.str().len + 2 } else { 0 }
+	return int_max(0, (width - 20) / char_width - loc_columns)
+}
+
+fn fit_grep_result(path string, line_nr string, text string, columns int) (string, string) {
+	// Leave room for both the location and match text in narrow windows.
+	path_columns := int_min(50, int_max(0, columns / 2 - line_nr.len - 1))
+	prefix := (path.limit(path_columns) + ':${line_nr}').limit(columns)
+	text_columns := int_min(100, int_max(0, columns - prefix.len - 2))
+	return prefix, text.trim_space().limit(text_columns)
 }
 
 // Open file on enter for Ctrl+P
