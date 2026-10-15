@@ -18,21 +18,21 @@ jobs:
           repository: vlang/v
       - name: Checkout ved
         id: checkout_ved
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
         uses: actions/checkout@v7
         with:
           path: ved
       - name: Build V
         id: build_v
-        if: ${{ !cancelled() && steps.checkout_ved.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
         run: make && ./v symlink -githubci
       - name: v vet
         id: v_vet
-        if: ${{ !cancelled() && steps.build_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
         run: v vet ved/
       - name: v fmt -verify
         id: v_fmt_verify
-        if: ${{ !cancelled() && steps.v_vet.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.v_vet.outcome == 'success' }}
         run: v fmt -verify ved/
 
   check-ubuntu:
@@ -46,24 +46,24 @@ jobs:
           repository: vlang/v
       - name: Build V
         id: build_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
         run: make && ./v symlink -githubci
       - name: Checkout ved
         id: checkout_ved
-        if: ${{ !cancelled() && steps.build_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
         uses: actions/checkout@v7
         with:
           path: ved
       - name: Install dependencies
         id: install_dependencies
-        if: ${{ !cancelled() && steps.checkout_ved.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
         run: |
           v retry -- sudo apt-get update
           v retry -- sudo apt-get install --quiet -y \
                           libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
       - name: Build ved
         id: build_ved
-        if: ${{ !cancelled() && steps.install_dependencies.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.install_dependencies.outcome == 'success' }}
         run: |
           cd ved
           v -prod .
@@ -80,17 +80,17 @@ jobs:
           repository: vlang/v
       - name: Checkout ved
         id: checkout_ved
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
         uses: actions/checkout@v7
         with:
           path: ved
       - name: Build V
         id: build_v
-        if: ${{ !cancelled() && steps.checkout_ved.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
         run: make && ./v symlink -githubci
       - name: Build ved
         id: build_ved
-        if: ${{ !cancelled() && steps.build_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
         run: |
           cd ved
           v .
@@ -107,19 +107,19 @@ jobs:
           repository: vlang/v
       - name: Checkout ved
         id: checkout_ved
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
         uses: actions/checkout@v7
         with:
           path: ved
       - name: Build V
         id: build_v
-        if: ${{ !cancelled() && steps.checkout_ved.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
         run: |
           .\makev.bat -msvc
           .\v.exe symlink -githubci
       - name: Build ved
         id: build_ved
-        if: ${{ !cancelled() && steps.build_v.outcome == 'success' }}
+        if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
         run: |
           cd ved
           v -prod .
