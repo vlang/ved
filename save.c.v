@@ -16,7 +16,7 @@ fn C.GetFileSecurityW(name &u16, info u32, sd voidptr, len u32, needed &u32) boo
 fn C.MoveFileExW(existing &u16, new &u16, flags u32) bool
 fn C.ReplaceFileW(replaced &u16, replacement &u16, backup &u16, flags u32, exclude voidptr, reserved voidptr) bool
 fn C.FlushFileBuffers(h voidptr) bool
-fn C.GetFileInformationByHandle(h voidptr, info &C.BY_HANDLE_FILE_INFORMATION) bool
+fn C.GetFileInformationByHandle(h voidptr, info &C.BY_HANDLE_FILE_INFORMATION) i32
 
 $if macos {
 	#include <copyfile.h>
@@ -156,7 +156,7 @@ fn link_count(path string, st os.Stat) u64 {
 		mut info := C.BY_HANDLE_FILE_INFORMATION{}
 		ok := C.GetFileInformationByHandle(h, &info)
 		C.CloseHandle(h)
-		return if ok { u64(info.nNumberOfLinks) } else { 1 }
+		return if ok != 0 { u64(info.nNumberOfLinks) } else { 1 }
 	} $else {
 		return st.nlink
 	}
@@ -453,7 +453,7 @@ fn copy_file_flags(target string, fd int) ! {
 		}
 	} $else $if macos {
 		mut s := C.stat{}
-		if C.stat(&char(target.str), &s) != 0 {
+		if unsafe { C.stat(&char(target.str), &s) } != 0 {
 			return error('cannot read the file flags: ${os.posix_get_error_msg(C.errno)}')
 		}
 		mut t := C.stat{}
