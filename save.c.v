@@ -4,25 +4,13 @@ import os
 import rand
 import strings
 
-#include <stddef.h>
-#include <stdint.h>
-
-@[typedef]
-type C.size_t = uint
-
-@[typedef]
-type C.intptr_t = int
-
-@[typedef]
-type C.ssize_t = int
-
 fn C.fsync(fd i32) i32
 fn C.fchown(fd i32, owner u32, group u32) i32
 fn C.fchmod(fd i32, mode u32) i32
 fn C._write(fd i32, buf voidptr, count u32) i32
 fn C._commit(fd i32) i32
 fn C._close(fd i32) i32
-fn C._open_osfhandle(handle C.intptr_t, flags i32) i32
+fn C._open_osfhandle(handle int, flags i32) i32
 fn C.CreateFileW(name &u16, access u32, share u32, sa voidptr, disposition u32, flags u32, template voidptr) voidptr
 fn C.GetFileSecurityW(name &u16, info u32, sd voidptr, len u32, needed &u32) bool
 fn C.MoveFileExW(existing &u16, new &u16, flags u32) bool
@@ -44,12 +32,12 @@ fn C.ioctl(fd i32, request u64, args ...voidptr) i32
 fn C.fstat(fd i32, buf voidptr) i32
 fn C.fchflags(fd i32, flags u32) i32
 
-fn C.copyfile(from &char, to &char, state voidptr, flags u32) i32
-fn C.listxattr(path &char, list &char, size C.size_t) C.ssize_t
-fn C.getxattr(path &char, name &char, value voidptr, size C.size_t) C.ssize_t
-fn C.fgetxattr(fd i32, name &char, value voidptr, size C.size_t) C.ssize_t
-fn C.fsetxattr(fd i32, name &char, value voidptr, size C.size_t, flags i32) i32
-fn C.flistxattr(fd i32, list &char, size C.size_t) C.ssize_t
+fn C.fcopyfile(from i32, to i32, state voidptr, flags u32) i32
+fn C.listxattr(path &char, list &char, size uint) int
+fn C.getxattr(path &char, name &char, value voidptr, size uint) int
+fn C.fgetxattr(fd i32, name &char, value voidptr, size uint) int
+fn C.fsetxattr(fd i32, name &char, value voidptr, size uint, flags i32) i32
+fn C.flistxattr(fd i32, list &char, size uint) int
 fn C.fremovexattr(fd i32, name &char) i32
 fn C.acl_init(count i32) voidptr
 fn C.acl_set_fd(fd i32, acl voidptr) i32
@@ -162,7 +150,7 @@ fn link_count(path string, st os.Stat) u64 {
 		share := u32(C.FILE_SHARE_READ | C.FILE_SHARE_WRITE | C.FILE_SHARE_DELETE)
 		h := C.CreateFileW(path.replace('/', '\\').to_wide(), 0, share, unsafe { nil },
 			C.OPEN_EXISTING, C.FILE_ATTRIBUTE_NORMAL, unsafe { nil })
-		if C.intptr_t(h) == -1 {
+		if int(h) == -1 {
 			return 1
 		}
 		mut info := C.BY_HANDLE_FILE_INFORMATION{}
@@ -180,7 +168,7 @@ fn can_write(path string) bool {
 		share := u32(C.FILE_SHARE_READ | C.FILE_SHARE_WRITE | C.FILE_SHARE_DELETE)
 		h := C.CreateFileW(path.replace('/', '\\').to_wide(), C.FILE_WRITE_DATA, share,
 			unsafe { nil }, C.OPEN_EXISTING, C.FILE_ATTRIBUTE_NORMAL, unsafe { nil })
-		if C.intptr_t(h) == -1 {
+		if int(h) == -1 {
 			return C.GetLastError() == C.ERROR_SHARING_VIOLATION
 		}
 		C.CloseHandle(h)
@@ -223,7 +211,7 @@ fn open_exclusive(path string, perm int, sd []u8, attrs u32) !int {
 		}
 		h := C.CreateFileW(path.replace('/', '\\').to_wide(), C.GENERIC_WRITE, 0, &sa,
 			C.CREATE_NEW, if attrs != 0 { attrs } else { u32(C.FILE_ATTRIBUTE_NORMAL) }, unsafe { nil })
-		if C.intptr_t(h) == -1 {
+		if int(h) == -1 {
 			code := C.GetLastError()
 			if code == C.ERROR_FILE_EXISTS {
 				return -1
@@ -233,7 +221,7 @@ fn open_exclusive(path string, perm int, sd []u8, attrs u32) !int {
 			}
 			return error(os.get_error_msg(int(code)))
 		}
-		fd := C._open_osfhandle(C.intptr_t(h), C._O_WRONLY | C._O_BINARY)
+		fd := C._open_osfhandle(int(h), C._O_WRONLY | C._O_BINARY)
 		if fd == -1 {
 			C.CloseHandle(h)
 			os.rm(path) or {}
@@ -358,7 +346,7 @@ fn copy_xattrs(target string, tmp string, fd int) ! {
 					continue
 				}
 			}
-			if C.fsetxattr(fd, &char(name.str), value.data, C.size_t(value.len), 0) != 0 {
+			if C.fsetxattr(fd, &char(name.str), value.data, uint(value.len), 0) != 0 {
 				return error('cannot keep the extended attribute ${name}: ${os.posix_get_error_msg(C.errno)}')
 			}
 		}
@@ -369,7 +357,13 @@ fn copy_xattrs(target string, tmp string, fd int) ! {
 		if cleared != 0 {
 			return error('cannot clear the ACL of the new file: ${os.posix_get_error_msg(C.errno)}')
 		}
-		if C.copyfile(&char(target.str), &char(tmp.str), unsafe { nil }, C.COPYFILE_ACL | C.COPYFILE_XATTR) != 0 {
+		// Keep both files open while copying metadata: concurrent saves can replace target.
+		source_fd := C.open(&char(target.str), C.O_RDONLY, 0)
+		if source_fd < 0 {
+			return error('cannot open the original file metadata: ${os.posix_get_error_msg(C.errno)}')
+		}
+		defer { C.close(source_fd) }
+		if C.fcopyfile(source_fd, fd, unsafe { nil }, C.COPYFILE_ACL | C.COPYFILE_XATTR) != 0 {
 			return error('cannot keep the ACL and extended attributes of the file: ${os.posix_get_error_msg(C.errno)}')
 		}
 	}
@@ -394,9 +388,9 @@ fn xattr_names(path string, fd int) ![]string {
 		}
 		mut list := []u8{len: int(size)}
 		n := if fd == -1 {
-			C.listxattr(&char(path.str), &char(list.data), C.size_t(list.len))
+			C.listxattr(&char(path.str), &char(list.data), uint(list.len))
 		} else {
-			C.flistxattr(fd, &char(list.data), C.size_t(list.len))
+			C.flistxattr(fd, &char(list.data), uint(list.len))
 		}
 		if n < 0 {
 			return error(os.posix_get_error_msg(C.errno))
@@ -490,9 +484,9 @@ fn read_xattr(path string, fd int, name string) ![]u8 {
 			return value
 		}
 		got := if fd == -1 {
-			C.getxattr(&char(path.str), &char(name.str), value.data, C.size_t(value.len))
+			C.getxattr(&char(path.str), &char(name.str), value.data, uint(value.len))
 		} else {
-			C.fgetxattr(fd, &char(name.str), value.data, C.size_t(value.len))
+			C.fgetxattr(fd, &char(name.str), value.data, uint(value.len))
 		}
 		if got < 0 {
 			return error(os.posix_get_error_msg(C.errno))
@@ -573,7 +567,7 @@ fn flush_file(path string) ! {
 		share := u32(C.FILE_SHARE_READ | C.FILE_SHARE_WRITE | C.FILE_SHARE_DELETE)
 		h := C.CreateFileW(path.replace('/', '\\').to_wide(), C.GENERIC_WRITE, share, unsafe { nil },
 			C.OPEN_EXISTING, C.FILE_ATTRIBUTE_NORMAL, unsafe { nil })
-		if C.intptr_t(h) == -1 {
+		if int(h) == -1 {
 			return error(os.get_error_msg(int(C.GetLastError())))
 		}
 		flushed := C.FlushFileBuffers(h)

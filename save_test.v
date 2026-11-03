@@ -233,7 +233,7 @@ fn test_hard_linked_file_is_not_replaced() {
 	assert false, 'saving a hard-linked file should fail'
 }
 
-fn C.setxattr(path &char, name &char, value voidptr, size C.size_t, flags i32) i32
+fn C.setxattr(path &char, name &char, value voidptr, size usize, flags i32) i32
 
 fn test_file_capabilities_are_dropped_like_a_normal_write() {
 	$if linux {
@@ -269,7 +269,7 @@ fn test_acl_and_xattrs_are_kept() {
 			return
 		}
 		value := 'kept'
-		if C.setxattr(&char(p.str), c'user.ved_test', value.str, C.size_t(value.len), 0) != 0 {
+		if C.setxattr(&char(p.str), c'user.ved_test', value.str, usize(value.len), 0) != 0 {
 			eprintln('skipping: the filesystem has no user extended attributes')
 			return
 		}
