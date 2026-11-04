@@ -5,7 +5,7 @@ module main
 
 import os
 import gg
-// import toml
+import toml
 import x.json2
 
 // The different kinds of cursors
@@ -16,10 +16,8 @@ enum CursorStyle {
 }
 
 // Config structure
-// TODO: Load user config from file
 struct Config {
 mut:
-	// settings        toml.Doc
 	dark_mode       bool
 	cursor_style    CursorStyle
 	text_size       int = min_text_size
@@ -28,7 +26,7 @@ mut:
 	tab_size        int = 4
 	tab             int = int(`\t`) // TODO read from config file?
 	backspace_go_up bool
-	vcolor          gg.Color // v selection background color
+	vcolor          gg.Color // v selection background color, base02
 	split_color     gg.Color
 	bgcolor         gg.Color // base00
 	errorbgcolor    gg.Color // base08
@@ -38,7 +36,7 @@ mut:
 	string_cfg      gg.TextCfg
 	key_color       gg.Color // base0E
 	key_cfg         gg.TextCfg
-	lit_color       gg.Color // base0E
+	lit_color       gg.Color // base0F
 	lit_cfg         gg.TextCfg
 	text_color      gg.Color // base05
 	txt_cfg         gg.TextCfg
@@ -61,30 +59,14 @@ mut:
 	// Config.json
 	disable_fmt bool
 	atomic_save bool // save through a temporary file that replaces the original
+	// [colors] from conf.toml by base16 name, e.g. '0B'
+	colors map[string]gg.Color @[json: '-']
 }
 
-/*
-// json
-struct Config2 {
-	disable_fmt bool
-	text_size   int
-	line_height int
-	char_width  int
-}
-*/
-
-/*
-fn (mut config Config) set_settings(path string) {
-	config.settings = toml.parse_file(path) or { toml.parse_text('') or { panic(err) } }
-}
-*/
-
-// reload_config reloads the config from config.toml file
-// set_default_color_values?
+// set_default_values computes the colors and text styles from the settings.
 fn (mut config Config) set_default_values() {
 	config.init_colors()
 
-	config.set_cursor_style()
 	// config.set_text_size()
 	// config.set_line_height()
 	// config.set_char_width()
@@ -114,45 +96,18 @@ fn (mut config Config) init_colors() {
 	config.dark_mode ||= '-dark' in os.args
 }
 
-fn (mut config Config) set_cursor_style() {
-	/*
-	toml_cursor_style := config.settings.value('editor.cursor').string()
-	if toml_cursor_style != 'toml.Any(toml.Null{})' {
-		match toml_cursor_style {
-			'block' { config.cursor_style = .block }
-			'beam' { config.cursor_style = .beam }
-			'variable' { config.cursor_style = .variable }
-			else { config.cursor_style = .block }
-		}
-		return
-	}
-	*/
-	config.cursor_style = .block
+// color returns the [colors] override for base, e.g. '0B', or the default.
+fn (config Config) color(base string, default gg.Color) gg.Color {
+	return config.colors[base] or { default }
 }
 
-// Convert a toml key color (in hex) to a gx.Color type
-/*
-fn (config Config) get_toml_color(base string) !gx.Color {
-
-	toml_hex := config.settings.value('colors.base${base}').string()
-	if toml_hex != 'toml.Any(toml.Null{})' {
-		toml_red := ('0x' + toml_hex[0..2]).u8()
-		toml_green := ('0x' + toml_hex[2..4]).u8()
-		toml_blue := ('0x' + toml_hex[4..6]).u8()
-
-		return gx.rgb(toml_red, toml_green, toml_blue)
-	}
-
-	return error('Couldn\'t read base${base} from the settings file')
-}
-*/
-
+// base 02
 fn (mut config Config) set_vcolor() {
-	if !config.dark_mode {
-		config.vcolor = gg.rgb(226, 233, 241)
+	config.vcolor = config.color('02', if !config.dark_mode {
+		gg.rgb(226, 233, 241)
 	} else {
-		config.vcolor = gg.rgb(60, 60, 60)
-	}
+		gg.rgb(60, 60, 60)
+	})
 }
 
 fn (mut config Config) set_split() {
@@ -165,25 +120,21 @@ fn (mut config Config) set_split() {
 
 // base 00
 fn (mut config Config) set_bgcolor() {
-	// config.bgcolor = config.get_toml_color('00') or {
-	config.bgcolor = if config.dark_mode {
+	config.bgcolor = config.color('00', if config.dark_mode {
 		gg.rgb(30, 30, 30)
 	} else {
 		gg.rgb(245, 245, 245)
-	}
-	//}
+	})
 }
 
-// base 01
+// base 08
 fn (mut config Config) set_errorbgcolor() {
-	// config.errorbgcolor = config.get_toml_color('01') or { gx.rgb(240, 0, 0) }
-	config.errorbgcolor = gg.rgb(240, 0, 0)
+	config.errorbgcolor = config.color('08', gg.rgb(240, 0, 0))
 }
 
 // base 0B
 fn (mut config Config) set_string() {
-	// config.string_color = config.get_toml_color('0B') or { gx.rgb(179, 58, 44) }
-	config.string_color = gg.rgb(179, 58, 44)
+	config.string_color = config.color('0B', gg.rgb(179, 58, 44))
 	config.string_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.string_color
@@ -192,8 +143,7 @@ fn (mut config Config) set_string() {
 
 // base 0E
 fn (mut config Config) set_key() {
-	// config.key_color = config.get_toml_color('0E') or { gx.rgb(74, 103, 154) }
-	config.key_color = gg.rgb(74, 103, 154)
+	config.key_color = config.color('0E', gg.rgb(74, 103, 154))
 
 	config.key_cfg = gg.TextCfg{
 		size:  config.text_size
@@ -203,8 +153,7 @@ fn (mut config Config) set_key() {
 
 // base 0F
 fn (mut config Config) set_lit() {
-	// config.lit_color = config.get_toml_color('0F') or { gx.rgb(7, 103, 154) }
-	config.lit_color = gg.rgb(7, 103, 154)
+	config.lit_color = config.color('0F', gg.rgb(7, 103, 154))
 
 	config.lit_cfg = gg.TextCfg{
 		size:  config.text_size
@@ -214,29 +163,25 @@ fn (mut config Config) set_lit() {
 
 // base 04
 fn (mut config Config) set_title() {
-	// config.title_color = config.get_toml_color('04') or { gx.rgb(40, 40, 40) }
-	config.title_color = gg.rgb(0, 0, 0)
+	config.title_color = config.color('04', gg.rgb(0, 0, 0))
 }
 
 // base 05
 fn (mut config Config) set_cursor() {
-	// config.cursor_color = config.get_toml_color('05') or {
-	config.cursor_color = if !config.dark_mode {
+	config.cursor_color = config.color('05', if !config.dark_mode {
 		gg.black
 	} else {
 		gg.white
-	}
-	//}
+	})
 }
 
 // base 05 (again)
 fn (mut config Config) set_txt() {
-	// config.text_color = config.get_toml_color('05') or {
-	config.text_color = if !config.dark_mode {
+	config.text_color = config.color('05', if !config.dark_mode {
 		gg.black
 	} else {
 		gg.rgb(212, 212, 212)
-	}
+	})
 
 	config.txt_cfg = gg.TextCfg{
 		size:  config.text_size
@@ -246,8 +191,7 @@ fn (mut config Config) set_txt() {
 
 // base 03
 fn (mut config Config) set_comment() {
-	// config.comment_color = config.get_toml_color('03') or { gx.dark_gray }
-	config.comment_color = gg.dark_gray
+	config.comment_color = config.color('03', gg.dark_gray)
 
 	config.comment_cfg = gg.TextCfg{
 		size:  config.text_size
@@ -281,8 +225,7 @@ fn (mut config Config) set_minus() {
 
 // base 01
 fn (mut config Config) set_line_nr() {
-	// config.line_nr_color = config.get_toml_color('01') or { gx.dark_gray }
-	config.line_nr_color = gg.dark_gray
+	config.line_nr_color = config.color('01', gg.dark_gray)
 
 	config.line_nr_cfg = gg.TextCfg{
 		size:  config.text_size
@@ -293,8 +236,7 @@ fn (mut config Config) set_line_nr() {
 
 // base 0B
 fn (mut config Config) set_green() {
-	// config.green_color = config.get_toml_color('0B') or { gg.green }
-	config.green_color = gg.green
+	config.green_color = config.color('0B', gg.green)
 
 	config.green_cfg = gg.TextCfg{
 		size:  config.text_size
@@ -303,31 +245,101 @@ fn (mut config Config) set_green() {
 }
 
 fn (mut config Config) set_red() {
-	// config.red_color = config.get_toml_color('08') or { gg.red }
-	config.red_color = gg.red
+	config.red_color = config.color('08', gg.red)
 	config.red_cfg = gg.TextCfg{
 		size:  config.text_size
 		color: config.red_color
 	}
 }
 
+// load_config2 loads config.json, then conf.toml on top of it. It runs again after
+// every save, so changes to either file apply without a restart.
 fn (mut ved Ved) load_config2() {
-	if os.exists(config_path2) {
-		if conf2 := json2.decode[Config](os.read_file(config_path2) or { return }) {
-			println('AXAXAXAXA ${conf2}')
+	ved.cfg = Config{}
+	mut zoom_saved := false
+	if text := os.read_file(config_path2) {
+		if conf2 := json2.decode[Config](text) {
 			ved.cfg = conf2
-			/*
-			ved.cfg.disable_fmt = conf2.disable_fmt
-			ved.cfg.text_size = conf2.text_size
-			ved.cfg.line_height = conf2.line_height
-			ved.cfg.char_width = conf2.char_width
-			*/
-			// ved.cfg.disable_fmt = conf2.disable_fmt
+			saved := json2.decode[json2.Any](text) or { json2.Any(map[string]json2.Any{}) }
+			zoom_saved = 'text_size' in saved.as_map()
 		} else {
 			println(err)
 		}
 	}
+	doc := toml.parse_file(config_path) or {
+		if os.exists(config_path) {
+			ved.error_line = 'conf.toml: ${err.msg()}'
+		}
+		toml.parse_text('') or { panic(err) }
+	}
+	ved.cfg.apply_toml_editor(doc, zoom_saved)
+	ved.cfg.colors = toml_colors(doc) or {
+		ved.error_line = 'conf.toml: ${err.msg()}'
+		map[string]gg.Color{}
+	}
 	ved.cfg.set_default_values()
+	// gg keeps its own copy of the background color and doesn't exist yet on the first load.
+	if !isnil(ved.gg) {
+		ved.gg.set_bg_color(ved.cfg.bgcolor)
+	}
+}
+
+// apply_toml_editor applies the settings of the [editor] table in conf.toml.
+fn (mut config Config) apply_toml_editor(doc toml.Doc, zoom_saved bool) {
+	if v := doc.value_opt('editor.dark_mode') {
+		config.dark_mode = v.bool()
+	}
+	if v := doc.value_opt('editor.cursor') {
+		config.cursor_style = match v.string() {
+			'beam' { .beam }
+			'variable' { .variable }
+			else { .block }
+		}
+	}
+	if !zoom_saved {
+		if n := toml_positive_int(doc, 'editor.text_size') {
+			config.text_size = n
+		}
+		if n := toml_positive_int(doc, 'editor.line_height') {
+			config.line_height = n
+		}
+		if n := toml_positive_int(doc, 'editor.char_width') {
+			config.char_width = n
+		}
+	}
+	if n := toml_positive_int(doc, 'editor.tab_size') {
+		config.tab_size = n
+	}
+	if v := doc.value_opt('editor.backspace_go_up') {
+		config.backspace_go_up = v.bool()
+	}
+	if v := doc.value_opt('editor.disable_fmt') {
+		config.disable_fmt = v.bool()
+	}
+	if v := doc.value_opt('editor.atomic_save') {
+		config.atomic_save = v.bool()
+	}
+}
+
+// toml_positive_int returns the integer at key, if it is set and greater than 0.
+fn toml_positive_int(doc toml.Doc, key string) ?int {
+	n := (doc.value_opt(key) or { return none }).int()
+	return if n > 0 { n } else { none }
+}
+
+// toml_colors reads the [colors] table of conf.toml: base16 names mapped to hex colors.
+fn toml_colors(doc toml.Doc) !map[string]gg.Color {
+	mut colors := map[string]gg.Color{}
+	table := doc.value_opt('colors') or { return colors }
+	for key, value in table.as_map() {
+		hex := value.string().trim_left('#')
+		if !key.starts_with('base') || hex.len != 6 || !hex.bytes().all(it.is_hex_digit()) {
+			return error('invalid color ${key} = "${value.string()}"')
+		}
+		colors[key[4..].to_upper()] = gg.rgb(u8(hex[0..2].parse_uint(16, 8) or { 0 }),
+			u8(hex[2..4].parse_uint(16, 8) or { 0 }), u8(hex[4..6].parse_uint(16, 8) or { 0 }))
+	}
+	return colors
 }
 
 fn (mut ved Ved) save_config2() {

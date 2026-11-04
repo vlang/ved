@@ -118,6 +118,8 @@ line_height = 20        # │ These *can* be edited, but you probably shouldn't 
 char_width = 8          # └───────────────────────────────────────────────────┘
 tab_size = 4            # Ved uses tab characters (\t). This settings changes how many spaces a tab should be displayed as
 backspace_go_up = true  # If set to true, hitting the backspace doesn't do anything when you reach the beginning of the line
+disable_fmt = false     # If set to true, files are not formatted (e.g. with `v fmt`) after saving
+atomic_save = false     # If set to true, files are saved through a temporary file that replaces the original
 
 # If you do not like ved's default colorscheme, or you just want
 # something new, edit the "colors" table. Ved uses a form of base16
@@ -143,6 +145,8 @@ base0D = "576ddb"
 base0E = "955ae7"
 base0F = "bf40bf"
 ```
+
+Changes to `conf.toml` apply the next time a file is saved. Changing the text size with`C =` and `C -` is remembered, and takes priority over `text_size`, `line_height` and `char_width` from `conf.toml`. Colors set in `[colors]` apply in both light and dark mode.
 
 ### Basic usage
 
@@ -208,4 +212,3 @@ x r             delete/replace character under cursor
 C-n             autocomplete
 +y              yank and copy to system clipboard
 ```
-
