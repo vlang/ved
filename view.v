@@ -21,6 +21,7 @@ mut:
 	short_path   string
 	prev_path    string // for tt
 	lines        []string
+	line_format  LineFormat // line endings of the file, kept when saving
 	page_height  int
 	vstart       int
 	vend         int // visual borders
@@ -86,7 +87,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if path == '' {
 		return
 	}
-	lines := load_lines(path) or {
+	lines, line_format := load_lines(path) or {
 		view.ved.error_line = 'cannot open ${path}: ${err.msg()}'
 		return
 	}
@@ -121,6 +122,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 		view.prev_path = view.path
 	}
 	view.lines = lines
+	view.line_format = line_format
 	// get words map
 	if view.lines.len < 1000 {
 		println('getting words')
@@ -142,7 +144,7 @@ fn (mut view View) open_file(path string, line_nr int) {
 	}
 	// Empty file, handle it
 	if view.lines.len == 0 {
-		view.lines << ''
+		view.insert_line(0, '')
 	}
 	switched := path != view.path
 	if switched {
@@ -163,11 +165,9 @@ fn (mut view View) open_file(path string, line_nr int) {
 	if y >= view.lines.len {
 		y = view.lines.len - 1
 	}
-	if y > 0 {
-		view.set_y(y)
-		if switched {
-			view.zz()
-		}
+	view.set_y(y)
+	if switched && y > 0 {
+		view.zz()
 	}
 	// Call zz() if it's out of bounds
 	if view.from > view.y || view.from + view.ved.page_height < view.y {
@@ -211,7 +211,7 @@ fn (mut view View) save_file() {
 	// On failure, keep the buffer untouched: the reopen below would replace
 	// the unsaved edits with whatever is on disk.
 	save := if view.ved.cfg.atomic_save { write_lines_atomic } else { write_lines }
-	save(path, view.lines) or {
+	save(path, view.lines, view.line_format) or {
 		view.ved.error_line = 'cannot save ${path}: ${err.msg()}'
 		return
 	}
@@ -289,12 +289,24 @@ fn (mut view View) set_line(newline string) {
 	if view.y < view.lines.len { // Check if index is within current bounds
 		view.lines[view.y] = newline
 	} else if view.y == view.lines.len { // Check if index is exactly one past the end
-		view.lines << newline
+		view.insert_line(view.lines.len, newline)
 	} else { // Index is too large
 		// Optionally, append anyway or just return to prevent further issues
-		view.lines << newline // Append as a fallback? Or just return? Append seems safer for paste.
+		view.insert_line(view.lines.len, newline) // Append as a fallback? Or just return? Append seems safer for paste.
 	}
 	view.changed = true
+}
+
+// insert_line inserts line at i. It ends with the line break used by most of the file.
+fn (mut view View) insert_line(i int, line string) {
+	view.lines.insert(i, line)
+	view.line_format.line_crlf.insert(i, view.line_format.crlf)
+}
+
+// delete_line deletes line i together with its line ending.
+fn (mut view View) delete_line(i int) {
+	view.lines.delete(i)
+	view.line_format.line_crlf.delete(i)
 }
 
 // set_y sets the vertical position (line number) of the cursor.
@@ -462,7 +474,7 @@ fn (mut view View) dd() {
 	ved.prev_cmd = 'dd'
 	ved.ylines = []
 	ved.ylines << view.line()
-	view.lines.delete(view.y)
+	view.delete_line(view.y)
 	if view.y == view.lines.len {
 		view.k()
 	}
@@ -564,7 +576,7 @@ fn (mut view View) backspace() {
 			view.x = 0
 			view.y--
 			view.x = view.lines[view.y].len
-			view.lines.delete(view.y + 1)
+			view.delete_line(view.y + 1)
 			view.changed = true
 		}
 		return
@@ -631,9 +643,9 @@ fn (mut view View) o_generic(delta int) {
 	}
 	view.x = new_line.len - 1
 	if view.y >= view.lines.len {
-		view.lines << new_line
+		view.insert_line(view.lines.len, new_line)
 	} else {
-		view.lines.insert(view.y, new_line)
+		view.insert_line(view.y, new_line)
 	}
 	view.changed = true
 }
@@ -713,7 +725,7 @@ fn (mut view View) d_visual() {
 	vtop := if view.vstart < view.vend { view.vstart } else { view.vend }
 	view.y_visual()
 	for i := 0; i < view.ved.ylines.len; i++ {
-		view.lines.delete(vtop)
+		view.delete_line(vtop)
 	}
 	// Move cursor to a valid position using k
 	if view.y >= view.lines.len {
