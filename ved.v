@@ -204,7 +204,7 @@ fn main() {
 		scale:         2
 		bg_color:      ved.cfg.bgcolor
 		frame_fn:      frame
-		on_event:      ved.on_event
+		event_fn:      ved_event
 		keydown_fn:    key_down
 		char_fn:       on_char
 		font_path:     fpath
