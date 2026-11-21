@@ -457,6 +457,9 @@ fn (mut view View) dd() {
 	if view.lines.len == 0 {
 		return
 	}
+	if view.y < 0 || view.y >= view.lines.len {
+		return
+	}
 	mut ved := view.ved
 	ved.prev_key = gg.KeyCode.invalid
 	ved.prev_cmd = 'dd'

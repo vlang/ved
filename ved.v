@@ -361,16 +361,26 @@ fn (mut ved Ved) ctrl_n() {
 // word_under_cursor finds and returns the complete word currently under the text cursor.
 fn (ved &Ved) word_under_cursor() string {
 	line := ved.view.line()
+	if line.len == 0 {
+		return ''
+	}
+	mut x := ved.view.x
+	if x < 0 || x > line.len {
+		return ''
+	}
+	if x == line.len {
+		x--
+	}
 	// First go left
-	mut start := ved.view.x
-	if start > 0 && line.len > 0 && !is_alpha_underscore(int(line[start - 1])) {
+	mut start := x
+	if start > 0 && !is_alpha_underscore(int(line[start - 1])) {
 		return ''
 	}
 	for start > 0 && is_alpha_underscore(int(line[start])) {
 		start--
 	}
 	// Now go right
-	mut end := ved.view.x
+	mut end := x
 	for end < line.len && is_alpha_underscore(int(line[end])) {
 		end++
 	}
@@ -387,7 +397,13 @@ fn (ved &Ved) word_under_cursor() string {
 // word_under_cursor_no_right finds and returns the word from the start of the word to the cursor position. Used for autocompletion triggers.
 fn (ved &Ved) word_under_cursor_no_right() string {
 	line := ved.view.line()
+	if line.len == 0 {
+		return ''
+	}
 	mut start := ved.view.x - 1
+	if start < 0 || start >= line.len {
+		return ''
+	}
 	// println('\n\n1line="${line}" linelen=${line.len} start=${start} s="${line[start..]}"')
 	// println("C='${line[start]}'")
 	for start > 0 && is_alpha_underscore(int(line[start])) {
