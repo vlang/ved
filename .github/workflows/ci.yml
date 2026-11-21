@@ -25,7 +25,7 @@ jobs:
       - name: Build V
         id: build_v
         if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
-        run: make && ./v symlink -githubci
+        run: make && ./v symlink
       - name: v vet
         id: v_vet
         if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
@@ -47,7 +47,7 @@ jobs:
       - name: Build V
         id: build_v
         if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
-        run: make && ./v symlink -githubci
+        run: make && ./v symlink
       - name: Checkout ved
         id: checkout_ved
         if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
@@ -87,7 +87,7 @@ jobs:
       - name: Build V
         id: build_v
         if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
-        run: make && ./v symlink -githubci
+        run: make && ./v symlink
       - name: Build ved
         id: build_ved
         if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
@@ -116,7 +116,7 @@ jobs:
         if: ${{ success() && !cancelled() && steps.checkout_ved.outcome == 'success' }}
         run: |
           .\makev.bat -msvc
-          .\v.exe symlink -githubci
+          .\v.exe symlink
       - name: Build ved
         id: build_ved
         if: ${{ success() && !cancelled() && steps.build_v.outcome == 'success' }}
