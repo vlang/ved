@@ -19,7 +19,7 @@ fn app_icon() sapp.IconDesc {
 		height: img.height
 		pixels: sapp.Range{
 			ptr:  img.data
-			size: usize(img.width * img.height * 4)
+			size: uint(img.width * img.height * 4)
 		}
 	}
 	return icon
