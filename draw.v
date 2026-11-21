@@ -31,6 +31,9 @@ fn (mut ved Ved) draw() {
 			v_to = ved.view.vstart + 1
 		}
 		for yy := v_from; yy <= v_to; yy++ {
+			if yy < ved.view.from || yy >= ved.view.from + ved.page_height {
+				continue
+			}
 			ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height,
 				line_width, ved.cfg.line_height, ved.cfg.vcolor)
 		}
@@ -195,6 +198,7 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		line := view.lines[j]
 		if line.len > 5000 {
 			println('line len too big! views[${i}].lines[${j}] (${line.len}) path=${ved.view.path}')
+			line_nr_rel++
 			continue
 		}
 		x := split_x + view.padding_left
