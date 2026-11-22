@@ -252,14 +252,17 @@ fn (mut config Config) set_red() {
 	}
 }
 
-// load_config2 loads config.json, then conf.toml on top of it. It runs again after
-// every save, so changes to either file apply without a restart.
-fn (mut ved Ved) load_config2() {
-	ved.cfg = Config{}
+// read_config reads config.json, then conf.toml on top of it, and returns the config
+// with the conf.toml error to show, if any. It runs again after every save.
+// It touches no shared state: after a save it  runs on the format_file thread
+// and frame() publishes the result.
+fn read_config() (Config, string) {
+	mut cfg := Config{}
+	mut problem := ''
 	mut zoom_saved := false
 	if text := os.read_file(config_path2) {
 		if conf2 := json2.decode[Config](text) {
-			ved.cfg = conf2
+			cfg = conf2
 			saved := json2.decode[json2.Any](text) or { json2.Any(map[string]json2.Any{}) }
 			zoom_saved = 'text_size' in saved.as_map()
 		} else {
@@ -268,20 +271,43 @@ fn (mut ved Ved) load_config2() {
 	}
 	doc := toml.parse_file(config_path) or {
 		if os.exists(config_path) {
-			ved.error_line = 'conf.toml: ${err.msg()}'
+			problem = 'conf.toml: ${err.msg()}'
 		}
 		toml.parse_text('') or { panic(err) }
 	}
-	ved.cfg.apply_toml_editor(doc, zoom_saved)
-	ved.cfg.colors = toml_colors(doc) or {
-		ved.error_line = 'conf.toml: ${err.msg()}'
+	cfg.apply_toml_editor(doc, zoom_saved)
+	cfg.colors = toml_colors(doc) or {
+		problem = 'conf.toml: ${err.msg()}'
 		map[string]gg.Color{}
 	}
-	ved.cfg.set_default_values()
-	// gg keeps its own copy of the background color and doesn't exist yet on the first load.
-	if !isnil(ved.gg) {
-		ved.gg.set_bg_color(ved.cfg.bgcolor)
+	cfg.set_default_values()
+	return cfg, problem
+}
+
+// queue_config hands a config read on another thread to frame(), which applies it.
+fn (mut ved Ved) queue_config(cfg Config, problem string) {
+	ved.cfg_mu.lock()
+	ved.pending_cfg = cfg
+	ved.pending_problem = problem
+	ved.cfg_mu.unlock()
+	ved.gg.refresh_ui()
+}
+
+// apply_pending_config publishes a queued config. It runs at the start of frame().
+// ved.cfg and gg only change on the render thread between frames.
+fn (mut ved Ved) apply_pending_config() {
+	ved.cfg_mu.lock()
+	defer {
+		ved.cfg_mu.unlock()
 	}
+	cfg := ved.pending_cfg or { return }
+	ved.pending_cfg = none
+	ved.cfg = cfg
+	if ved.pending_problem != '' {
+		ved.error_line = ved.pending_problem
+	}
+	// gg keeps its own copy of the background color.
+	ved.gg.set_bg_color(cfg.bgcolor)
 }
 
 // apply_toml_editor applies the settings of the [editor] table in conf.toml.
