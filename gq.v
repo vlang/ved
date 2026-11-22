@@ -63,7 +63,7 @@ fn (mut view View) gq() {
 
 	// Delete the original selected lines.
 	for i := 0; i < selected_lines.len; i++ {
-		view.lines.delete(vtop)
+		view.delete_line(vtop)
 	}
 
 	// Reflow each paragraph and build the final list of new lines.
@@ -90,9 +90,9 @@ fn (mut view View) gq() {
 	mut insert_pos := if vtop > view.lines.len { view.lines.len } else { vtop }
 	for line in new_lines {
 		if insert_pos > view.lines.len { // Should not happen, but a safeguard
-			view.lines << line
+			view.insert_line(view.lines.len, line)
 		} else {
-			view.lines.insert(insert_pos, line)
+			view.insert_line(insert_pos, line)
 		}
 		insert_pos++
 	}
