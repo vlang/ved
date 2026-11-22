@@ -12,7 +12,13 @@ import x.json2
 
 const exe_dir = os.dir(os.executable())
 const home_dir = os.home_dir()
-const settings_dir = os.join_path(home_dir, '.ved')
+// tests use their own settings directory in order to prevent file operations
+// from overwriting the user's session.
+const settings_dir = $if test {
+	os.join_path(os.vtmp_dir(), 'ved_settings')
+} $else {
+	os.join_path(home_dir, '.ved')
+}
 const codeblog_path = os.join_path(home_dir, 'code', 'blog')
 const syntax_dir = os.join_path(settings_dir, 'syntax')
 const session_path = os.join_path(settings_dir, 'session')

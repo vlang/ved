@@ -11,6 +11,8 @@ const root = os.join_path(os.vtmp_dir(), 'ved_save_test')
 fn testsuite_begin() {
 	os.rmdir_all(root) or {}
 	os.mkdir_all(root) or { panic(err) }
+	// main() creates the settings dir; open_file saves the session into it.
+	os.mkdir_all(settings_dir) or { panic(err) }
 	$if !windows {
 		C.umask(0o022)
 	}
