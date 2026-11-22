@@ -1,6 +1,12 @@
 <h1 align="center">Ved</h1>
 <h3 align="center">A small and fast text editor written in V</h3>
 
+<p align="center">
+  <a href="https://vlang.github.io/ved/"><strong>Website</strong></a> ·
+  <a href="https://github.com/vlang/ved/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://github.com/vlang/ved#building-from-source"><strong>Build from source</strong></a>
+</p>
+
 <img src="https://user-images.githubusercontent.com/47652746/199333211-ee78f600-039c-4d96-85ec-e5580fca6736.jpg" alt="Screenshot of the editor">
 
 [![Patreon-badge](https://img.shields.io/badge/Patreon-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/vlang)
