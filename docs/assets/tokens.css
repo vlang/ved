@@ -48,12 +48,6 @@
   --accent: var(--blue-500);
   --accent-soft: var(--blue-500);
 
-  /* semantic: syntax mock */
-  --code-key: #c084fc;
-  --code-string: #86efac;
-  --code-comment: var(--gray-400);
-  --code-lit: #fbbf24;
-
   /* typography */
   --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
@@ -103,7 +97,6 @@
   --radius-pill: 999px;
 
   /* shadow */
-  --shadow-soft: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 0 1px var(--blue-500), 0 0 32px -8px rgba(59, 130, 246, 0.45);
 
   /* motion */

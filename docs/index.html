@@ -24,6 +24,7 @@
       </a>
       <nav class="nav" aria-label="Main navigation">
         <a class="nav-secondary" href="#features">Features</a>
+        <a class="nav-secondary" href="#screenshots">Screenshots</a>
         <a class="nav-secondary" href="#quickstart">Quick start</a>
         <a class="nav-strong" href="#download">Download</a>
         <a class="nav-strong" href="https://github.com/vlang/ved">GitHub</a>
@@ -53,29 +54,6 @@
             <span>builds in under a second</span><span class="dot"></span>
             <span>Windows, macOS, Linux</span>
           </p>
-        </div>
-
-        <div class="editor" aria-label="Illustration of ved editing V source code">
-          <div class="editor-bar">
-            <span class="editor-lights" aria-hidden="true"><span></span><span></span><span></span></span>
-            <span class="editor-tab editor-tab-active">main.v</span>
-            <span class="editor-tab">config.v</span>
-          </div>
-          <div class="editor-body" aria-hidden="true">
-            <div class="editor-lines">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8</div>
-            <div class="editor-code"><span class="code-key">module</span> main
-
-<span class="code-key">import</span> os
-
-<span class="code-key">fn</span> main() {
-  name := <span class="code-string">'ved'</span>
-  println(<span class="code-string">'hello from ${name}'</span>)<span class="cursor"></span>
-  <span class="code-comment">// 300k lines, no lag</span>
-}</div>
-          </div>
-          <div class="editor-status" aria-hidden="true">
-            <span>main.v</span><span>ln 6, col 28</span><span>utf-8</span><span>V</span>
-          </div>
         </div>
       </div>
     </section>
@@ -124,17 +102,6 @@
               </li>
             </ul>
           </div>
-          <div class="editor" aria-hidden="true">
-            <div class="editor-bar"><span class="editor-lights"><span></span><span></span><span></span></span><span class="editor-tab editor-tab-active">search</span></div>
-            <div class="editor-body">
-              <div class="editor-lines">1<br>2<br>3<br>4<br>5</div>
-              <div class="editor-code"><span class="code-comment">// Ctrl+P - fuzzy file finder</span>
-<span class="code-key">src</span>/<span class="code-string">view</span>.v
-<span class="code-key">src</span>/<span class="code-string">draw</span>.v
-<span class="code-key">src</span>/<span class="code-string">query</span>.v
-<span class="code-key">src</span>/<span class="code-string">hl</span>.v<span class="cursor"></span></div>
-            </div>
-          </div>
         </article>
 
         <div class="feature-grid">
@@ -154,6 +121,20 @@
             <p>Motions, operators, visual mode, yank and paste, search navigation, and repeat. Workspaces, splits, and a built-in timer round out the package.</p>
           </article>
         </div>
+      </div>
+    </section>
+
+    <section class="section" id="screenshots" aria-labelledby="screenshots-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">In the wild</span>
+          <h2 id="screenshots-title">A look at ved.</h2>
+          <p class="lede">Two splits, syntax highlighting, and a status bar, all in one small window.</p>
+        </div>
+        <figure class="screenshot">
+          <img src="assets/screenshot.jpg" alt="Ved editing several V source files in a split view with syntax highlighting" width="1920" height="1080" loading="lazy">
+          <figcaption>Ved with a workspace open. Screenshot from the project README.</figcaption>
+        </figure>
       </div>
     </section>
 
