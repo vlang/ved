@@ -9,11 +9,11 @@ import x.json2
 const builtin_v_syntax_file_content = $embed_file('syntax/v.syntax').to_string()
 
 struct Syntax {
-	name         string
-	extensions   []string
-	fmt_cmd      string
-	keywords     []string
-	literals     []string
+	name       string
+	extensions []string
+	fmt_cmd    string
+	keywords   []string
+	literals   []string
 mut:
 	keywords_map map[string]bool
 	literals_map map[string]bool
