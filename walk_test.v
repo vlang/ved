@@ -61,6 +61,25 @@ fn test_special_files_are_skipped() {
 	assert files == ['a.v']
 }
 
+fn test_untracked_special_files_are_skipped_in_git_repos() {
+	$if windows {
+		return
+	}
+	repo := fresh_dir('fifo_git')
+	os.write_file(os.join_path(repo, 'tracked.v'), '')!
+	os.write_file(os.join_path(repo, 'untracked.v'), '')!
+	assert C.mkfifo(&char(os.join_path(repo, 'pipe').str), 0o644) == 0
+	os.symlink('pipe', os.join_path(repo, 'pipe_link'))!
+	os.symlink('untracked.v', os.join_path(repo, 'link.v'))!
+	assert os.exec(['git', '-C', repo, 'init', '-q']).exit_code == 0
+	assert os.exec(['git', '-C', repo, 'add', 'tracked.v']).exit_code == 0
+	ved := &Ved{}
+	mut files, partial := ved.get_files_for_workspace(repo)
+	files.sort()
+	assert files == ['link.v', 'tracked.v', 'untracked.v']
+	assert !partial
+}
+
 fn test_unreadable_folders_make_the_walk_partial() {
 	$if windows {
 		return
@@ -189,6 +208,8 @@ fn test_switch_from_git_to_non_git_workspace() {
 	git_dir := fresh_dir('repo with space')
 	os.write_file(os.join_path(git_dir, 'tracked.v'), '')!
 	os.write_file(os.join_path(git_dir, 'untracked.v'), '')!
+	os.write_file(os.join_path(git_dir, 'ignored.v'), '')!
+	os.write_file(os.join_path(git_dir, '.gitignore'), 'ignored.v\n')!
 	assert os.exec(['git', '-C', git_dir, 'init', '-q']).exit_code == 0
 	assert os.exec(['git', '-C', git_dir, 'add', 'tracked.v']).exit_code == 0
 	plain_dir := fresh_dir('plain')
@@ -198,7 +219,9 @@ fn test_switch_from_git_to_non_git_workspace() {
 		workspace: git_dir
 	}
 	ved.load_git_tree()
-	assert ved.all_git_files == ['tracked.v']
+	mut listed := ved.all_git_files.clone()
+	listed.sort()
+	assert listed == ['.gitignore', 'tracked.v', 'untracked.v']
 	ved.workspace = plain_dir
 	ved.load_git_tree()
 	assert ved.all_git_files == ['plain.v']

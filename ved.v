@@ -1180,7 +1180,7 @@ fn read_grep_file_exts(workspaces []string) map[string][]string {
 }
 
 // get_files_for_workspace lists all files for a given workspace path, using `git ls-files`
-// in git repos and walking the directory otherwise.
+// in git repos (tracked and untracked but not ignored) and walking the directory otherwise.
 // TODO: Caching? For now, load every time.
 fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	if ws_path == '' {
@@ -1201,6 +1201,22 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 			return []string{}, true
 		}
 		files = s.output.split('\0').filter(it != '')
+		others := os.exec(['git', '-C', ws_path, 'ls-files', '-z', '--others', '--exclude-standard'])
+		if others.exit_code != 0 {
+			partial = true
+		} else {
+			for rel in others.output.split('\0') {
+				if rel == '' {
+					continue
+				}
+				// untracked symlinks can point at FIFOs or devices. Ctrl+P reads every
+				// listed file to count its lines and reading these can block the editor.
+				st := os.stat(os.join_path(ws_path, rel)) or { continue }
+				if st.get_filetype() == .regular {
+					files << rel
+				}
+			}
+		}
 	} else {
 		files, partial = walk_workspace_files(ws_path)
 	}
