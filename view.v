@@ -4,6 +4,7 @@
 module main
 
 import os
+import strconv
 import strings
 import gg
 
@@ -318,6 +319,10 @@ fn (mut view View) j() {
 	// Scroll
 	if view.y >= view.from + view.page_height {
 		view.from++
+		max_from := view.lines.len - 1
+		if view.from > max_from {
+			view.from = max_from
+		}
 	}
 	// Correct x if there are tabs on the next line
 	_, nr_tabs1 := nr_spaces_and_tabs_in_line(line0)
@@ -437,8 +442,9 @@ fn (mut view View) gg() {
 // shift_f scrolls the view down by one page. (Vim: `Ctrl+F`)
 fn (mut view View) shift_f() {
 	view.from += view.page_height
-	if view.from >= view.lines.len {
-		view.from = view.lines.len - 1
+	max_from := view.lines.len - 1
+	if view.from > max_from {
+		view.from = max_from
 	}
 	view.set_y(view.from)
 }
@@ -510,7 +516,7 @@ fn (mut v View) delete_char() {
 	if u.len < 1 || v.x >= u.len {
 		return
 	}
-	mut new_line := unsafe { u[..v.x] }
+	mut new_line := u[..v.x]
 	right := u[v.x + 1..]
 	new_line << right
 	v.set_line(new_line.string())
@@ -989,7 +995,7 @@ fn (mut view View) super_a(diff int) {
 	}
 	s := line[num_start_pos..]
 	vals := s.fields()
-	number := vals[0].int()
+	number := strconv.atoi(vals[0]) or { 0 }
 	new_line := line.replace_once(number.str(), (number + diff).str())
 	view.set_line(new_line)
 }
