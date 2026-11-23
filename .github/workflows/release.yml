@@ -15,7 +15,34 @@ permissions:
   contents: read
 
 jobs:
+  # Resolve the requested version to exactly one commit, so every platform
+  # builds the same revision and a tag created by manual dispatch points at it.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - name: Checkout ved
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve release revision
+        id: resolve
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            sha="$(git rev-list -n 1 "${VERSION}")"
+          else
+            # Manual dispatch for a tag that does not exist yet: tag the dispatch ref.
+            sha="$(git rev-parse HEAD)"
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "Release ${VERSION} resolves to ${sha}"
+
   windows:
+    needs: resolve
     runs-on: windows-latest
     env:
       VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
@@ -28,6 +55,7 @@ jobs:
       - name: Checkout ved
         uses: actions/checkout@v4
         with:
+          ref: ${{ needs.resolve.outputs.sha }}
           path: ved
       - name: Build V
         working-directory: v
@@ -55,6 +83,7 @@ jobs:
           if-no-files-found: error
 
   deb:
+    needs: resolve
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
@@ -67,6 +96,7 @@ jobs:
       - name: Checkout ved
         uses: actions/checkout@v4
         with:
+          ref: ${{ needs.resolve.outputs.sha }}
           path: ved
       - name: Build V
         working-directory: v
@@ -74,7 +104,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --quiet libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
+          sudo apt-get install -y --quiet dpkg-dev libfreetype6-dev libglfw3-dev libxi-dev libxcursor-dev
       - name: Build ved
         working-directory: ved
         run: v -prod -o ved .
@@ -86,14 +116,31 @@ jobs:
           VER="${VERSION#v}"
           ARCH="$(dpkg --print-architecture)"
           PKG="ved_${VER}_${ARCH}"
+          DATADIR="$PKG/usr/share/ved"
+
+          # Derive runtime dependencies from the binary produced by this build.
+          mkdir -p debian
+          cat > debian/control <<EOF
+          Source: ved
+          Section: editors
+          Priority: optional
+          Maintainer: Vlang Team <team@vlang.io>
+
+          Package: ved
+          Architecture: $ARCH
+          Depends: \${shlibs:Depends}
+          EOF
+          DEPS="$(dpkg-shlibdeps -O ved | sed 's/^shlibs:Depends=//')"
+
           mkdir -p "$PKG/DEBIAN" "$PKG/usr/bin" "$PKG/usr/share/doc/ved" \
-            "$PKG/usr/share/applications"
+            "$PKG/usr/share/applications" "$DATADIR"
           cat > "$PKG/DEBIAN/control" <<EOF
           Package: ved
           Version: $VER
           Section: editors
           Priority: optional
           Architecture: $ARCH
+          Depends: $DEPS
           Maintainer: Vlang Team <team@vlang.io>
           Homepage: https://github.com/vlang/ved
           Description: Small and fast text editor written in V
@@ -104,6 +151,8 @@ jobs:
           install -m 0755 ved "$PKG/usr/bin/ved"
           install -m 0644 README.md "$PKG/usr/share/doc/ved/README.md"
           install -m 0644 LICENSE "$PKG/usr/share/doc/ved/copyright"
+          install -m 0644 welcome.txt "$DATADIR/welcome.txt"
+          install -m 0644 RobotoMono-Regular.ttf "$DATADIR/RobotoMono-Regular.ttf"
           cat > "$PKG/usr/share/applications/ved.desktop" <<EOF
           [Desktop Entry]
           Name=ved
@@ -125,6 +174,7 @@ jobs:
           if-no-files-found: error
 
   rpm:
+    needs: resolve
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
@@ -137,6 +187,7 @@ jobs:
       - name: Checkout ved
         uses: actions/checkout@v4
         with:
+          ref: ${{ needs.resolve.outputs.sha }}
           path: ved
       - name: Build V
         working-directory: v
@@ -155,10 +206,12 @@ jobs:
           set -euo pipefail
           VER="${VERSION#v}"
           mkdir -p rpmbuild/BUILD rpmbuild/RPMS rpmbuild/SOURCES rpmbuild/SPECS rpmbuild/SRPMS
-          mkdir -p staging/usr/bin staging/usr/share/doc/ved
+          mkdir -p staging/usr/bin staging/usr/share/doc/ved staging/usr/share/ved
           install -m 0755 ved staging/usr/bin/ved
           install -m 0644 README.md staging/usr/share/doc/ved/README.md
           install -m 0644 LICENSE staging/usr/share/doc/ved/LICENSE
+          install -m 0644 welcome.txt staging/usr/share/ved/welcome.txt
+          install -m 0644 RobotoMono-Regular.ttf staging/usr/share/ved/RobotoMono-Regular.ttf
           tar -czf "rpmbuild/SOURCES/ved-${VER}.tar.gz" -C staging .
           cat > rpmbuild/SPECS/ved.spec <<EOF
           Name:           ved
@@ -182,6 +235,7 @@ jobs:
           %files
           %{_bindir}/ved
           %{_datadir}/doc/ved/*
+          %{_datadir}/ved/*
 
           %changelog
           * Sun Nov 22 2026 Vlang Team <team@vlang.io> - $VER-1
@@ -198,7 +252,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: [windows, deb, rpm]
+    needs: [windows, deb, rpm, resolve]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -212,6 +266,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+          target: ${{ needs.resolve.outputs.sha }}
           files: |
             artifacts/ved-windows-x86_64.zip
             artifacts/ved-x86_64.deb

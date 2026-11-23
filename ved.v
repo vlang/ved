@@ -10,7 +10,6 @@ import uiold
 import clipboard
 import x.json2
 
-const exe_dir = os.dir(os.executable())
 const home_dir = os.home_dir()
 const settings_dir = os.join_path(home_dir, '.ved')
 const codeblog_path = os.join_path(home_dir, 'code', 'blog')
@@ -134,7 +133,23 @@ Options:
   -two_splits
 '
 
-const fpath = os.resource_abs_path('RobotoMono-Regular.ttf')
+// resource_path resolves a bundled resource. The copy beside the executable
+// wins (dev builds and the Windows zip), with the system data directory used
+// by the Linux packages as a fallback.
+fn resource_path(name string) string {
+	local := os.resource_abs_path(name)
+	if os.exists(local) {
+		return local
+	}
+	$if linux {
+		installed := os.join_path('/usr/share/ved', name)
+		if os.exists(installed) {
+			return installed
+		}
+	}
+	return local
+}
+
 const args = os.args.clone()
 const is_fullscreen = '-fullscreen' in args
 
@@ -201,6 +216,7 @@ fn main() {
 		win_width = 770
 		win_height = 480
 	}
+	fpath := resource_path('RobotoMono-Regular.ttf')
 	ved.gg = gg.new_context(
 		width:         win_width
 		height:        win_height
@@ -286,7 +302,7 @@ fn main() {
 	ved.init_tree()
 	println('first_launch=${first_launch}')
 	if ved.workspaces.len == 1 && first_launch && !os.exists(session_path) {
-		ved.view.open_file(os.join_path(exe_dir, 'welcome.txt'), 0)
+		ved.view.open_file(resource_path('welcome.txt'), 0)
 	}
 	spawn ved.loop()
 	ved.refresh = true
