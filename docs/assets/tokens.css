@@ -1,0 +1,113 @@
+/* Generated token layer for the ved site. Source: ux-ui-agent-skills tokens/*.json (design-doctrine 3-tier system).
+   Raw values live here only; components reference var(--*) exclusively. */
+:root {
+  /* primitive */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-800: #1e40af;
+  --white: #ffffff;
+  --black: #000000;
+
+  /* semantic: surface + text */
+  --bg: var(--gray-950);
+  --surface: var(--gray-900);
+  --surface-raised: var(--gray-800);
+  --surface-sunken: #080b12;
+  --border: var(--gray-800);
+  --border-strong: var(--gray-700);
+  --text: var(--gray-100);
+  --text-muted: var(--gray-400);
+  --text-subtle: var(--gray-500);
+
+  /* semantic: action */
+  --action-primary: var(--blue-600);
+  --action-primary-hover: var(--blue-700);
+  --action-primary-active: var(--blue-800);
+  --action-on-primary: var(--white);
+  --action-secondary: var(--gray-800);
+  --action-secondary-hover: var(--gray-700);
+  --action-secondary-active: var(--gray-600);
+
+  /* semantic: accent (single) */
+  --accent: var(--blue-500);
+  --accent-soft: var(--blue-500);
+
+  /* typography */
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+  --text-6xl: 60px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+
+  /* spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* shadow */
+  --shadow-glow: 0 0 0 1px var(--blue-500), 0 0 32px -8px rgba(59, 130, 246, 0.45);
+
+  /* motion */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* layout */
+  --page-inline: var(--space-4);
+  --page-inline-lg: var(--space-8);
+  --content-width: 1080px;
+  --header-height: 64px;
+}

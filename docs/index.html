@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Ved is a small, fast text editor written in V. Hardware-accelerated rendering, syntax highlighting, fuzzy file finder, git integration, and a growing Vim mode.">
+  <title>ved - a small and fast text editor written in V</title>
+  <link rel="icon" href="https://raw.githubusercontent.com/vlang/ved/master/assets/v_icon.png" type="image/png">
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="ved, back to top">
+        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" aria-hidden="true">
+          <path d="M3 5l9 14L21 5"/>
+          <path d="M7 5l5 8 5-8"/>
+        </svg>
+        <span>ved</span>
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a class="nav-secondary" href="#features">Features</a>
+        <a class="nav-secondary" href="#screenshots">Screenshots</a>
+        <a class="nav-secondary" href="#quickstart">Quick start</a>
+        <a class="nav-strong" href="#download">Download</a>
+        <a class="nav-strong" href="https://github.com/vlang/ved">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">Written in V, for people who edit text</span>
+          <h1 id="hero-title" class="hero-title">The editor that <span class="accent">keeps up.</span></h1>
+          <p class="lede">Ved starts fast, stays small, and renders hardware-accelerated text. Scroll through 300,000 lines with syntax highlighting and feel no lag.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#download">
+              Download
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3"/></svg>
+            </a>
+            <a class="btn btn-secondary" href="https://github.com/vlang/ved">
+              View source
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.3 6.1-1.5 6.1-6.5A5.2 5.2 0 0 0 19.8 3 4.8 4.8 0 0 0 19.7.6S18.5.2 16 1.8a13.4 13.4 0 0 0-7 0C6.5.2 5.3.6 5.3.6A4.8 4.8 0 0 0 5.2 3a5.2 5.2 0 0 0-1.4 3.6c0 5 3.1 6.2 6.1 6.5A3.4 3.4 0 0 0 9 15.1V19"/></svg>
+            </a>
+          </div>
+          <p class="hero-note">
+            <span>1 MB binary</span><span class="dot"></span>
+            <span>builds in under a second</span><span class="dot"></span>
+            <span>Windows, macOS, Linux</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Key numbers">
+      <div class="container metrics-grid">
+        <div>
+          <div class="metric-value">1 MB</div>
+          <div class="metric-label">single static binary, no runtime to install</div>
+        </div>
+        <div>
+          <div class="metric-value">&lt; 1 s</div>
+          <div class="metric-label">from source with a warm V toolchain</div>
+        </div>
+        <div>
+          <div class="metric-value">300k</div>
+          <div class="metric-label">lines, scrolled with highlighting, without lag</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Built for flow</span>
+          <h2 id="features-title">Small editor. Serious machinery.</h2>
+          <p class="lede">Ved keeps the surface quiet and the internals fast. Everything below works out of the box, with no plugin setup.</p>
+        </div>
+
+        <article class="feature-lead">
+          <div>
+            <h3>Hardware-accelerated text rendering</h3>
+            <p class="muted">Text is drawn through the GPU, so highlighting and scrolling stay responsive on large buffers. Syntax is lexed per line and drawn in colored chunks instead of repainting whole screens.</p>
+            <ul class="feature-list">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Visible-range rendering: cost tracks your viewport, not file size</span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Syntax definitions loaded from the syntax folder and overridable in your config</span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Light and dark themes, base16-style color configuration</span>
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <h3>Find anything, instantly</h3>
+            <p>Fuzzy file finder with Ctrl+P. Search inside a file with <code>/</code>, or across the whole workspace with git grep using <code>?</code>.</p>
+          </article>
+          <article class="feature-card">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+            <h3>Git, in the editor</h3>
+            <p>Commit with Ctrl+C, inspect a diff with Ctrl+-, and jump to definitions without leaving your buffer.</p>
+          </article>
+          <article class="feature-card">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4zM8 5v14M12 9h5M12 13h5"/></svg>
+            <h3>Vim muscle memory</h3>
+            <p>Motions, operators, visual mode, yank and paste, search navigation, and repeat. Workspaces, splits, and a built-in timer round out the package.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="screenshots" aria-labelledby="screenshots-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">In the wild</span>
+          <h2 id="screenshots-title">A look at ved.</h2>
+          <p class="lede">Two splits, syntax highlighting, and a status bar, all in one small window.</p>
+        </div>
+        <figure class="screenshot">
+          <img src="assets/screenshot.jpg" alt="Ved editing several V source files in a split view with syntax highlighting" width="1920" height="1080" loading="lazy">
+          <figcaption>Ved with a workspace open. Screenshot from the project README.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="quickstart" aria-labelledby="quickstart-title">
+      <div class="container quickstart">
+        <div>
+          <span class="eyebrow">Two minutes in</span>
+          <h2 id="quickstart-title">From zero to editing.</h2>
+          <p class="lede">Grab a release below, or build from source with V. Open a directory to get a workspace, then use Ctrl+P to jump between files.</p>
+          <p class="muted">Most people never need to touch a config file. If you do, create <code>conf.toml</code> in <code>~/.ved</code>.</p>
+        </div>
+        <div class="terminal">
+          <div class="terminal-head">shell</div>
+          <pre class="terminal-body"><span class="prompt">$</span> git clone https://github.com/vlang/ved
+<span class="prompt">$</span> cd ved
+<span class="prompt">$</span> v .
+<span class="prompt">$</span> ./ved path/to/project</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="download" aria-labelledby="download-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Get started</span>
+          <h2 id="download-title">Download ved</h2>
+          <p class="lede">Pick your platform. Each release ships a ready-to-run binary; no V installation required.</p>
+        </div>
+
+        <div class="downloads">
+          <a class="download-card" href="https://github.com/vlang/ved/releases/latest/download/ved-windows-x86_64.zip">
+            <span class="download-platform">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l7-2v7H3zM12 4l9-2v9h-9zM3 13h7v7l-7-2zM12 13h9v7l-9-2z"/></svg>
+              Windows
+              <svg class="download-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            </span>
+            <span class="download-file">ved-windows-x86_64.zip</span>
+            <span class="muted">64-bit · unzip and run ved.exe</span>
+          </a>
+
+          <a class="download-card" href="https://github.com/vlang/ved/releases/latest/download/ved-x86_64.deb">
+            <span class="download-platform">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+              Debian / Ubuntu
+              <svg class="download-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            </span>
+            <span class="download-file">ved-x86_64.deb</span>
+            <span class="muted">sudo apt install ./ved-x86_64.deb</span>
+          </a>
+
+          <a class="download-card" href="https://github.com/vlang/ved/releases/latest/download/ved-x86_64.rpm">
+            <span class="download-platform">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5"/></svg>
+              Fedora / RPM
+              <svg class="download-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            </span>
+            <span class="download-file">ved-x86_64.rpm</span>
+            <span class="muted">sudo dnf install ./ved-x86_64.rpm</span>
+          </a>
+        </div>
+
+        <p class="download-note">Prefer to build it yourself? <a class="muted" href="https://github.com/vlang/ved#building-from-source">Follow the source build instructions</a>. macOS builds are produced by CI; grab the artifact from the latest workflow run until a signed release is added.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>ved. Free software, GPL-3.0.</span>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="https://github.com/vlang/ved">Source</a>
+        <a href="https://github.com/vlang/ved/issues">Issues</a>
+        <a href="https://github.com/vlang/ved/releases">Releases</a>
+        <a href="https://discord.gg/vlang">Community</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
