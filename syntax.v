@@ -8,6 +8,10 @@ import x.json2
 
 const builtin_v_syntax_file_content = $embed_file('syntax/v.syntax').to_string()
 
+// Bounds the number of syntax definitions held in memory. The first entry is
+// the embedded default, which a matching file on disk replaces in place.
+const max_syntaxes = 256
+
 struct Syntax {
 	name       string
 	extensions []string
@@ -41,6 +45,10 @@ fn (mut ved Ved) load_syntaxes() {
 	ved.syntaxes << vsyntax
 	files := os.walk_ext(syntax_dir, '.syntax')
 	for file in files {
+		if ved.syntaxes.len >= max_syntaxes {
+			eprintln('    error: syntax limit ${max_syntaxes} reached, ignoring ${file}')
+			continue
+		}
 		fcontent := os.read_file(file) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'

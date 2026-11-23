@@ -19,6 +19,10 @@ struct Chunk {
 	typ   ChunkKind
 }
 
+// A line is at most 5000 characters in draw.v, and each chunk covers at
+// least one character, so this cap never truncates a line the editor draws.
+const max_chunks_per_line = 5000
+
 // DrawOp is one text run to hand to the graphics context.
 // kind == none means plain text; otherwise it names the highlight style.
 struct DrawOp {
@@ -110,6 +114,9 @@ fn lex_standard_span(line string, mcomment Mcomment, keywords map[string]bool, l
 
 	mut i := 0 // Use mut i instead of for loop index to allow manual increment
 	for i < line.len {
+		if chunks.len >= max_chunks_per_line {
+			break
+		}
 		start := i
 		// Comment // #
 		if i > 0 && line[i - 1] == `/` && line[i] == `/` {
@@ -237,6 +244,9 @@ fn lex_standard_span(line string, mcomment Mcomment, keywords map[string]bool, l
 
 		// If none of the above matched, advance by one character
 		i++
+	}
+	if chunks.len > max_chunks_per_line {
+		chunks = chunks[..max_chunks_per_line]
 	}
 	return chunks
 }
