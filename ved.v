@@ -1196,12 +1196,27 @@ fn (ved &Ved) get_files_for_workspace(ws_path string) ([]string, bool) {
 	mut files := []string{}
 	mut partial := false
 	if is_git {
-		s := os.exec(['git', '-C', ws_path, 'ls-files', '-z', '--cached', '--others',
-			'--exclude-standard'])
+		s := os.exec(['git', '-C', ws_path, 'ls-files', '-z'])
 		if s.exit_code != 0 {
 			return []string{}, true
 		}
 		files = s.output.split('\0').filter(it != '')
+		others := os.exec(['git', '-C', ws_path, 'ls-files', '-z', '--others', '--exclude-standard'])
+		if others.exit_code != 0 {
+			partial = true
+		} else {
+			for rel in others.output.split('\0') {
+				if rel == '' {
+					continue
+				}
+				// untracked symlinks can point at FIFOs or devices. Ctrl+P reads every
+				// listed file to count its lines and reading these can block the editor.
+				st := os.stat(os.join_path(ws_path, rel)) or { continue }
+				if st.get_filetype() == .regular {
+					files << rel
+				}
+			}
+		}
 	} else {
 		files, partial = walk_workspace_files(ws_path)
 	}

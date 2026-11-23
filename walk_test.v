@@ -61,6 +61,25 @@ fn test_special_files_are_skipped() {
 	assert files == ['a.v']
 }
 
+fn test_untracked_special_files_are_skipped_in_git_repos() {
+	$if windows {
+		return
+	}
+	repo := fresh_dir('fifo_git')
+	os.write_file(os.join_path(repo, 'tracked.v'), '')!
+	os.write_file(os.join_path(repo, 'untracked.v'), '')!
+	assert C.mkfifo(&char(os.join_path(repo, 'pipe').str), 0o644) == 0
+	os.symlink('pipe', os.join_path(repo, 'pipe_link'))!
+	os.symlink('untracked.v', os.join_path(repo, 'link.v'))!
+	assert os.exec(['git', '-C', repo, 'init', '-q']).exit_code == 0
+	assert os.exec(['git', '-C', repo, 'add', 'tracked.v']).exit_code == 0
+	ved := &Ved{}
+	mut files, partial := ved.get_files_for_workspace(repo)
+	files.sort()
+	assert files == ['link.v', 'tracked.v', 'untracked.v']
+	assert !partial
+}
+
 fn test_unreadable_folders_make_the_walk_partial() {
 	$if windows {
 		return
