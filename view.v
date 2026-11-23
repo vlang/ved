@@ -227,8 +227,9 @@ fn (mut view View) save_file() {
 // format_file asynchronously runs an external formatting command (like `v fmt`, `goimports`, `prettier`)
 // on the view's file. After formatting, it reloads the file to reflect the changes.
 fn (mut view View) format_file() {
-	view.ved.load_config2()
-	if view.ved.cfg.disable_fmt {
+	cfg, problem := read_config()
+	view.ved.queue_config(cfg, problem)
+	if cfg.disable_fmt {
 		return
 	}
 	path := view.path

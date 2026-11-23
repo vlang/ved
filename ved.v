@@ -5,6 +5,7 @@ module main
 
 import gg
 import os
+import sync
 import time
 import uiold
 import clipboard
@@ -80,6 +81,10 @@ mut:
 	gg_pos             int
 	gg_scroll          int // scroll offset for grep/ctrlp results
 	cfg                Config
+	// A config read by format_file after a save, waiting for frame() to apply it.
+	cfg_mu             &sync.Mutex = sync.new_mutex()
+	pending_cfg        ?Config
+	pending_problem    string
 	cb                 &clipboard.Clipboard = unsafe { nil }
 	open_paths         [][]string // all open files (tabs) per workspace: open_paths[workspace_idx] == ['a.txt', b.v']
 	prev_y             int        // for jumping back ('')
@@ -184,7 +189,7 @@ fn main() {
 	// ved.cfg.set_settings(config_path)
 	println('CONFIG')
 	println(ved.cfg)
-	ved.load_config2()
+	ved.cfg, ved.error_line = read_config()
 
 	ved.nr_splits = ved.get_nr_splits_from_screen_size(width, height)
 	ved.calc_nr_splits_from_text_size()
@@ -308,6 +313,7 @@ fn frame(mut ved Ved) {
 	// return
 	// }
 	// println('frame() ${time.now()}')
+	ved.apply_pending_config()
 	ved.gg.begin()
 	ved.draw()
 	if ved.mode == .timer {
@@ -1038,6 +1044,7 @@ const min_text_size = 18
 
 // increase_font changes the editor's font size and recalculates related UI metrics.
 fn (mut ved Ved) increase_font(delta int) {
+	ved.apply_pending_config()
 	// println('INCREASE_FONT(${delta})')
 	// println('text_size=${ved.cfg.text_size}')
 	// println('char_width=${ved.cfg.char_width}')
