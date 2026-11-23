@@ -23,6 +23,7 @@
   --blue-700: #1d4ed8;
   --blue-800: #1e40af;
   --white: #ffffff;
+  --black: #000000;
 
   /* semantic: surface + text */
   --bg: var(--gray-950);
