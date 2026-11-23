@@ -89,3 +89,49 @@ fn test_word_under_cursor_no_right_bounds() {
 	ved.view.x = 100
 	assert ved.word_under_cursor_no_right() == ''
 }
+
+// A word starting at column 0 must not lose its first character.
+fn test_word_under_cursor_at_column_zero() {
+	mut ved := &Ved{}
+	mut vw := ved.new_view()
+	ved.view = &vw
+	ved.view.lines = ['hello world']
+	ved.view.y = 0
+	ved.view.x = 0
+	assert ved.word_under_cursor() == 'hello'
+}
+
+// A single-character word (including at one-past-EOL) must be returned whole.
+fn test_word_under_cursor_single_char_word() {
+	mut ved := &Ved{}
+	mut vw := ved.new_view()
+	ved.view = &vw
+	ved.view.lines = ['a']
+	ved.view.y = 0
+	ved.view.x = 0
+	assert ved.word_under_cursor() == 'a'
+	ved.view.x = 1
+	assert ved.word_under_cursor() == 'a'
+}
+
+// Same first-character rule for the no-right variant.
+fn test_word_under_cursor_no_right_at_column_zero() {
+	mut ved := &Ved{}
+	mut vw := ved.new_view()
+	ved.view = &vw
+	ved.view.lines = ['hello']
+	ved.view.y = 0
+	ved.view.x = 5
+	assert ved.word_under_cursor_no_right() == 'hello'
+}
+
+// Deleting the final line leaves the cursor at the new end of the buffer.
+fn test_dd_deletes_last_line() {
+	mut ved := &Ved{}
+	mut view := ved.new_view()
+	view.lines = ['a', 'b']
+	view.y = 1
+	view.dd()
+	assert view.lines == ['a']
+	assert ved.ylines == ['b']
+}

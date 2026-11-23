@@ -384,12 +384,18 @@ fn (ved &Ved) word_under_cursor() string {
 	for end < line.len && is_alpha_underscore(int(line[end])) {
 		end++
 	}
-	if start + 1 >= line.len || start >= end {
+	// The left scan stops on the non-word char before the word, or at column 0.
+	// A word beginning at column 0 starts at `start`, not at `start + 1`.
+	mut word_start := start + 1
+	if start == 0 && is_alpha_underscore(int(line[0])) {
+		word_start = 0
+	}
+	if word_start >= line.len || word_start >= end {
 		return ''
 	}
 	// println("word under cursor line='$line' start=$start end=$end")
 	// print_backtrace()
-	mut word := line[start + 1..end]
+	mut word := line[word_start..end]
 	word = word.trim_space()
 	return word
 }
@@ -411,7 +417,11 @@ fn (ved &Ved) word_under_cursor_no_right() string {
 		start--
 	}
 	// println('new start=${start}')
-	mut word := line[start + 1..line.len]
+	mut word_start := start + 1
+	if start == 0 && is_alpha_underscore(int(line[0])) {
+		word_start = 0
+	}
+	mut word := line[word_start..line.len]
 	word = word.trim_space()
 	return word
 }
