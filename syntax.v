@@ -8,30 +8,56 @@ import x.json2
 
 const builtin_v_syntax_file_content = $embed_file('syntax/v.syntax').to_string()
 
+// Bounds the number of syntax definitions held in memory. The first entry is
+// the embedded default, which a matching file on disk replaces in place.
+const max_syntaxes = 256
+
 struct Syntax {
 	name       string
 	extensions []string
 	fmt_cmd    string
 	keywords   []string
 	literals   []string
+mut:
+	keywords_map map[string]bool
+	literals_map map[string]bool
+}
+
+// build_syntax_index precomputes keyword/literal lookup maps so the
+// per-frame highlighter does hash lookups instead of linear scans.
+fn build_syntax_index(mut syntax Syntax) {
+	syntax.keywords_map = {}
+	for k in syntax.keywords {
+		syntax.keywords_map[k] = true
+	}
+	syntax.literals_map = {}
+	for l in syntax.literals {
+		syntax.literals_map[l] = true
+	}
 }
 
 fn (mut ved Ved) load_syntaxes() {
 	println('loading syntax files...')
-	vsyntax := json2.decode[Syntax](builtin_v_syntax_file_content) or {
+	mut vsyntax := json2.decode[Syntax](builtin_v_syntax_file_content) or {
 		panic('the builtin syntax file "${builtin_v_syntax_file_content}" can not be decoded ${err}')
 	}
+	build_syntax_index(mut vsyntax)
 	ved.syntaxes << vsyntax
 	files := os.walk_ext(syntax_dir, '.syntax')
 	for file in files {
+		if ved.syntaxes.len >= max_syntaxes {
+			eprintln('    error: syntax limit ${max_syntaxes} reached, ignoring ${file}')
+			continue
+		}
 		fcontent := os.read_file(file) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			'{}'
 		}
-		syntax := json2.decode[Syntax](fcontent) or {
+		mut syntax := json2.decode[Syntax](fcontent) or {
 			eprintln('    error: cannot load syntax file ${file}: ${err.msg()}')
 			Syntax{}
 		}
+		build_syntax_index(mut syntax)
 		if file.ends_with('v.syntax') {
 			// allow overriding the builtin embedded syntax at runtime:
 			ved.syntaxes[0] = syntax

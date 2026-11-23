@@ -19,6 +19,18 @@ struct Chunk {
 	typ   ChunkKind
 }
 
+// A line is at most 5000 characters in draw.v, and each chunk covers at
+// least one character, so this cap never truncates a line the editor draws.
+const max_chunks_per_line = 5000
+
+// DrawOp is one text run to hand to the graphics context.
+// kind == none means plain text; otherwise it names the highlight style.
+struct DrawOp {
+	x    int
+	text string
+	kind ?ChunkKind
+}
+
 struct Mcomment {
 	start string
 	end   string
@@ -93,37 +105,35 @@ fn (ved &Ved) determine_ml_comment_state(view &View, target_line_nr int) bool {
 	return is_inside
 }
 
-// Handles syntax highlighting for a line assuming it does *not* start within a multi-line comment
-// and does *not* start a multi-line comment that continues to the next line.
-// It handles single-line comments (//, #), strings, keywords, literals, and single-line /* ... */ or <!-- ... --> comments.
-fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext string) {
-	mcomment := get_mcomment_by_ext(ext)
-	// Red/green test hack
-	/*
-       if line.contains('[32m') && line.contains('PASS') {
-               ved.gg.draw_text(x, y, line[5..], ved.cfg.green_cfg)
-               return
-       } else if line.contains('[31m') && line.contains('FAIL') {
-               ved.gg.draw_text(x, y, line[5..], ved.cfg.red_cfg)
-               return
-       }
-       */
-
-	ved.chunks = []
-	cur_syntax := ved.syntaxes[ved.current_syntax_idx] or { Syntax{} }
+// lex_standard_span scans a single line without multi-line comment state
+// and returns its highlight chunks. Pure function: no drawing, no globals.
+// Extracted unchanged from draw_text_line_standard_syntax.
+fn lex_standard_span(line string, mcomment Mcomment, keywords map[string]bool, literals map[string]bool) []Chunk {
+	mut chunks := []Chunk{}
 	// TODO use runes for everything to fix keyword + 2+ byte rune words
 
 	mut i := 0 // Use mut i instead of for loop index to allow manual increment
 	for i < line.len {
+		if chunks.len >= max_chunks_per_line {
+			break
+		}
 		start := i
 		// Comment // #
 		if i > 0 && line[i - 1] == `/` && line[i] == `/` {
-			ved.add_chunk(.a_comment, start - 1, line.len)
+			chunks << Chunk{
+				start: start - 1
+				end:   line.len
+				typ:   .a_comment
+			}
 			i = line.len // End the loop
 			break
 		}
 		if line[i] == `#` {
-			ved.add_chunk(.a_comment, start, line.len)
+			chunks << Chunk{
+				start: start
+				end:   line.len
+				typ:   .a_comment
+			}
 			i = line.len // End the loop
 			break
 		}
@@ -133,12 +143,16 @@ fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext s
 		if i + mcomment.start.len <= line.len && line[i..i + mcomment.start.len] == mcomment.start {
 			end_pos := line.index_after(mcomment.end, i + mcomment.start.len) or { -1 }
 			if end_pos != -1 {
-				ved.add_chunk(.a_comment, start, end_pos + mcomment.end.len)
+				chunks << Chunk{
+					start: start
+					end:   end_pos + mcomment.end.len
+					typ:   .a_comment
+				}
 				i = end_pos + mcomment.end.len // Move past the comment
 				continue
 			} else {
-				// This case (start found but no end on this line) should be handled by the new logic in draw_split.
-				// If we reach here, it means draw_split decided this line doesn't start a *continuing* multiline comment.
+				// Start found but no end on this line; the caller (lex_line)
+				// decides whether this opens a continuing multiline comment.
 				// Treat the start delimiter as normal text by just advancing `i`.
 				i += 1
 				continue
@@ -160,7 +174,11 @@ fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext s
 			} else {
 				end += 1
 			} // include closing quote
-			ved.add_chunk(.a_string, start, end)
+			chunks << Chunk{
+				start: start
+				end:   end
+				typ:   .a_string
+			}
 			if i == end {
 				i++
 			} else {
@@ -183,7 +201,11 @@ fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext s
 			} else {
 				end += 1
 			} // include closing quote
-			ved.add_chunk(.a_string, start, end)
+			chunks << Chunk{
+				start: start
+				end:   end
+				typ:   .a_string
+			}
 			if i == end {
 				i++
 			} else {
@@ -198,10 +220,18 @@ fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext s
 				end++
 			}
 			word := line[start..end]
-			if word in cur_syntax.literals {
-				ved.add_chunk(.a_lit, start, end)
-			} else if word in cur_syntax.keywords {
-				ved.add_chunk(.a_key, start, end)
+			if word in literals {
+				chunks << Chunk{
+					start: start
+					end:   end
+					typ:   .a_lit
+				}
+			} else if word in keywords {
+				chunks << Chunk{
+					start: start
+					end:   end
+					typ:   .a_key
+				}
 			}
 			// If it's not a keyword or literal, it will be drawn as normal text later.
 			if i == end {
@@ -215,41 +245,138 @@ fn (mut ved Ved) draw_text_line_standard_syntax(x int, y int, line string, ext s
 		// If none of the above matched, advance by one character
 		i++
 	}
+	if chunks.len > max_chunks_per_line {
+		chunks = chunks[..max_chunks_per_line]
+	}
+	return chunks
+}
 
-	// --- Keep the original chunk drawing logic ---
-	if ved.chunks.len == 0 {
-		ved.gg.draw_text(x, y, line, ved.cfg.txt_cfg)
-		return
+// lex_line highlights one display line given the multi-line comment state
+// at its start. Returns the chunks and the state for the next line.
+// Pure function: extracted from draw_split, output identical to it.
+fn lex_line(s string, ml_before bool, ext string, keywords map[string]bool, literals map[string]bool) ([]Chunk, bool) {
+	mcomment := get_mcomment_by_ext(ext)
+	mut chunks := []Chunk{}
+	mut ml := ml_before
+	// Handle multi page /**/
+	// Find the position of start and end comment delimiters on the current line.
+	// This now uses the string-based delimiters from the Mcomment struct.
+	start_comment_pos := s.index(mcomment.start) or { -1 }
+	end_comment_pos := s.index(mcomment.end) or { -1 }
+
+	// This logic handles rendering for a line that starts inside a multi-line comment.
+	if ml {
+		if end_comment_pos != -1 { // The multi-line comment ends on this line.
+			// The part of the line that is inside the comment.
+			// The slice now uses `mcomment.end.len` for an accurate length.
+			chunks << Chunk{
+				start: 0
+				end:   end_comment_pos + mcomment.end.len
+				typ:   .a_comment
+			}
+
+			// The rest of the line (after the comment) uses standard syntax highlighting.
+			rest_off := end_comment_pos + mcomment.end.len
+			normal_part := s[rest_off..]
+			if normal_part.len > 0 {
+				for c in lex_standard_span(normal_part, mcomment, keywords, literals) {
+					chunks << Chunk{
+						start: c.start + rest_off
+						end:   c.end + rest_off
+						typ:   c.typ
+					}
+				}
+			}
+
+			// The comment block is now closed.
+			ml = false
+		} else { // The entire line is still inside the comment.
+			chunks << Chunk{
+				start: 0
+				end:   s.len
+				typ:   .a_comment
+			}
+			// `ml` remains true for the next line.
+		}
+	} else { // ml is false
+		if start_comment_pos != -1
+			&& (end_comment_pos == -1 || end_comment_pos < start_comment_pos) { // Comment starts here and continues
+			// Normal part before / *
+			for c in lex_standard_span(s[..start_comment_pos], mcomment, keywords, literals) {
+				chunks << c
+			}
+			// Comment part from / * onwards
+			chunks << Chunk{
+				start: start_comment_pos
+				end:   s.len
+				typ:   .a_comment
+			}
+			ml = true // Update state for next line
+		} else { // No multiline comment start OR it's a single-line /* ... */
+			// Use the standard highlighter for the whole line
+			chunks = lex_standard_span(s, mcomment, keywords, literals)
+			// ml remains false
+		}
+	}
+	return chunks, ml
+}
+
+// chunk_draw_ops turns lexed chunks into the ordered text runs for a line.
+// Pure function: no drawing, no globals. The draw decisions were extracted
+// from draw_chunks so the whole highlight path can be tested headlessly.
+fn chunk_draw_ops(line string, chunks []Chunk, char_width int) []DrawOp {
+	mut ops := []DrawOp{}
+	if chunks.len == 0 {
+		ops << DrawOp{
+			x:    0
+			text: line
+			kind: none
+		}
+		return ops
 	}
 	mut pos := 0
-	// println('"$line" nr chunks=$ved.chunks.len')
 	// TODO use runes
-	// runes := msg.runes.slice_fast(chunk.pos, chunk.end)
-	// txt := join_strings(runes)
-	for j, chunk in ved.chunks {
-		// println('chunk #$i start=$chunk.start end=$chunk.end typ=$chunk.typ')
-		// Initial text chunk (not necessarily initial, but the one right before current chunk,
-		// since we don't have a seperate chunk for text)
+	for j, chunk in chunks {
+		// Text run before this chunk (there is no separate chunk for plain text).
 		if chunk.start > pos {
-			s := line[pos..chunk.start]
-			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, s, ved.cfg.txt_cfg)
+			ops << DrawOp{
+				x:    pos * char_width
+				text: line[pos..chunk.start]
+				kind: none
+			}
 		}
-		// Keyword, literal, string etc
-		typ := chunk.typ
-		cfg := match typ {
-			.a_key { ved.cfg.key_cfg }
-			.a_lit { ved.cfg.lit_cfg }
-			.a_string { ved.cfg.string_cfg }
-			.a_comment { ved.cfg.comment_cfg }
+		// Keyword, literal, string etc.
+		ops << DrawOp{
+			x:    chunk.start * char_width
+			text: line[chunk.start..chunk.end]
+			kind: chunk.typ
 		}
-		s := line[chunk.start..chunk.end]
-		ved.gg.draw_text(x + chunk.start * ved.cfg.char_width, y, s, cfg)
 		pos = chunk.end
-		// Final text chunk
-		if j == ved.chunks.len - 1 && chunk.end < line.len {
-			final := line[chunk.end..]
-			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, final, ved.cfg.txt_cfg)
+		// Text run after the final chunk.
+		if j == chunks.len - 1 && chunk.end < line.len {
+			ops << DrawOp{
+				x:    pos * char_width
+				text: line[chunk.end..]
+				kind: none
+			}
 		}
 	}
-	// --- End of original chunk drawing logic ---
+	return ops
+}
+
+// draw_chunks replays lexed chunks to the screen via chunk_draw_ops.
+fn (mut ved Ved) draw_chunks(x int, y int, line string, chunks []Chunk) {
+	for op in chunk_draw_ops(line, chunks, ved.cfg.char_width) {
+		cfg := if style := op.kind {
+			match style {
+				.a_key { ved.cfg.key_cfg }
+				.a_lit { ved.cfg.lit_cfg }
+				.a_string { ved.cfg.string_cfg }
+				.a_comment { ved.cfg.comment_cfg }
+			}
+		} else {
+			ved.cfg.txt_cfg
+		}
+		ved.gg.draw_text(x + op.x, y, op.text, cfg)
+	}
 }

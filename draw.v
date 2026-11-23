@@ -183,7 +183,6 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		current_is_ml_comment = ved.determine_ml_comment_state(view, view.from)
 	}
 	ext := os.file_ext(view.path) // Cache extension
-	mcomment := get_mcomment_by_ext(ext) // Cache delimiters
 
 	split_width := ved.split_width()
 	split_x := split_width * (i - split_from)
@@ -262,55 +261,11 @@ fn (mut ved Ved) draw_split(i int, split_from int) {
 		}
 
 		if view.hl_on {
-			// Handle multi page /**/
-			// Find the position of start and end comment delimiters on the current line.
-			// This now uses the string-based delimiters from the Mcomment struct.
-			start_comment_pos := s.index(mcomment.start) or { -1 }
-			end_comment_pos := s.index(mcomment.end) or { -1 }
-
-			// This logic handles rendering for a line that starts inside a multi-line comment.
-			if current_is_ml_comment {
-				if end_comment_pos != -1 { // The multi-line comment ends on this line.
-					// Draw the part of the line that is inside the comment.
-					// The slice now uses `mcomment.end.len` for an accurate length.
-					comment_part := s[..end_comment_pos + mcomment.end.len]
-					ved.gg.draw_text(line_x, y, comment_part, ved.cfg.comment_cfg)
-
-					// Draw the rest of the line (after the comment) using standard syntax highlighting.
-					normal_part := s[end_comment_pos + mcomment.end.len..]
-					if normal_part.len > 0 {
-						// Calculate the starting x-position for the text after the comment.
-						normal_part_x := line_x + comment_part.len * ved.cfg.char_width
-						ved.draw_text_line_standard_syntax(normal_part_x, y, normal_part,
-							ext)
-					}
-
-					// Update the state since the comment block is now closed.
-					current_is_ml_comment = false
-				} else { // The entire line is still inside the comment.
-					// Draw the whole line with the comment color.
-					ved.gg.draw_text(line_x, y, s, ved.cfg.comment_cfg)
-					// The state `current_is_ml_comment` remains true for the next line.
-				}
-			} else { // current_is_ml_comment is false
-				if start_comment_pos != -1
-					&& (end_comment_pos == -1 || end_comment_pos < start_comment_pos) { // Comment starts here and continues
-					// Draw normal part before / *
-					normal_part := s[..start_comment_pos]
-					if normal_part.len > 0 {
-						ved.draw_text_line_standard_syntax(line_x, y, normal_part, ext)
-					}
-					// Draw comment part from / * onwards
-					comment_part := s[start_comment_pos..]
-					comment_part_x := line_x + normal_part.len * ved.cfg.char_width // Adjust based on actual rendered width if needed
-					ved.gg.draw_text(comment_part_x, y, comment_part, ved.cfg.comment_cfg)
-					current_is_ml_comment = true // Update state for next line
-				} else { // No multiline comment start OR it's a single-line /* ... */
-					// Use the standard highlighter for the whole line
-					ved.draw_text_line_standard_syntax(line_x, y, s, ext)
-					// current_is_ml_comment remains false
-				}
-			}
+			cur_syntax := ved.syntaxes[ved.current_syntax_idx] or { Syntax{} }
+			line_chunks, ml_next := lex_line(s, current_is_ml_comment, ext, cur_syntax.keywords_map,
+				cur_syntax.literals_map)
+			current_is_ml_comment = ml_next
+			ved.draw_chunks(line_x, y, s, line_chunks)
 		} else {
 			ved.gg.draw_text(line_x, y, s, ved.cfg.txt_cfg)
 		}
