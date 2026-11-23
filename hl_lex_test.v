@@ -133,3 +133,70 @@ fn test_lex_line_balanced_comment_stays_shut() {
 		typ:   .a_comment
 	}]
 }
+
+fn test_lex_literal() {
+	mc := get_mcomment_by_ext('.v')
+	kw := map[string]bool{}
+	lit := {
+		'true': true
+	}
+	chunks := lex_standard_span('return true', mc, kw, lit)
+	assert chunks == [Chunk{
+		start: 7
+		end:   11
+		typ:   .a_lit
+	}]
+}
+
+// Keywords after a closing */ must still be highlighted: the tail of the
+// line goes through lex_standard_span with the caller's maps.
+fn test_lex_line_closes_with_keyword_after() {
+	kw := {
+		'return': true
+	}
+	lit := map[string]bool{}
+	chunks, ml := lex_line('*/ return x', true, '.v', kw, lit)
+	assert ml == false
+	assert chunks == [Chunk{
+		start: 0
+		end:   2
+		typ:   .a_comment
+	}, Chunk{
+		start: 3
+		end:   9
+		typ:   .a_key
+	}]
+}
+
+fn test_chunk_draw_ops_no_chunks() {
+	ops := chunk_draw_ops('plain', [], 8)
+	assert ops.len == 1
+	assert ops[0].x == 0
+	assert ops[0].text == 'plain'
+}
+
+fn test_chunk_draw_ops_final_text() {
+	ops := chunk_draw_ops('fn x', [Chunk{
+		start: 0
+		end:   2
+		typ:   .a_key
+	}], 8)
+	assert ops.len == 2
+	assert ops[0].x == 0
+	assert ops[0].text == 'fn'
+	assert ops[1].x == 16
+	assert ops[1].text == ' x'
+}
+
+fn test_chunk_draw_ops_leading_text() {
+	ops := chunk_draw_ops('a fn', [Chunk{
+		start: 2
+		end:   4
+		typ:   .a_key
+	}], 8)
+	assert ops.len == 2
+	assert ops[0].x == 0
+	assert ops[0].text == 'a '
+	assert ops[1].x == 16
+	assert ops[1].text == 'fn'
+}

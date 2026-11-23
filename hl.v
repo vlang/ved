@@ -19,6 +19,14 @@ struct Chunk {
 	typ   ChunkKind
 }
 
+// DrawOp is one text run to hand to the graphics context.
+// kind == none means plain text; otherwise it names the highlight style.
+struct DrawOp {
+	x    int
+	text string
+	kind ?ChunkKind
+}
+
 struct Mcomment {
 	start string
 	end   string
@@ -303,41 +311,62 @@ fn lex_line(s string, ml_before bool, ext string, keywords map[string]bool, lite
 	return chunks, ml
 }
 
-// draw_chunks replays lexed chunks to the screen. Extracted unchanged
-// from draw_text_line_standard_syntax.
-fn (mut ved Ved) draw_chunks(x int, y int, line string, chunks []Chunk) {
+// chunk_draw_ops turns lexed chunks into the ordered text runs for a line.
+// Pure function: no drawing, no globals. The draw decisions were extracted
+// from draw_chunks so the whole highlight path can be tested headlessly.
+fn chunk_draw_ops(line string, chunks []Chunk, char_width int) []DrawOp {
+	mut ops := []DrawOp{}
 	if chunks.len == 0 {
-		ved.gg.draw_text(x, y, line, ved.cfg.txt_cfg)
-		return
+		ops << DrawOp{
+			x:    0
+			text: line
+			kind: none
+		}
+		return ops
 	}
 	mut pos := 0
-	// println('"$line" nr chunks=$chunks.len')
 	// TODO use runes
-	// runes := msg.runes.slice_fast(chunk.pos, chunk.end)
-	// txt := join_strings(runes)
 	for j, chunk in chunks {
-		// println('chunk #$i start=$chunk.start end=$chunk.end typ=$chunk.typ')
-		// Initial text chunk (not necessarily initial, but the one right before current chunk,
-		// since we don't have a seperate chunk for text)
+		// Text run before this chunk (there is no separate chunk for plain text).
 		if chunk.start > pos {
-			s := line[pos..chunk.start]
-			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, s, ved.cfg.txt_cfg)
+			ops << DrawOp{
+				x:    pos * char_width
+				text: line[pos..chunk.start]
+				kind: none
+			}
 		}
-		// Keyword, literal, string etc
-		typ := chunk.typ
-		cfg := match typ {
-			.a_key { ved.cfg.key_cfg }
-			.a_lit { ved.cfg.lit_cfg }
-			.a_string { ved.cfg.string_cfg }
-			.a_comment { ved.cfg.comment_cfg }
+		// Keyword, literal, string etc.
+		ops << DrawOp{
+			x:    chunk.start * char_width
+			text: line[chunk.start..chunk.end]
+			kind: chunk.typ
 		}
-		s := line[chunk.start..chunk.end]
-		ved.gg.draw_text(x + chunk.start * ved.cfg.char_width, y, s, cfg)
 		pos = chunk.end
-		// Final text chunk
+		// Text run after the final chunk.
 		if j == chunks.len - 1 && chunk.end < line.len {
-			final := line[chunk.end..]
-			ved.gg.draw_text(x + pos * ved.cfg.char_width, y, final, ved.cfg.txt_cfg)
+			ops << DrawOp{
+				x:    pos * char_width
+				text: line[chunk.end..]
+				kind: none
+			}
 		}
+	}
+	return ops
+}
+
+// draw_chunks replays lexed chunks to the screen via chunk_draw_ops.
+fn (mut ved Ved) draw_chunks(x int, y int, line string, chunks []Chunk) {
+	for op in chunk_draw_ops(line, chunks, ved.cfg.char_width) {
+		cfg := if style := op.kind {
+			match style {
+				.a_key { ved.cfg.key_cfg }
+				.a_lit { ved.cfg.lit_cfg }
+				.a_string { ved.cfg.string_cfg }
+				.a_comment { ved.cfg.comment_cfg }
+			}
+		} else {
+			ved.cfg.txt_cfg
+		}
+		ved.gg.draw_text(x + op.x, y, op.text, cfg)
 	}
 }
