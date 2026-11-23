@@ -114,6 +114,17 @@ fn test_word_under_cursor_single_char_word() {
 	assert ved.word_under_cursor() == 'a'
 }
 
+// The first byte of a word is a valid cursor position even when preceded by a separator.
+fn test_word_under_cursor_on_first_byte_of_word() {
+	mut ved := &Ved{}
+	mut vw := ved.new_view()
+	ved.view = &vw
+	ved.view.lines = ['ab cd']
+	ved.view.y = 0
+	ved.view.x = 3
+	assert ved.word_under_cursor() == 'cd'
+}
+
 // Same first-character rule for the no-right variant.
 fn test_word_under_cursor_no_right_at_column_zero() {
 	mut ved := &Ved{}

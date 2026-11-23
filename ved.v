@@ -373,7 +373,10 @@ fn (ved &Ved) word_under_cursor() string {
 	}
 	// First go left
 	mut start := x
-	if start > 0 && !is_alpha_underscore(int(line[start - 1])) {
+	// The cursor can sit on the first byte of a word, in which case the byte
+	// before it is a separator but the word under the cursor is still valid.
+	if start > 0 && !is_alpha_underscore(int(line[start - 1]))
+		&& !is_alpha_underscore(int(line[start])) {
 		return ''
 	}
 	for start > 0 && is_alpha_underscore(int(line[start])) {
