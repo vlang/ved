@@ -1044,6 +1044,7 @@ const min_text_size = 18
 
 // increase_font changes the editor's font size and recalculates related UI metrics.
 fn (mut ved Ved) increase_font(delta int) {
+	ved.apply_pending_config()
 	// println('INCREASE_FONT(${delta})')
 	// println('text_size=${ved.cfg.text_size}')
 	// println('char_width=${ved.cfg.char_width}')

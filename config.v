@@ -276,9 +276,10 @@ fn read_config() (Config, string) {
 		toml.parse_text('') or { panic(err) }
 	}
 	cfg.apply_toml_editor(doc, zoom_saved)
-	cfg.colors = toml_colors(doc) or {
-		problem = 'conf.toml: ${err.msg()}'
-		map[string]gg.Color{}
+	colors, color_problem := toml_colors(doc)
+	cfg.colors = colors
+	if color_problem != '' {
+		problem = 'conf.toml: ${color_problem}'
 	}
 	cfg.set_default_values()
 	return cfg, problem
@@ -353,29 +354,29 @@ fn toml_positive_int(doc toml.Doc, key string) ?int {
 	return if n > 0 { n } else { none }
 }
 
-// toml_colors reads the [colors] table of conf.toml: base16 names mapped to hex colors.
-fn toml_colors(doc toml.Doc) !map[string]gg.Color {
+// toml_colors reads the [colors] table of conf.toml: base16 names, base00 to base0F,
+// mapped to hex colors. Invalid entries are skipped, the first one is returned as the
+// problem to show and the valid ones still apply.
+fn toml_colors(doc toml.Doc) (map[string]gg.Color, string) {
 	mut colors := map[string]gg.Color{}
-	table := doc.value_opt('colors') or { return colors }
+	mut problem := ''
+	table := doc.value_opt('colors') or { return colors, problem }
 	for key, value in table.as_map() {
-		hex := value.string().trim_left('#')
-		if !key.starts_with('base') || hex.len != 6 || !hex.bytes().all(it.is_hex_digit()) {
-			return error('invalid color ${key} = "${value.string()}"')
+		hex := if value is string { value.trim_left('#') } else { '' }
+		is_base16 := key.len == 6 && key.starts_with('base') && key[4] == `0`
+			&& key[5].is_hex_digit()
+		if !is_base16 || hex.len != 6 || !hex.bytes().all(it.is_hex_digit()) {
+			if problem == '' {
+				problem = 'invalid color ${key} = ${value.to_toml()}'
+			}
+			continue
 		}
 		colors[key[4..].to_upper()] = gg.rgb(u8(hex[0..2].parse_uint(16, 8) or { 0 }),
 			u8(hex[2..4].parse_uint(16, 8) or { 0 }), u8(hex[4..6].parse_uint(16, 8) or { 0 }))
 	}
-	return colors
+	return colors, problem
 }
 
 fn (mut ved Ved) save_config2() {
-	/*
-	config2 := Config2{
-		text_size:   ved.cfg.text_size
-		disable_fmt: ved.cfg.disable_fmt
-		line_height: ved.cfg.line_height
-		char_width:  ved.cfg.char_width
-	}
-	*/
 	os.write_file(config_path2, json2.encode(ved.cfg, prettify: true)) or { panic(err) }
 }
