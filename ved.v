@@ -5,6 +5,7 @@ module main
 
 import gg
 import os
+import strconv
 import time
 import uiold
 import clipboard
@@ -22,6 +23,8 @@ const file_stats_path = os.join_path(settings_dir, 'file_stats')
 const config_path = os.join_path(settings_dir, 'conf.toml')
 const config_path2 = os.join_path(settings_dir, 'config.json')
 const max_nr_workspaces = 10
+const max_nr_views = max_nr_workspaces * 4
+const max_error_line_len = 200
 
 // CtrlPResult represents a file found during a Ctrl+P search.
 struct CtrlPResult {
@@ -157,9 +160,6 @@ const is_fullscreen = '-fullscreen' in args
 fn get_screen_size() (int, int) {
 	mut size := gg.screen_size()
 	println('AAA SIZE=${size}')
-	if unsafe { true } {
-		// exit(0)
-	}
 	if size.width == 0 || size.height == 0 {
 		size = $if small_window ? { gg.Size{770, 480} } $else { gg.Size{2560, 1440} }
 	}
@@ -509,9 +509,7 @@ fn (mut ved Ved) update_view() {
 	$if debug {
 		println('update view len=${ved.views.len}')
 	}
-	unsafe {
-		ved.view = &ved.views[ved.cur_split]
-	}
+	ved.view = &ved.views[ved.cur_split]
 }
 
 // set_insert switches the editor to Insert mode.
@@ -607,6 +605,14 @@ fn (mut ved Ved) open_workspace(idx int) {
 	// Update cur split index. If we are in space 0 split 1 and go to
 	// space 1, split is updated to 4 (1 + 3 * (1-0))
 	ved.cur_split += diff * ved.nr_splits
+	// Keep the active split inside the bounded set of open workspaces.
+	max_split := ved.workspaces.len * ved.nr_splits
+	if max_split > 0 {
+		ved.cur_split = ved.cur_split % max_split
+		if ved.cur_split < 0 {
+			ved.cur_split += max_split
+		}
+	}
 
 	// Load git files for the new workspace
 	ved.load_git_tree()
@@ -635,7 +641,8 @@ fn (mut ved Ved) add_workspace(path string) {
 	if workspace.ends_with('/.') {
 		workspace = workspace[..workspace.len - 2]
 	}
-	if ved.workspaces.len >= max_nr_workspaces {
+	// Views grow by nr_splits per workspace; cap both counters explicitly.
+	if ved.workspaces.len >= max_nr_workspaces || ved.views.len + ved.nr_splits > max_nr_views {
 		// ui.alert('workspace limit')
 		return
 	}
@@ -703,13 +710,13 @@ fn (mut ved Ved) load_file_stats() {
 	for line in lines {
 		// Split on the last ':', the path itself can contain one (C:\Users\...).
 		i := line.last_index(':') or { continue }
-		ved.file_open_count[line[..i]] = line[i + 1..].int()
+		ved.file_open_count[line[..i]] = strconv.atoi(line[i + 1..]) or { 0 }
 	}
 }
 
 // toi is a helper function to convert a string to an i64.
 fn toi(s string) i64 {
-	return s.i64()
+	return strconv.atoi64(s) or { 0 }
 }
 
 // save_timer saves the current task and timer state to disk.
@@ -783,7 +790,7 @@ fn (mut ved Ved) load_views(paths []string) {
 			// myfile.v:23
 			// can contain line numbers from the previous session, parse them and go to them.
 			// Split on the last ':'
-			line_nr = path.all_after_last(':').int()
+			line_nr = strconv.atoi(path.all_after_last(':')) or { 0 }
 			path = path.all_before_last(':')
 		}
 		// view.open_file(path)
@@ -868,9 +875,7 @@ fn (mut ved Ved) open_blog() {
 fn (ved &Ved) get_last_view() &View {
 	pos := (ved.workspace_idx + 1) * ved.nr_splits - 1
 	eprintln('> ${@METHOD} pos: ${pos}')
-	unsafe {
-		return &ved.views[pos]
-	}
+	return &ved.views[pos]
 }
 
 // last_view_idx returns the index of the last view within the current workspace.
@@ -902,7 +907,7 @@ fn (mut ved Ved) get_build_file_location() ?string {
 
 // go_to_error parses a compiler error message, opens the corresponding file if necessary, and jumps to the error location.
 fn (mut ved Ved) go_to_error(line string, error_details string) {
-	ved.error_line = line.after('error: ')
+	ved.error_line = line.after('error: ').limit(max_error_line_len)
 	ved.error_line += '    ' + error_details
 	// panic: volt/twitch.v:88
 	println('go to ERROR line="${line}" error_details=${error_details}')
@@ -923,14 +928,14 @@ fn (mut ved Ved) go_to_error(line string, error_details string) {
 		return
 	}
 	path := line[..pos]
-	line_nr := vals[1].int()
-	col := vals[2].int()
+	line_nr := strconv.atoi(vals[1]) or { 0 }
+	col := strconv.atoi(vals[2]) or { 0 }
 	println('path=${path} filename=${filename} linenr=${line_nr} col=${col}')
 	// Search for the file with the eror in all views inside current workspace
 	start_i := ved.workspace_idx * ved.nr_splits
 	end_i := (ved.workspace_idx + 1) * ved.nr_splits
 	for i := start_i; i < end_i && i < ved.views.len; i++ {
-		mut view := unsafe { &ved.views[i] }
+		mut view := &ved.views[i]
 		if !view.path.contains(os.path_separator + filename) && view.path != filename {
 			continue
 		}
@@ -1130,9 +1135,6 @@ fn (ved &Ved) get_nr_splits_from_screen_size(width int, height int) int {
 	}
 	max_split_width := ved.cfg.char_width * 110
 	println('MAX=${max_split_width}')
-	if unsafe { false } {
-		exit(1)
-	}
 	return nr_splits
 }
 
