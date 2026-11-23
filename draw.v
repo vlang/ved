@@ -3,6 +3,18 @@ module main
 import gg
 import os
 
+// visual_row_in_viewport reports whether a visual-selection row maps to a text
+// line that is actually inside the current viewport. `vstart`/`vend` are
+// 0-based line indices; the .visual loop stores them as `yy = index + 1` while
+// .visual_block stores them unchanged, so `offset` is 1 for .visual and 0 for
+// .visual_block.
+fn visual_row_in_viewport(yy int, from int, page_height int, offset int) bool {
+	// Convert the loop's row back to a 0-based text-line index before testing it
+	// against the viewport. The .visual loop stores index+1, .visual_block index.
+	line_index := yy - offset
+	return line_index >= from && line_index < from + page_height
+}
+
 fn (mut ved Ved) draw() {
 	mut view := ved.view
 	split_width := ved.split_width()
@@ -31,7 +43,7 @@ fn (mut ved Ved) draw() {
 			v_to = ved.view.vstart + 1
 		}
 		for yy := v_from; yy <= v_to; yy++ {
-			if yy < ved.view.from || yy >= ved.view.from + ved.page_height {
+			if !visual_row_in_viewport(yy, ved.view.from, ved.page_height, 1) {
 				continue
 			}
 			ved.gg.draw_rect_filled(line_x, (yy - ved.view.from) * ved.cfg.line_height,
@@ -46,7 +58,7 @@ fn (mut ved Ved) draw() {
 		x_min := if ved.view.vx < ved.view.x { ved.view.vx } else { ved.view.x }
 		x_max := if ved.view.vx > ved.view.x { ved.view.vx } else { ved.view.x }
 		for yy := v_from; yy <= v_to; yy++ {
-			if yy < ved.view.from || yy >= ved.view.from + ved.page_height {
+			if !visual_row_in_viewport(yy, ved.view.from, ved.page_height, 0) {
 				continue
 			}
 			// line := view.lines[yy]
